@@ -89,3 +89,10 @@ Attach or link screenshots. Place files in `docs/qa/bug-reports/assets/BUG-NNN/`
 |------|-----|--------|
 | YYYY-MM-DD | | Filed |
 | | | |
+
+---
+
+*This front-matter and the section headings above are what the HTML report
+generator and the tracker sync helpers parse. Keep them stable so the
+report renders and `bugs-needing-sync.sh` / `bugs-needing-pull.sh` find
+the tracker fields.*

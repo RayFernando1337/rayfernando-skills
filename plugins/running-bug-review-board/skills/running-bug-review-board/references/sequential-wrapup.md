@@ -78,6 +78,21 @@ Stop sequential and ask the user when:
 - A P0 bug blocks every remaining scenario
 - Auth provider is throttling for >5 minutes
 
+## Block A — pull before re-testing
+
+Before re-testing any `fixed` or `in-progress` bug in Block A, run a
+**pull** from the configured tracker per
+[issue-trackers.md](issue-trackers.md). Engineering may already have
+flipped the status to `verified`, or commented with reproduction notes
+worth reading before you spend cycles re-testing.
+
+```bash
+bash ~/.agents/skills/running-bug-review-board/scripts/bugs-needing-pull.sh "$REPO_ROOT"
+```
+
+Apply the pull's reconciliation rules; surface any divergence to the
+user before continuing.
+
 ## Verdict
 
 Write the final verdict in the coordinator merge doc, even if you ran
@@ -89,6 +104,12 @@ verdict is YES, also:
 - Update `docs/README.md` phase table status
 - Update phase doc § QA status with "Sign-off: YES (YYYY-MM-DD)" + link
   to merge
+
+**Regenerate the HTML report** per
+[html-report-style-guide.md](html-report-style-guide.md) before
+committing the merge. If a tracker is configured, also run
+`scripts/bugs-needing-sync.sh` and push any new bugs filed during the
+wrap-up.
 
 ## Sequential agent prompt
 

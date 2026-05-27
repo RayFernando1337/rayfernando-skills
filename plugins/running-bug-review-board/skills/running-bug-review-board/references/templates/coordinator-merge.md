@@ -79,6 +79,23 @@
 |-----|-------|----------|--------|
 | BUG-NNN | … | P0/P1/P2 | open |
 
+## Tracker sync (this pass)
+
+| Tracker | Pushed (new) | Updated | Pulled | Diverged |
+|---------|-------------:|--------:|-------:|---------:|
+| {linear/github/jira/notion/none} | N | N | N | N |
+
+*See [issue-trackers.md](../../.agents/skills/running-bug-review-board/references/issue-trackers.md) for the bi-directional sync workflow.*
+
+## Generated artifacts
+
+| Artifact | Path |
+|----------|------|
+| HTML dashboard | `docs/qa/report/index.html` |
+| Per-bug pages  | `docs/qa/report/bugs/BUG-*.html` |
+| Per-run pages  | `docs/qa/report/runs/*.html` |
+| Stylesheet     | `docs/qa/report/assets.css` |
+
 ## Sign-off criteria
 
 | Criterion | Met? |

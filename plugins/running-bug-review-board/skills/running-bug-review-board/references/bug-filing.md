@@ -154,14 +154,12 @@ open → wontfix (with rationale)
 
 ## Bug review board (BRB) cadence
 
-Run a weekly (or pre-sign-off) BRB:
+The auto QA pass files bugs. The **Interactive BRB** triages them with
+the user in the loop — pulled from the configured tracker, heuristics
+run, status flips applied, HTML refreshed, minutes written. The two
+workflows are intentionally separate so triage bias doesn't contaminate
+the auto pass.
 
-- [ ] List `open` and `in-progress` bugs
-- [ ] Confirm priorities (P0/P1 block phase; P2 → `deferred` with note
-      in phase doc)
-- [ ] Link fix PR / commit when status flips to `fixed`
-- [ ] QA re-tests linked Test IDs → `verified` or reopen
-- [ ] Any regressions on the regression matrix?
-
-The BRB is the feedback loop: **find** → **document** → **fix** →
-**verify** → **next phase**.
+Full ceremony: [brb-interactive.md](brb-interactive.md).
+Pattern-based suggestions: [triage-heuristics.md](triage-heuristics.md).
+Bi-directional tracker sync: [issue-trackers.md](issue-trackers.md).

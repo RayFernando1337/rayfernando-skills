@@ -4,6 +4,16 @@ Drive the app like a real user. Whatever tool the agent has, the playbook
 is the same: navigate → snapshot → act on **fresh refs** → capture
 evidence → release the tab when done.
 
+## Scope: web apps only
+
+This playbook covers **web app QA in a browser** — Chrome viewport
+emulation, real Safari / Firefox, headless Playwright. If the repo under
+QA is an iOS / iPadOS application project, use
+[ios-simulator-playbook.md](ios-simulator-playbook.md) instead. Web app
+QA does **not** boot iOS simulators; the project-type detection in
+[discovering-the-app.md](discovering-the-app.md) decides which playbook
+activates.
+
 ## Tool ladder (cursor-first)
 
 Use whichever is available. The shape of the work is identical.

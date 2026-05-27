@@ -107,6 +107,15 @@ When shards finish (complete or stalled with partial data):
 1. Collect every `docs/qa/runs/QA-<letter>-run-YYYY-MM-DD.md`
 2. Apply [gate-merge.md](gate-merge.md)
 3. Verdict goes in `docs/qa/runs/COORDINATOR-MERGE-YYYY-MM-DD.md`
+4. **Regenerate the HTML report** per
+   [html-report-style-guide.md](html-report-style-guide.md): dashboard
+   + per-bug + per-run pages.
+5. If a tracker is configured, run:
+   ```bash
+   bash ~/.agents/skills/running-bug-review-board/scripts/bugs-needing-sync.sh "$REPO_ROOT"
+   ```
+   Push each listed bug per [issue-trackers.md](issue-trackers.md). Fill
+   in the merge doc's "Tracker sync (this pass)" table.
 
 ## Common pitfalls (observed)
 

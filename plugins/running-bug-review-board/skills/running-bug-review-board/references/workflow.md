@@ -146,6 +146,22 @@ merge doc covering:
 This is what makes runs **recoverable** — the next agent should not have
 to rediscover state.
 
+## 11. Schedule interactive BRB
+
+The auto pass discovers bugs. The Bug Review Board **triages** them with
+the user in the loop. Use a **separate session** — running BRB inside an
+auto pass lets triage bias contaminate the pass and confuses attribution.
+
+When to schedule BRB:
+- After a NO verdict: triage the open P0 / P1 before the next pass.
+- After a YES verdict: usually only needs to verify P2 deferrals and
+  ack any post-merge tracker pulls.
+- On a regular cadence (weekly, pre-release) regardless of verdict.
+
+See [brb-interactive.md](brb-interactive.md). The facilitator prompt
+lives at
+[templates/brb-interactive-prompt.md](templates/brb-interactive-prompt.md).
+
 ## Anti-patterns
 
 | Don't | Why |

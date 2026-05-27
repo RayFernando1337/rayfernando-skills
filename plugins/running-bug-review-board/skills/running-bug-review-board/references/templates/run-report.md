@@ -31,6 +31,12 @@
 |-----|-------|----------|
 | BUG-NNN | … | P0/P1/P2 |
 
+## Tracker sync (this run)
+
+| Tracker | Pushed (new) | Updated | Pulled | Diverged |
+|---------|-------------:|--------:|-------:|---------:|
+| {linear/github/jira/notion/none} | N | N | N | N |
+
 ## Gate {N} status (this shard)
 
 | # | Item | Result |

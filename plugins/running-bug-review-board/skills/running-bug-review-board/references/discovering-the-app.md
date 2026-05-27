@@ -153,11 +153,18 @@ Before you start scenarios, you should have:
 
 1. A 2-paragraph mental model of the app: target user, job-to-be-done,
    success metrics.
-2. A list of public + authenticated routes.
-3. A list of personas with expected permissions per route.
-4. A list of recently-changed surfaces (from CHANGELOG / git log) — these
+2. The **project type** (web / iOS / mixed / other) and which playbook
+   activates.
+3. A list of public + authenticated routes.
+4. A list of personas with expected permissions per route.
+5. A list of recently-changed surfaces (from CHANGELOG / git log) — these
    are highest-risk for regressions.
-5. A list of out-of-scope items (defer, do not file as blockers).
-6. A list of open bugs to re-test first.
+6. A list of out-of-scope items (defer, do not file as blockers).
+7. A list of open bugs to re-test first.
+8. The **issue tracker** (confirmed by the user) recorded in
+   `docs/qa/qa-config.json` with `discoveredAt` + `confirmedBy`.
+9. If there's an existing bug-reports folder: a quick heuristic scan per
+   [triage-heuristics.md](triage-heuristics.md) to flag obvious clusters
+   so the new pass can avoid filing duplicates.
 
-If anything in (1)–(6) is unclear, **ask the user** before continuing.
+If anything in (1)–(9) is unclear, **ask the user** before continuing.
