@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-skill-zip:
+    name: Build skill zip and attach to release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build claude.ai-compatible zip
+        run: |
+          cd plugins/running-bug-review-board/skills
+          zip -r "${GITHUB_WORKSPACE}/running-bug-review-board.zip" running-bug-review-board
+
+      - name: Verify zip contents
+        run: unzip -l running-bug-review-board.zip | head -30
+
+      - name: Create GitHub Release with skill zip
+        uses: softprops/action-gh-release@v2
+        with:
+          files: running-bug-review-board.zip
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            **Claude Code:**
+            ```
+            /plugin marketplace add RayFernando1337/rayfernando-skills@${{ github.ref_name }}
+            /plugin install running-bug-review-board@rayfernando-skills
+            ```
+
+            **claude.ai (Settings > Features > Skills):**
+            Download `running-bug-review-board.zip` below and upload it.
+
+            **Cursor / Codex / Droid:** see the [README](https://github.com/RayFernando1337/rayfernando-skills#cursor--codex--droid-and-any-other-filesystem-based-agent) for clone + symlink instructions.
+
+            ---

@@ -1,7 +1,7 @@
 {
-  "name": "rayfernando-skills",
+  "name": "running-bug-review-board",
   "version": "0.1.0",
-  "description": "Ray Fernando's collection of Skill files. Currently ships running-bug-review-board: a real-user QA + Bug Review Board (BRB) workflow used to test apps like a customer, file structured bug reports, run parallel or sequential QA passes, and produce a YES/NO sign-off per phase. Repo-agnostic and browser-tool-agnostic.",
+  "description": "Real-user QA workflow with a Bug Review Board (BRB). Drives the live app like a customer, files structured P0/P1/P2 bug reports, and produces a YES/NO sign-off per phase. Repo-agnostic and browser-tool-agnostic.",
   "author": {
     "name": "Ray Fernando",
     "url": "https://github.com/RayFernando1337"

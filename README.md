@@ -28,35 +28,35 @@ A lot of teams point their AI agents at code review and miss where users actuall
 
 ### Claude Code (recommended)
 
-Clone the repo and point Claude Code at the plugin directory:
+Two commands inside Claude Code:
 
-```bash
-git clone https://github.com/RayFernando1337/rayfernando-skills.git ~/Code/rayfernando-skills
-cc --plugin-dir ~/Code/rayfernando-skills
+```
+/plugin marketplace add RayFernando1337/rayfernando-skills
+/plugin install running-bug-review-board@rayfernando-skills
 ```
 
-The plugin auto-discovers every Skill file under `skills/` on startup. Ask Claude something that matches a Skill file's trigger description (e.g. "QA this phase", "run a manual test plan", "is this ready to ship?") and the relevant Skill file loads automatically.
+That's it. Claude Code adds the marketplace, fetches the plugin, and the Skill file activates the next time an agent matches one of its trigger phrases (e.g. "QA this phase", "run a manual test plan", "is this ready to ship?").
 
-To make it sticky across sessions, add the plugin path to your `~/.claude/settings.json`:
+To pin to a specific release tag:
 
-```json
-{
-  "pluginDirs": ["~/Code/rayfernando-skills"]
-}
+```
+/plugin marketplace add RayFernando1337/rayfernando-skills@v0.1.0
+/plugin install running-bug-review-board@rayfernando-skills
 ```
 
 ### Cursor / Codex / Droid (and any other filesystem-based agent)
 
-Skill files are plain markdown directories with no special packaging required. Symlink the Skill file into wherever your tool reads from:
+These agents read Skill files directly from a folder on disk. Clone the repo once and symlink the Skill file into each tool's skills directory:
 
 ```bash
 # Clone once into a central location
 git clone https://github.com/RayFernando1337/rayfernando-skills.git ~/Code/rayfernando-skills
 
-# Symlink each skill into each tool's skill dir
+# Symlink the Skill file into each tool's skill dir
 for tool_dir in ~/.claude/skills ~/.cursor/skills ~/.codex/skills ~/.factory/skills; do
   mkdir -p "$tool_dir"
-  ln -sf ~/Code/rayfernando-skills/skills/running-bug-review-board "$tool_dir/running-bug-review-board"
+  ln -sf ~/Code/rayfernando-skills/plugins/running-bug-review-board/skills/running-bug-review-board \
+         "$tool_dir/running-bug-review-board"
 done
 ```
 
@@ -67,7 +67,7 @@ Replace the for-loop list with whichever tools you use. The Skill file works the
 Some projects ship their own `.cursor/skills/` or `.claude/skills/` directories. Drop a symlink there to make the Skill file available to anyone who clones the project:
 
 ```bash
-ln -s ~/Code/rayfernando-skills/skills/running-bug-review-board \
+ln -s ~/Code/rayfernando-skills/plugins/running-bug-review-board/skills/running-bug-review-board \
       .claude/skills/running-bug-review-board
 git add .claude/skills/running-bug-review-board
 git commit -m "Add running-bug-review-board Skill file"
@@ -75,12 +75,13 @@ git commit -m "Add running-bug-review-board Skill file"
 
 ### claude.ai (Settings > Features > Skills)
 
-Build a zip from the Skill file directory and upload it through Settings > Features > Skills:
+Download `running-bug-review-board.zip` from the [latest release](https://github.com/RayFernando1337/rayfernando-skills/releases/latest) and upload it through Settings > Features > Skills.
+
+Or build the zip yourself from a local clone:
 
 ```bash
-# From the repo root
-cd skills/running-bug-review-board
-zip -r ../../running-bug-review-board.zip .
+cd plugins/running-bug-review-board/skills
+zip -r ../../../running-bug-review-board.zip running-bug-review-board
 ```
 
 Then upload `running-bug-review-board.zip` in claude.ai. (claude.ai expects a zip whose root directory contains `SKILL.md`.)
@@ -105,7 +106,7 @@ The Skill file activates and walks the agent through:
 For repos that don't have a QA folder yet, the Skill file includes a scaffolder:
 
 ```bash
-bash ~/Code/rayfernando-skills/skills/running-bug-review-board/scripts/scaffold-qa.sh \
+bash ~/Code/rayfernando-skills/plugins/running-bug-review-board/skills/running-bug-review-board/scripts/scaffold-qa.sh \
      /path/to/your/repo PHASE_NUMBER
 ```
 
@@ -124,27 +125,39 @@ This creates `docs/qa/` with the bug-report template, run-report skeletons, gate
 
 ---
 
-## Skill file structure (under the hood)
+## Repo structure (under the hood)
 
-Each Skill file follows the standard SKILL.md format with progressive disclosure:
+The repo follows the standard Claude Code marketplace layout. Each Skill file uses progressive disclosure with a lean SKILL.md and references loaded on demand.
 
 ```
-skills/running-bug-review-board/
-├── SKILL.md                          # main entry (~265 lines)
-├── references/                       # loaded on demand
-│   ├── workflow.md                   # PM/QA/Eng trifecta decision tree
-│   ├── discovering-the-app.md        # investigate intent + ask user
-│   ├── test-plan.md                  # derive plan from spec/phase/gate
-│   ├── test-accounts.md              # Clerk/Auth0/Supabase/etc playbook
-│   ├── session-hygiene.md            # stale storage, rate limits
-│   ├── browser-playbook.md           # cursor-ide-browser → playwright
-│   ├── parallel-coordinator.md       # multi-agent shards
-│   ├── sequential-wrapup.md          # solo / wrap-up mode
-│   ├── bug-filing.md                 # severity + evidence rules
-│   ├── gate-merge.md                 # verdict + handoff prompt
-│   └── templates/                    # bug, test-plan, run-report, merge skeletons
-└── scripts/
-    └── scaffold-qa.sh                # universal QA folder scaffold
+rayfernando-skills/
+├── .claude-plugin/
+│   └── marketplace.json              # marketplace catalog
+├── plugins/
+│   └── running-bug-review-board/
+│       ├── .claude-plugin/
+│       │   └── plugin.json           # plugin manifest
+│       └── skills/
+│           └── running-bug-review-board/
+│               ├── SKILL.md          # main entry (~265 lines)
+│               ├── references/       # loaded on demand
+│               │   ├── workflow.md
+│               │   ├── discovering-the-app.md
+│               │   ├── test-plan.md
+│               │   ├── test-accounts.md
+│               │   ├── session-hygiene.md
+│               │   ├── browser-playbook.md
+│               │   ├── parallel-coordinator.md
+│               │   ├── sequential-wrapup.md
+│               │   ├── bug-filing.md
+│               │   ├── gate-merge.md
+│               │   └── templates/    # bug, test-plan, run-report, merge skeletons
+│               └── scripts/
+│                   └── scaffold-qa.sh   # universal QA folder scaffold
+├── .github/workflows/release.yml     # builds claude.ai zip on tag push
+├── CHANGELOG.md
+├── LICENSE
+└── README.md
 ```
 
 ---

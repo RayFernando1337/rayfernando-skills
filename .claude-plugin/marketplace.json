@@ -1,0 +1,33 @@
+{
+  "name": "rayfernando-skills",
+  "owner": {
+    "name": "Ray Fernando",
+    "url": "https://github.com/RayFernando1337"
+  },
+  "metadata": {
+    "description": "Ray Fernando's collection of installable Skill files for AI coding agents.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "running-bug-review-board",
+      "source": "./plugins/running-bug-review-board",
+      "description": "Real-user QA workflow with a Bug Review Board (BRB). Drives the live app like a customer, files structured P0/P1/P2 bug reports, and produces a YES/NO sign-off per phase.",
+      "version": "0.1.0",
+      "category": "qa",
+      "tags": [
+        "qa",
+        "manual-testing",
+        "bug-review-board",
+        "real-user-testing",
+        "browser-automation"
+      ],
+      "author": {
+        "name": "Ray Fernando",
+        "url": "https://github.com/RayFernando1337"
+      },
+      "homepage": "https://github.com/RayFernando1337/rayfernando-skills",
+      "license": "Apache-2.0"
+    }
+  ]
+}
