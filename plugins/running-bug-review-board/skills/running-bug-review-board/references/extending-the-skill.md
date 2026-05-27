@@ -177,6 +177,21 @@ Treat any change that requires consumers to re-read the documentation
 - [ ] `README.md` → update the "What's new" callout at the top + the
       skill list table if relevant.
 - [ ] `SKILL.md` frontmatter description if the surface area changed.
+- [ ] **Push an annotated git tag.** GitHub Releases only update when
+      a `v*` tag is pushed (the `.github/workflows/release.yml`
+      workflow fires on tag push, builds `running-bug-review-board.zip`,
+      and attaches it to a new Release). Without this step the
+      manifests say the new version but GitHub Releases keeps showing
+      the old one.
+      ```bash
+      git tag -a vX.Y.Z -m "vX.Y.Z — <one-line summary>"
+      git push origin vX.Y.Z
+      ```
+- [ ] Verify the workflow ran and the Release was created:
+      ```bash
+      gh run list --limit 2
+      gh release view vX.Y.Z
+      ```
 
 ### Semver rules of thumb for this skill
 
