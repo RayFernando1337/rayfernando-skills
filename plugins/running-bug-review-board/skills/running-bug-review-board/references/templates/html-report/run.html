@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <title>{{RUN_TITLE}} — {{REPORT_TITLE}}</title>
+  <link rel="stylesheet" href="../assets.css">
+  <!-- skill:running-bug-review-board v0.2 -->
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1 class="topbar-title">
+        <a href="../index.html" style="color: inherit;">{{REPORT_TITLE}}</a>
+      </h1>
+      <p class="topbar-meta">
+        <a href="../index.html">← Dashboard</a>
+      </p>
+    </div>
+  </header>
+
+  <main class="container-wide">
+
+    <section class="hero hero-verdict hero-{{VERDICT_YES_OR_NO}}">
+      <div class="hero-eyebrow">
+        {{RUN_KIND_LABEL}} · Phase {{PHASE}} · <time datetime="{{RUN_ISO}}">{{RUN_DATE}}</time>
+      </div>
+      <div class="hero-headline">
+        <span class="badge badge-{{VERDICT_YES_OR_NO}}">{{VERDICT_YES_OR_NO}}</span>
+        <span>{{RUN_HEADLINE}}</span>
+      </div>
+      <dl class="hero-stats">
+        <div><dt>Scenarios</dt><dd>{{SCENARIOS_TOTAL}}</dd></div>
+        <div><dt>Passed</dt><dd>{{PASSED}}</dd></div>
+        <div><dt>Failed</dt><dd>{{FAILED}}</dd></div>
+        <div><dt>Blocked</dt><dd>{{BLOCKED}}</dd></div>
+      </dl>
+      <a class="hero-cta" href="../../runs/{{RUN_MD_FILENAME}}">Open markdown source →</a>
+    </section>
+
+    {{#HANDOFF_PROMPT}}
+    <h2 class="section-title">Handoff prompt</h2>
+    <section class="bug-section" id="handoff">
+      <p>If the verdict is <strong>NO</strong>, paste this into a fresh agent:</p>
+      <pre><code>{{HANDOFF_PROMPT}}</code></pre>
+    </section>
+    {{/HANDOFF_PROMPT}}
+
+    <h2 class="section-title">Results</h2>
+    <section class="bug-section" id="results">
+      <table class="runs-table">
+        <thead>
+          <tr><th>Test ID</th><th>Result</th><th>Gate</th><th>Notes / Bug</th></tr>
+        </thead>
+        <tbody>
+          {{RESULT_ROWS}}
+        </tbody>
+      </table>
+    </section>
+
+    {{#BUGS_FILED}}
+    <h2 class="section-title">Bugs filed this run</h2>
+    <section class="bug-section" id="bugs-filed">
+      <table class="runs-table">
+        <thead>
+          <tr><th>Bug</th><th>Title</th><th>Priority</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {{BUGS_FILED_ROWS}}
+        </tbody>
+      </table>
+    </section>
+    {{/BUGS_FILED}}
+
+    {{#TRACKER_SYNC}}
+    <h2 class="section-title">Tracker sync</h2>
+    <section class="bug-section" id="tracker-sync">
+      <table class="runs-table">
+        <thead>
+          <tr><th>Tracker</th><th>Pushed (new)</th><th>Updated</th><th>Pulled</th><th>Diverged</th></tr>
+        </thead>
+        <tbody>
+          {{TRACKER_SYNC_ROWS}}
+        </tbody>
+      </table>
+    </section>
+    {{/TRACKER_SYNC}}
+
+    {{#REGRESSION_MATRIX}}
+    <h2 class="section-title">Regression matrix</h2>
+    <section class="bug-section" id="regression">
+      <table class="runs-table">
+        <thead>
+          <tr><th>Row</th><th>Result</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          {{REGRESSION_ROWS}}
+        </tbody>
+      </table>
+    </section>
+    {{/REGRESSION_MATRIX}}
+
+    {{#PROCESS_NOTES}}
+    <h2 class="section-title">Process notes</h2>
+    <section class="bug-section" id="process">
+      {{PROCESS_NOTES_HTML}}
+    </section>
+    {{/PROCESS_NOTES}}
+
+    {{#RECOMMENDED_NEXT}}
+    <h2 class="section-title">Recommended next steps</h2>
+    <section class="bug-section" id="next-steps">
+      {{RECOMMENDED_NEXT_HTML}}
+    </section>
+    {{/RECOMMENDED_NEXT}}
+
+  </main>
+
+  <footer class="footer">
+    <p class="footer-meta">
+      Generated <time datetime="{{GENERATED_ISO}}">{{GENERATED_HUMAN}}</time>
+      by the <code>running-bug-review-board</code> skill v0.2.
+      Markdown source:
+      <a href="../../runs/{{RUN_MD_FILENAME}}"><code>{{RUN_MD_FILENAME}}</code></a>.
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <title>BUG-{{NNN}} — {{TITLE}}</title>
+  <link rel="stylesheet" href="../assets.css">
+  <!-- skill:running-bug-review-board v0.2 -->
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1 class="topbar-title">
+        <a href="../index.html" style="color: inherit;">{{REPORT_TITLE}}</a>
+      </h1>
+      <p class="topbar-meta">
+        <a href="../index.html">← Dashboard</a>
+      </p>
+    </div>
+  </header>
+
+  <main class="container-wide">
+    <article class="bug">
+
+      <aside class="bug-meta" aria-label="Bug metadata">
+        <h2 class="bug-meta-title">BUG-{{NNN}}</h2>
+        <dl>
+          <div>
+            <dt>Status</dt>
+            <dd>
+              <span class="pill pill-{{STATUS}}">
+                <span class="dot"></span> {{STATUS_LABEL}}
+                {{#IS_DUPLICATE}}<a href="BUG-{{DUPLICATE_OF}}.html">BUG-{{DUPLICATE_OF}}</a>{{/IS_DUPLICATE}}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>Priority</dt>
+            <dd><span class="chip chip-{{PRIORITY_LOWER}}">{{PRIORITY}}</span></dd>
+          </div>
+          <div><dt>Phase</dt><dd>{{PHASE}}</dd></div>
+          <div><dt>Test ID</dt><dd><code>{{TEST_ID}}</code></dd></div>
+          <div><dt>Gate</dt><dd>{{GATE_ITEM}}</dd></div>
+          <div>
+            <dt>Reported</dt>
+            <dd>
+              <time datetime="{{REPORTED_ISO}}">{{REPORTED_HUMAN}}</time>
+              by {{REPORTED_BY}}
+            </dd>
+          </div>
+          {{#FIXED_IN}}
+          <div><dt>Fixed in</dt><dd><a href="{{FIXED_IN}}">{{FIXED_IN_LABEL}}</a></dd></div>
+          {{/FIXED_IN}}
+          {{#VERIFIED_BY}}
+          <div><dt>Verified by</dt><dd>{{VERIFIED_BY}}</dd></div>
+          {{/VERIFIED_BY}}
+          {{#ENVIRONMENT}}
+          <div><dt>Environment</dt><dd>{{ENVIRONMENT}}</dd></div>
+          {{/ENVIRONMENT}}
+          {{#TRACKER_LINEAR}}
+          <div><dt>Linear</dt><dd><a href="{{TRACKER_LINEAR_URL}}" class="tag tag-tracker">{{TRACKER_LINEAR}}</a></dd></div>
+          {{/TRACKER_LINEAR}}
+          {{#TRACKER_GITHUB}}
+          <div><dt>GitHub</dt><dd><a href="{{TRACKER_GITHUB_URL}}" class="tag tag-tracker">{{TRACKER_GITHUB}}</a></dd></div>
+          {{/TRACKER_GITHUB}}
+          {{#TRACKER_JIRA}}
+          <div><dt>Jira</dt><dd><a href="{{TRACKER_JIRA_URL}}" class="tag tag-tracker">{{TRACKER_JIRA}}</a></dd></div>
+          {{/TRACKER_JIRA}}
+          {{#LAST_SYNCED_AT}}
+          <div><dt>Last synced</dt><dd><time datetime="{{LAST_SYNCED_ISO}}">{{LAST_SYNCED_HUMAN}}</time></dd></div>
+          {{/LAST_SYNCED_AT}}
+          {{#RELATED_BUGS}}
+          <div><dt>Related</dt><dd>{{RELATED_BUG_LINKS}}</dd></div>
+          {{/RELATED_BUGS}}
+        </dl>
+      </aside>
+
+      <div class="bug-body">
+        <h1 class="bug-title">{{TITLE}}</h1>
+
+        <section class="bug-section" id="summary">
+          <h2>Summary</h2>
+          <p>{{SUMMARY}}</p>
+        </section>
+
+        <section class="bug-section" id="steps">
+          <h2>Steps to reproduce</h2>
+          <ol>
+            {{STEPS_ITEMS}}
+          </ol>
+        </section>
+
+        <section class="bug-section" id="expected">
+          <h2>Expected result</h2>
+          {{EXPECTED_HTML}}
+        </section>
+
+        <section class="bug-section" id="actual">
+          <h2>Actual result</h2>
+          {{ACTUAL_HTML}}
+        </section>
+
+        {{#ENVIRONMENT_DETAILS}}
+        <section class="bug-section" id="environment-details">
+          <h2>Environment details</h2>
+          {{ENVIRONMENT_DETAILS_HTML}}
+        </section>
+        {{/ENVIRONMENT_DETAILS}}
+
+        <section class="bug-section" id="evidence">
+          <h2>Evidence</h2>
+
+          {{#CONSOLE_ERRORS}}
+          <h3 class="bug-section-subtitle">Console errors</h3>
+          <pre><code>{{CONSOLE_ERRORS}}</code></pre>
+          {{/CONSOLE_ERRORS}}
+
+          {{#SERVER_DB}}
+          <h3 class="bug-section-subtitle">Server / DB</h3>
+          {{SERVER_DB_HTML}}
+          {{/SERVER_DB}}
+
+          {{#NETWORK}}
+          <h3 class="bug-section-subtitle">Network</h3>
+          {{NETWORK_HTML}}
+          {{/NETWORK}}
+
+          {{#SCREENSHOTS}}
+          <h3 class="bug-section-subtitle">Screenshots</h3>
+          <div class="evidence-gallery">
+            {{SCREENSHOT_TILES}}
+            <!-- Each tile:
+            <a class="evidence-tile" href="../../bug-reports/assets/BUG-{{NNN}}/01-step.png" target="_blank" rel="noopener">
+              <img loading="lazy" src="../../bug-reports/assets/BUG-{{NNN}}/01-step.png" alt="01 — step description">
+              <figcaption>01-step.png</figcaption>
+            </a>
+            -->
+          </div>
+          {{/SCREENSHOTS}}
+
+          {{#IOS_SCREENSHOTS}}
+          <h3 class="bug-section-subtitle">iOS Simulator screenshots</h3>
+          <div class="evidence-gallery">
+            {{IOS_SCREENSHOT_TILES}}
+          </div>
+          {{/IOS_SCREENSHOTS}}
+        </section>
+
+        {{#NOTES}}
+        <section class="bug-section" id="notes">
+          <h2>Notes</h2>
+          {{NOTES_HTML}}
+        </section>
+        {{/NOTES}}
+
+        <section class="bug-section" id="triage">
+          <h2>Triage log</h2>
+          <table class="triage-log">
+            <thead>
+              <tr><th>Date</th><th>Who</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {{TRIAGE_ROWS}}
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="footer">
+    <p class="footer-meta">
+      Generated <time datetime="{{GENERATED_ISO}}">{{GENERATED_HUMAN}}</time>
+      by the <code>running-bug-review-board</code> skill v0.2.
+      To change this bug's state, edit
+      <a href="../../bug-reports/BUG-{{NNN}}-{{SLUG}}.md"><code>BUG-{{NNN}}-{{SLUG}}.md</code></a>
+      and regenerate.
+    </p>
+  </footer>
+</body>
+</html>

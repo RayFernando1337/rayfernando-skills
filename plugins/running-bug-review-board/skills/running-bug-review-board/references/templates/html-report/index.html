@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <title>{{TITLE}}</title>
+  <link rel="stylesheet" href="assets.css">
+  <!-- skill:running-bug-review-board v0.2 -->
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1 class="topbar-title">{{TITLE}}</h1>
+      <p class="topbar-meta">
+        Last updated <time datetime="{{GENERATED_ISO}}">{{GENERATED_HUMAN}}</time>
+        · <a href="../">QA folder</a>
+      </p>
+    </div>
+  </header>
+
+  <main class="container-wide">
+
+    <!-- Verdict hero — one per active phase; usually the latest merge. -->
+    <section class="hero hero-verdict hero-{{VERDICT_YES_OR_NO}}">
+      <div class="hero-eyebrow">Phase {{PHASE_N}} — {{PHASE_SLUG}}</div>
+      <div class="hero-headline">
+        <span class="badge badge-{{VERDICT_YES_OR_NO}}">{{VERDICT_YES_OR_NO}}</span>
+        <span>{{VERDICT_HEADLINE}}</span>
+      </div>
+      <dl class="hero-stats">
+        <div><dt>Open P0</dt><dd>{{OPEN_P0_COUNT}}</dd></div>
+        <div><dt>Open P1</dt><dd>{{OPEN_P1_COUNT}}</dd></div>
+        <div><dt>Open P2</dt><dd>{{OPEN_P2_COUNT}}</dd></div>
+        <div><dt>Last merge</dt><dd><time datetime="{{MERGE_ISO}}">{{MERGE_DATE}}</time></dd></div>
+      </dl>
+      <a class="hero-cta" href="runs/{{MERGE_SLUG}}.html">Open merge doc →</a>
+    </section>
+
+    <!-- Filter bar -->
+    <nav class="filters" aria-label="Filter bugs">
+      <details class="filter-group" open>
+        <summary>Priority</summary>
+        <label><input type="checkbox" data-filter="priority" value="P0" checked> P0</label>
+        <label><input type="checkbox" data-filter="priority" value="P1" checked> P1</label>
+        <label><input type="checkbox" data-filter="priority" value="P2" checked> P2</label>
+      </details>
+      <details class="filter-group">
+        <summary>Status</summary>
+        <label><input type="checkbox" data-filter="status" value="open" checked> Open</label>
+        <label><input type="checkbox" data-filter="status" value="in-progress" checked> In progress</label>
+        <label><input type="checkbox" data-filter="status" value="fixed" checked> Fixed</label>
+        <label><input type="checkbox" data-filter="status" value="verified"> Verified</label>
+        <label><input type="checkbox" data-filter="status" value="deferred"> Deferred</label>
+        <label><input type="checkbox" data-filter="status" value="duplicate"> Duplicate</label>
+        <label><input type="checkbox" data-filter="status" value="wontfix"> Won't fix</label>
+      </details>
+      <details class="filter-group">
+        <summary>Phase</summary>
+        {{PHASE_FILTER_CHECKBOXES}}
+      </details>
+    </nav>
+
+    <!-- Open bug board, grouped by priority. -->
+    <h2 class="section-title">Open bugs</h2>
+    <section class="board" aria-label="Open bugs by priority">
+      <div class="board-column board-column-p0">
+        <h3 class="board-column-title">
+          <span class="chip chip-p0">P0</span> {{OPEN_P0_COUNT}} open
+        </h3>
+        {{P0_BUG_CARDS}}
+      </div>
+      <div class="board-column board-column-p1">
+        <h3 class="board-column-title">
+          <span class="chip chip-p1">P1</span> {{OPEN_P1_COUNT}} open
+        </h3>
+        {{P1_BUG_CARDS}}
+      </div>
+      <div class="board-column board-column-p2">
+        <h3 class="board-column-title">
+          <span class="chip chip-p2">P2</span> {{OPEN_P2_COUNT}} open
+        </h3>
+        {{P2_BUG_CARDS}}
+      </div>
+    </section>
+
+    <!-- Recent runs -->
+    <h2 class="section-title">Recent runs</h2>
+    <section class="runs" aria-label="Recent QA runs">
+      <table class="runs-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Phase</th>
+            <th>Verdict</th>
+            <th>P0</th>
+            <th>P1</th>
+            <th>P2</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{RUN_ROWS}}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- All bugs (collapsed table) -->
+    <h2 class="section-title">All bugs</h2>
+    <section class="all-bugs" aria-label="All bugs">
+      <table class="runs-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Phase</th>
+            <th>Tracker</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ALL_BUG_ROWS}}
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p class="footer-meta">
+      Generated <time datetime="{{GENERATED_ISO}}">{{GENERATED_HUMAN}}</time>
+      by the <code>running-bug-review-board</code> skill v0.2.
+      Markdown is the source of truth — edit
+      <a href="../bug-reports/">bug-reports/</a> and regenerate.
+    </p>
+  </footer>
+
+  <script>
+    // Vanilla-JS filter — toggles [hidden] on bug-card and runs rows
+    // based on data-priority / data-status / data-phase attributes.
+    (function () {
+      var filters = document.querySelectorAll('[data-filter]');
+      function apply() {
+        var active = {};
+        filters.forEach(function (input) {
+          var key = input.dataset.filter;
+          active[key] = active[key] || new Set();
+          if (input.checked) active[key].add(input.value);
+        });
+        document.querySelectorAll('[data-priority], [data-status]')
+          .forEach(function (el) {
+            var ok = true;
+            ['priority', 'status', 'phase'].forEach(function (key) {
+              var val = el.dataset[key];
+              if (val && active[key] && active[key].size > 0 && !active[key].has(val)) {
+                ok = false;
+              }
+            });
+            el.hidden = !ok;
+          });
+      }
+      filters.forEach(function (input) { input.addEventListener('change', apply); });
+      apply();
+    })();
+  </script>
+</body>
+</html>
