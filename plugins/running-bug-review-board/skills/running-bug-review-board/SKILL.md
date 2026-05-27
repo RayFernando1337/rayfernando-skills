@@ -195,23 +195,31 @@ bugs missing tracker IDs (push candidates).
 [`scripts/bugs-needing-pull.sh`](scripts/bugs-needing-pull.sh) lists
 bugs whose `Tracker / lastSyncedAt` is stale (pull candidates).
 
-## HTML report (Apple-language)
+## HTML report (Zite + Dieter Rams)
 
 At the end of every pass and every BRB session, regenerate
 `docs/qa/report/index.html` plus per-bug and per-run detail pages by
 applying [html-report-style-guide.md](references/html-report-style-guide.md).
 
-The style guide encodes SF Pro typography stack, Apple system color
-palette with light + dark variants, Dynamic Type-style scale, 8-point
-spacing grid, evidence galleries with embedded screenshots, a vanilla-JS
-filter bar, and a print stylesheet. Component recipes are copy-paste
-HTML; the canonical CSS lives in
-[templates/html-report/assets.css](references/templates/html-report/assets.css).
+The report reads like a magazine, not a Kanban board. Typography does
+the work — priority is the word `P0` in small caps, status is the word
+`Open`, verdict is a single display-type word (`YES` or `NO`). One ink
+colour for body, one quiet terracotta accent for links and CTAs,
+hairline rules for separation. No coloured chips, no pills, no
+shadows. A 640px reading column on every screen size; on desktop, bug
+detail pages add a quiet right rail for metadata. On mobile, a sticky
+thumb-zone duplicates the primary action so the reader doesn't have
+to scroll back up.
+
+The information hierarchy is engineered for the engineer-reviewer's
+sweep: **Title → Deck → Impact → Actual / Expected → Risk to fix →
+Steps → Evidence**. The bug template grew `Impact` and `Risk to fix`
+sections in v0.3 (additive — old bugs render gracefully without them).
 
 **Markdown stays the source of truth.** HTML is read-only and
-regenerated. Never edit the HTML to change bug state — edit the markdown
-and regenerate. The dashboard is what stakeholders open during BRB and
-ship reviews.
+regenerated. Never edit the HTML to change bug state — edit the
+markdown and regenerate. The dashboard is what stakeholders open
+during BRB and ship reviews.
 
 ## Pattern-based triage suggestions
 

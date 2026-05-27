@@ -1,491 +1,496 @@
-# HTML report style guide — Apple design language
+# HTML report style guide — v0.3
 
-The QA agent generates an HTML report (`docs/qa/report/`) from the existing
-markdown bug and run files. **Markdown stays the source of truth.** HTML is
-the read-only view layer the team scans during triage.
+The QA agent generates an HTML report (`docs/qa/report/`) from the
+existing markdown bug and run files. **Markdown stays the source of
+truth.** HTML is the read-only view layer the team scans during triage.
 
-This reference encodes the design language so any agent that follows it
-produces consistent, scannable, Apple-style output. The agent reads this
-file, opens the skeleton templates in
+This guide encodes the design language so any agent that follows it
+produces consistent, scannable output. The agent reads this file,
+opens the skeleton templates in
 [templates/html-report/](templates/html-report/), and writes
 `docs/qa/report/index.html` + `bugs/BUG-NNN.html` + `runs/<slug>.html`.
 
-## Contract
+## Design philosophy
 
-- **Source of truth:** markdown in `docs/qa/bug-reports/` and `docs/qa/runs/`.
-- **HTML is regenerated** at the end of every auto QA pass, at the end of
-  every interactive BRB session, and on user request ("refresh the report").
-- **Never edit HTML to change bug state.** Edit the markdown; regenerate.
-- **Version marker:** every generated page carries
-  `<!-- skill:running-bug-review-board v0.2 -->` near the top of `<head>`.
-  Later agents look for this marker to decide whether to extend or rewrite.
-- **If a marker doesn't match** (someone hand-edited the file or the
-  version is older): write to `index.next.html` (or `bugs/BUG-NNN.next.html`)
-  and tell the user to diff. Never silently overwrite.
+**Zite + Dieter Rams. Less, but better.**
+
+The report reads like a magazine, not like a Kanban board.
+Decoration is gone. Typography does the work that colored chips and
+pills did in v0.2.
+
+| Principle | What it means here |
+|-----------|---------------------|
+| **Useful before pretty** (Rams 1) | Every element answers a triage question. Nothing decorative. |
+| **Honest** (Rams 6) | Severity isn't dressed up with red/orange/yellow. P0 is the word "P0", set in the eyebrow. |
+| **Unobtrusive** (Rams 5) | Chrome disappears. Content sings. |
+| **As little design as possible** (Rams 10) | One ink colour for body. One quiet accent (terracotta) for links. Hairline rules for separation. That's it. |
+| **Editorial weight** (Zite) | A reading column ~640px wide. Serif pull-quotes for impact. Display type for verdicts and titles. |
+| **The eye reads top-down** | Title, then deck, then impact, then prose. Metadata goes to a quiet right rail on desktop, hidden under the title on mobile. |
+
+What we explicitly stopped doing in v0.3:
+
+- ❌ Coloured priority chips (`chip-p0` etc.)
+- ❌ Coloured status pills with dots
+- ❌ Coloured verdict badges
+- ❌ Card grids with shadows
+- ❌ A three-column Kanban for the open bug board
+- ❌ Tracker tags as colourful pills
+- ❌ "Filter by colour" affordances
+
+What we do instead:
+
+- ✅ Priority is the word `P0` in the eyebrow line above the title
+- ✅ Status is a word in the same eyebrow (`Open`, `In progress`)
+- ✅ Verdict is a single word — `YES` or `NO` — in display type
+- ✅ Open bugs are a magazine list, ordered P0 then P1 then P2
+- ✅ Hairline rules separate sections; no cards
+- ✅ One accent colour, used only on interactive things
+- ✅ Filter affordances are quiet `<details>` elements with checkbox lists
+
+## Information hierarchy contract
+
+This is the order the engineer's eye lands on a bug. **Templates
+must preserve this order** so a reviewer can scan a bug in seconds:
+
+1. **Eyebrow** — small caps line with `Priority · Phase · Status · Tracker`
+2. **Title** — what is this? (display type)
+3. **Deck** — the one-sentence Summary, set in serif
+4. **Impact** — what does a user experience if this ships unfixed?
+   (a pull-quote with a vertical hairline rule on the left)
+5. **Actual** — what's happening now? (prose)
+6. **Expected** — what should happen? (prose)
+7. **Risk to fix** — engineer's marginal note. Hidden when empty.
+8. **Steps to reproduce** — numbered list with a monospace gutter
+9. **Evidence** — console errors first (cheap to read), then
+   server / DB, then network, then screenshots (bulkiest, scroll for it)
+10. **Notes** — anything else the filer noted
+11. **Triage log** — the bug's history of decisions
+
+The right rail (desktop only) holds Test ID, Gate, Reported, Fixed in,
+Verified by, tracker IDs, last-synced timestamp, Duplicate-of /
+Related links. None of that crowds the reading column.
 
 ## Output layout
 
 ```
 docs/qa/report/
 ├── index.html              # dashboard
-├── assets.css              # shared stylesheet (one copy, embedded if you prefer)
+├── assets.css              # shared stylesheet (canonical copy below)
 ├── bugs/
 │   └── BUG-NNN.html        # one per bug-report markdown
 └── runs/
     └── <slug>.html         # one per run-report or coordinator-merge markdown
 ```
 
-The folder sits next to the markdown sources under `docs/qa/`, so links
-between pages stay short and `assets/BUG-NNN/*.png` paths resolve with
-`../../bug-reports/assets/BUG-NNN/...`.
+The folder sits next to the markdown sources under `docs/qa/`, so
+links between pages stay short and `assets/BUG-NNN/*.png` paths
+resolve with `../../bug-reports/assets/BUG-NNN/...`.
 
-## Apple design tokens
+## Versioning
 
-All values come from Apple's
-[Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/).
-Encode as CSS custom properties so the agent always works in semantic names.
+Every generated page carries
+`<!-- skill:running-bug-review-board v0.3 -->` near the top of `<head>`.
+Later agents look for this marker to decide whether to extend or
+rewrite.
 
-### Typography (iOS Large default scale)
+If a marker doesn't match (someone hand-edited the file or the version
+is older): write to `index.next.html` (or `bugs/BUG-NNN.next.html`) and
+tell the user to diff. **Never silently overwrite**.
 
-| Style | Size | Weight | Leading | Use |
-|-------|------|--------|---------|-----|
-| Large Title | 34 | Regular (Bold emphasized) | 41 | Dashboard page title |
-| Title 1 | 28 | Regular (Bold) | 34 | Page section ("Open P0", "Recent runs") |
-| Title 2 | 22 | Regular (Bold) | 28 | Bug detail page title |
-| Title 3 | 20 | Regular (Semibold) | 25 | Card title |
-| Headline | 17 | Semibold | 22 | Card subtitle, table header |
-| Body | 17 | Regular (Semibold emphasized) | 22 | Default body text |
-| Callout | 16 | Regular | 21 | Field labels |
-| Subhead | 15 | Regular | 20 | Metadata, secondary lines |
-| Footnote | 13 | Regular | 18 | Small captions |
-| Caption 1 | 12 | Regular | 16 | Triage log timestamps |
-| Caption 2 | 11 | Regular | 13 | Smallest annotations |
+## Design tokens (canonical)
 
-Font stack:
+The full token set lives in
+[templates/html-report/assets.css](templates/html-report/assets.css) —
+the agent copies it verbatim to `docs/qa/report/assets.css` on every
+regenerate. Summary:
 
-```css
---font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-             "Helvetica Neue", Helvetica, Arial, sans-serif;
---font-mono: ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
-```
+### Colour — almost monochrome
 
-### Color (Apple system palette)
+| Token | Light | Dark | Where |
+|-------|-------|------|-------|
+| `--ink` | `#1A1A1A` | `#ECEAE3` | All body text. |
+| `--paper` | `#FAFAF7` warm off-white | `#131311` near-black | Page background. |
+| `--rule` | `#D8D6D0` | `#2E2D2A` | Hairline separators. |
+| `--mute` | `#6B6864` | `#908C84` | Eyebrow, metadata, captions. |
+| `--soft` | `#F2F0EA` | `#1B1B18` | Pre code blocks, evidence frames. |
+| `--accent` | `#A5391A` deep terracotta | `#E08263` lifted terracotta | Links, CTA underlines, the period after `NO`. **The only saturated colour on the page.** |
+| `--quote` | `#2A2A2A` | `#F4F2EB` | Pull-quotes and decks. |
+| `--warn-ink` | `#3A1A0A` | `#F4D9C6` | The `P0` prefix in the eyebrow. Not a swatch — an ink shift. |
 
-Default light / default dark hex values (matches HIG specification tables;
-the increased-contrast pair is left to a future `prefers-contrast: more`
-block).
+We do not use systemRed / systemOrange / systemYellow / systemGreen
+anywhere. Priority and status are typographic.
 
-| Token | Light | Dark | Role in QA report |
-|-------|-------|------|-------------------|
-| systemRed | `#FF3B30` | `#FF453A` | P0, NO verdict, `open` status, fail |
-| systemOrange | `#FF9500` | `#FF9F0A` | P1, `fixed` status pending re-test |
-| systemYellow | `#FFCC00` | `#FFD60A` | P2, warning, nit |
-| systemGreen | `#34C759` | `#30D158` | YES verdict, `verified` status, pass |
-| systemMint | `#00C7BE` | `#66D4CF` | Recent activity highlight |
-| systemTeal | `#30B0C7` | `#40C8E0` | Info chip |
-| systemCyan | `#32ADE6` | `#64D2FF` | Filter active chip |
-| systemBlue | `#007AFF` | `#0A84FF` | Primary links + actions, `in-progress` |
-| systemIndigo | `#5856D6` | `#5E5CE6` | Tracker tag (Linear / GitHub / Jira) |
-| systemPurple | `#AF52DE` | `#BF5AF2` | BRB session marker |
-| systemPink | `#FF2D55` | `#FF375F` | Regression marker |
-| systemBrown | `#A2845E` | `#AC8E68` | `deferred` status |
-| systemGray | `#8E8E93` | `#8E8E93` | Secondary text, `wontfix` |
-| systemGray2 | `#AEAEB2` | `#636366` | `duplicate` status |
-| systemGray3 | `#C7C7CC` | `#48484A` | Borders |
-| systemGray4 | `#D1D1D6` | `#3A3A3C` | Subtle dividers |
-| systemGray5 | `#E5E5EA` | `#2C2C2E` | Card surface |
-| systemGray6 | `#F2F2F7` | `#1C1C1E` | Page background |
-| label | `#000000` | `#FFFFFF` | Primary text |
-| secondaryLabel | `rgba(60,60,67,0.60)` | `rgba(235,235,245,0.60)` | Subhead text |
-| tertiaryLabel | `rgba(60,60,67,0.30)` | `rgba(235,235,245,0.30)` | Inactive |
-
-### Spacing — 8-point grid
+### Typography — magazine register
 
 ```css
---space-1:  4px;
---space-2:  8px;
---space-3: 12px;
---space-4: 16px;
---space-5: 20px;
---space-6: 24px;
---space-8: 32px;
---space-10: 40px;
---space-12: 48px;
---space-16: 64px;
+--font-display: ui-sans-serif, -apple-system, "SF Pro Display",
+                BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial,
+                sans-serif;
+--font-text:    ui-sans-serif, -apple-system, "SF Pro Text",
+                BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial,
+                sans-serif;
+--font-serif:   ui-serif, Charter, "Iowan Old Style", "Times New Roman",
+                Georgia, serif;
+--font-mono:    ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono",
+                monospace;
 ```
 
-### Radius
+Display headlines use the display stack, body uses text, decks and
+pull-quotes use serif, IDs and code use mono.
 
-```css
---radius-chip:    8px;   /* pills, chips */
---radius-card:   12px;   /* bug cards */
---radius-surface:16px;   /* page sections */
---radius-hero:   20px;   /* verdict hero */
-```
+### Scale — display type for verdicts, reading type for prose
 
-### Layout
+| Token | Size | Use |
+|-------|------|-----|
+| `--size-display-xl` | clamp(40, 6vw, 64) | Verdict word `YES` / `NO` |
+| `--size-display-l`  | clamp(28, 4vw, 40) | Article title on bug detail |
+| `--size-display-m`  | clamp(22, 3vw, 28) | Article title in the list |
+| `--size-deck`       | clamp(18, 2vw, 21) | Deck, impact pull-quote |
+| `--size-headline`   | 17 | Section headings |
+| `--size-body`       | 17 | Prose |
+| `--size-meta`       | 13 | Metadata, footnotes |
+| `--size-micro`      | 11 | Uppercase eyebrow |
 
-```css
---container-narrow: 768px;   /* bug detail (reading optimized) */
---container-wide: 1024px;    /* dashboard */
---page-pad: clamp(20px, 4vw, 32px);
---card-pad: 20px;
-```
+### Rhythm — 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 / 96
 
-### Elevation
+Use `--s-1` through `--s-9`. Generous whitespace is the point.
 
-```css
---shadow-1: 0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.06);
---shadow-2: 0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
---shadow-3: 0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.04);
-```
+### Layout — reading column always
 
-In dark mode, prefer a 1px `border: 1px solid var(--systemGray3-dark)`
-over shadows — Apple's pattern.
+| Token | Value | Why |
+|-------|-------|-----|
+| `--col-read` | 640px | Comfortable reading line length (~70ch in our typeface). |
+| `--col-rail` | 220px | Right-rail metadata on desktop only. |
+| `--gutter` | clamp(20, 4vw, 48) | Page padding. |
 
-## Semantic role mapping
+On mobile: single column. On desktop (≥1024px): the bug detail page
+adds the right rail (`.read.has-rail`); the dashboard stays single
+column at all widths.
 
-The agent **never** picks colors based on aesthetics. It uses the role
-name and the stylesheet does the rest.
+## Component recipes
 
-| Concept | Class | Visual |
-|---------|-------|--------|
-| P0 | `.chip.chip-p0` | systemRed background, white text, "P0" label |
-| P1 | `.chip.chip-p1` | systemOrange |
-| P2 | `.chip.chip-p2` | systemYellow, black text (for contrast on yellow) |
-| YES verdict | `.badge.badge-yes` | systemGreen pill, white text, checkmark |
-| NO verdict | `.badge.badge-no` | systemRed pill, white text, x-mark |
-| Status `open` | `.pill.pill-open` | outline + systemRed dot |
-| Status `in-progress` | `.pill.pill-in-progress` | outline + systemBlue dot |
-| Status `fixed` | `.pill.pill-fixed` | outline + systemOrange dot |
-| Status `verified` | `.pill.pill-verified` | outline + systemGreen dot |
-| Status `deferred` | `.pill.pill-deferred` | outline + systemBrown dot |
-| Status `wontfix` | `.pill.pill-wontfix` | outline + systemGray dot |
-| Status `duplicate` | `.pill.pill-duplicate` | outline + systemGray2 dot, with "Duplicate of BUG-XXX" subtext |
-| Regression marker | `.tag.tag-regression` | systemPink chip |
-| Tracker tag | `.tag.tag-tracker` | systemIndigo chip, shows "Linear / LIN-1234" |
-
-**Color is never alone.** Every priority / status pairs the swatch with a
-text label so screen readers and color-blind viewers always know what
-they're looking at.
-
-## Components
-
-Each component below has a fenced HTML snippet the agent copies and fills.
+Each component has a fenced HTML snippet the agent copies and fills.
 See [templates/html-report/](templates/html-report/) for full skeleton
 files that wire these together.
 
-### Page chrome — `<head>`
+### Page chrome
 
 ```html
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-  <title>{TITLE}</title>
-  <link rel="stylesheet" href="assets.css">
-  <!-- skill:running-bug-review-board v0.2 -->
-</head>
-```
-
-### Top bar
-
-```html
-<header class="topbar">
-  <div class="topbar-inner">
-    <h1 class="topbar-title">{TITLE}</h1>
-    <p class="topbar-meta">
-      Last updated <time datetime="{ISO}">{HUMAN}</time>
-      · <a href="../">QA folder</a>
+<header class="masthead">
+  <div class="masthead-inner">
+    <h1 class="masthead-title"><a href="./">{TITLE}</a></h1>
+    <p class="masthead-meta">
+      <time datetime="{ISO}">{HUMAN}</time> · <a href="../">qa/</a>
     </p>
   </div>
 </header>
 ```
 
-### Verdict hero
+A hairline rule below, no card. The title is small caps so the
+verdict that follows can take the visual top spot.
+
+### Verdict — display type, not a badge
 
 ```html
-<section class="hero hero-verdict hero-{YES|NO}">
-  <div class="hero-eyebrow">Phase {N} — {SLUG}</div>
-  <div class="hero-headline">
-    <span class="badge badge-{YES|NO}">{YES|NO}</span>
-    <span>{Headline phrase from merge doc}</span>
-  </div>
-  <dl class="hero-stats">
-    <div><dt>Open P0</dt><dd>{N}</dd></div>
-    <div><dt>Open P1</dt><dd>{N}</dd></div>
-    <div><dt>Last merge</dt><dd>{YYYY-MM-DD}</dd></div>
-  </dl>
-  <a class="hero-cta" href="runs/{merge-slug}.html">Open merge doc →</a>
-</section>
-```
-
-### Priority chip
-
-```html
-<span class="chip chip-p0">P0</span>
-<span class="chip chip-p1">P1</span>
-<span class="chip chip-p2">P2</span>
-```
-
-### Status pill
-
-```html
-<span class="pill pill-open"><span class="dot"></span> Open</span>
-<span class="pill pill-in-progress"><span class="dot"></span> In progress</span>
-<span class="pill pill-fixed"><span class="dot"></span> Fixed</span>
-<span class="pill pill-verified"><span class="dot"></span> Verified</span>
-<span class="pill pill-deferred"><span class="dot"></span> Deferred</span>
-<span class="pill pill-wontfix"><span class="dot"></span> Won't fix</span>
-<span class="pill pill-duplicate">
-  <span class="dot"></span> Duplicate of
-  <a href="BUG-{XXX}.html">BUG-{XXX}</a>
-</span>
-```
-
-### Bug card (dashboard tile)
-
-```html
-<article class="bug-card" data-priority="P0" data-status="open" data-phase="2">
-  <header class="bug-card-head">
-    <a class="bug-card-title" href="bugs/BUG-{NNN}.html">{Title}</a>
-    <div class="bug-card-chips">
-      <span class="chip chip-{p0|p1|p2}">{P0|P1|P2}</span>
-      <span class="pill pill-{status}"><span class="dot"></span> {Status}</span>
-    </div>
-  </header>
-  <p class="bug-card-summary">{One-sentence summary}</p>
-  <footer class="bug-card-meta">
-    <span>Phase {N}</span> · <span>{Test ID}</span> · <span>Reported {DATE}</span>
-    {if tracker.linear.id}· <span class="tag tag-tracker">Linear {LIN-1234}</span>{endif}
-  </footer>
-</article>
-```
-
-### Bug board (dashboard, three columns)
-
-```html
-<section class="board" aria-label="Open bugs by priority">
-  <div class="board-column board-column-p0">
-    <h2 class="board-column-title">
-      <span class="chip chip-p0">P0</span> {N} open
-    </h2>
-    {bug cards…}
-  </div>
-  <div class="board-column board-column-p1">
-    <h2 class="board-column-title">
-      <span class="chip chip-p1">P1</span> {N} open
-    </h2>
-    {bug cards…}
-  </div>
-  <div class="board-column board-column-p2">
-    <h2 class="board-column-title">
-      <span class="chip chip-p2">P2</span> {N} open
-    </h2>
-    {bug cards…}
-  </div>
-</section>
-```
-
-### Recent runs table
-
-```html
-<section class="runs">
-  <h2 class="section-title">Recent runs</h2>
-  <table class="runs-table">
-    <thead>
-      <tr>
-        <th>Date</th><th>Phase</th><th>Verdict</th>
-        <th>P0</th><th>P1</th><th>P2</th><th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><time datetime="{ISO}">{YYYY-MM-DD}</time></td>
-        <td>{N}</td>
-        <td><span class="badge badge-{yes|no}">{YES|NO}</span></td>
-        <td>{N}</td><td>{N}</td><td>{N}</td>
-        <td><a href="runs/{slug}.html">Open →</a></td>
-      </tr>
-    </tbody>
-  </table>
-</section>
-```
-
-### Bug detail page
-
-Two-column on wide screens; single column under 720px.
-
-```html
-<article class="bug">
-  <aside class="bug-meta" aria-label="Bug metadata">
-    <h2 class="bug-meta-title">BUG-{NNN}</h2>
-    <dl>
-      <div><dt>Status</dt><dd><span class="pill pill-{status}">…</span></dd></div>
-      <div><dt>Priority</dt><dd><span class="chip chip-{px}">{Px}</span></dd></div>
-      <div><dt>Phase</dt><dd>{N}</dd></div>
-      <div><dt>Test ID</dt><dd>{P{N}-{block}{n}}</dd></div>
-      <div><dt>Gate</dt><dd>{N}.{x}</dd></div>
-      <div><dt>Reported</dt><dd><time>{DATE}</time> by {NAME}</dd></div>
-      {if duplicate}
-      <div><dt>Duplicate of</dt><dd><a href="BUG-{XXX}.html">BUG-{XXX}</a></dd></div>
-      {endif}
-      {if related}
-      <div><dt>Related</dt><dd>{links}</dd></div>
-      {endif}
-      {tracker rows}
-    </dl>
-  </aside>
-
-  <div class="bug-body">
-    <h1 class="bug-title">{Title}</h1>
-
-    <section class="bug-section" id="summary">
-      <h2>Summary</h2>
-      <p>{One-sentence summary}</p>
-    </section>
-
-    <section class="bug-section" id="steps">
-      <h2>Steps to reproduce</h2>
-      <ol>{step list}</ol>
-    </section>
-
-    <section class="bug-section" id="expected">
-      <h2>Expected result</h2>
-      <p>{Expected}</p>
-    </section>
-
-    <section class="bug-section" id="actual">
-      <h2>Actual result</h2>
-      <p>{Actual}</p>
-    </section>
-
-    <section class="bug-section" id="evidence">
-      <h2>Evidence</h2>
-      {Console block, server / DB block, network block}
-      <div class="evidence-gallery">
-        {images}
-      </div>
-    </section>
-
-    <section class="bug-section" id="notes">
-      <h2>Notes</h2>
-      <p>{Notes content}</p>
-    </section>
-
-    <section class="bug-section" id="triage">
-      <h2>Triage log</h2>
-      <table class="triage-log">…</table>
-    </section>
-  </div>
-</article>
-```
-
-### Evidence gallery
-
-```html
-<div class="evidence-gallery">
-  <a class="evidence-tile" href="../../bug-reports/assets/BUG-{NNN}/01-step.png" target="_blank" rel="noopener">
-    <img loading="lazy" src="../../bug-reports/assets/BUG-{NNN}/01-step.png" alt="Step 1 — page load">
-    <figcaption>01-step.png</figcaption>
+<article class="verdict">
+  <p class="eyebrow">Phase 2 — sessions-scheduling</p>
+  <h2 class="verdict-word is-no">NO</h2>
+  <p class="verdict-line">
+    Two P0 bugs block sign-off; sequential wrap-up is scheduled.
+  </p>
+  <a class="verdict-action" href="runs/COORDINATOR-MERGE-2026-05-27.html">
+    Read the merge
   </a>
-  {…more tiles…}
-</div>
+</article>
 ```
 
-Use CSS Grid `grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))`
-so tiles flow naturally.
+The class `is-no` appends a terracotta full-stop after the word `NO`
+— a quiet, final refusal, not an alarm. `is-yes` omits the stop and
+leaves the word standing on its own.
 
-### Filter bar
+### Eyebrow — the metadata line above a title
 
 ```html
-<nav class="filters" aria-label="Filter bugs">
-  <details class="filter-group">
+<p class="eyebrow">
+  <span class="pri">P0</span><span class="sep">·</span>Phase 2<span class="sep">·</span>Open<span class="sep">·</span>LIN-1244
+</p>
+```
+
+All small caps, all letter-spaced, all `--mute` except the `.pri`
+which uses `--warn-ink` for a slight ink shift. The `·` separator is
+the rule colour.
+
+### Bug list item — a magazine article preview
+
+```html
+<li class="bug-list-item"
+    data-priority="P0" data-status="open" data-phase="2">
+  <a class="bug-list-link" href="bugs/BUG-007.html">
+    <p class="bug-list-meta">
+      <span class="pri">P0</span><span class="sep">·</span>Phase 2<span class="sep">·</span>Open<span class="sep">·</span>LIN-1244
+    </p>
+    <h3 class="bug-list-title">Stale invite poisons fresh-user signup</h3>
+    <p class="bug-list-impact">
+      A user who opened an invite link, abandoned it, then returned later and
+      signed up without one is silently joined to the old group.
+    </p>
+  </a>
+</li>
+```
+
+Each list item is an article preview. The list is rendered three
+times on the dashboard — one ordered list per priority group, headed
+by a small-caps divider `P0 — 3 open`. No Kanban columns.
+
+### Priority group header
+
+```html
+<h3 class="bug-group-head">P0 <span class="count">— 3 open</span></h3>
+<ol class="bug-list" data-priority-group="P0">…</ol>
+```
+
+A bold underline rule sits beneath the heading to separate priority
+sections. The count is muted.
+
+### Article title + deck (bug detail)
+
+```html
+<header class="article-header">
+  <p class="eyebrow">
+    <span class="pri">P0</span><span class="sep">·</span>Phase 2<span class="sep">·</span>Open<span class="sep">·</span>LIN-1244
+  </p>
+  <h1 class="article-title">Stale invite poisons fresh-user signup</h1>
+  <p class="article-deck">
+    A returning visitor's stale sessionStorage hijacks fresh-user signup
+    when the URL has no invite parameter.
+  </p>
+</header>
+```
+
+### Impact — a pull-quote
+
+```html
+<aside class="article-impact">
+  <p class="eyebrow">Impact</p>
+  <p>
+    Anyone who briefly considered an invite from a co-worker can be
+    silently joined to that group days later, without their consent
+    or knowledge.
+  </p>
+</aside>
+```
+
+Set in serif, with a 2px ink rule on the left edge. Hidden if the
+markdown has no Impact section.
+
+### Risk to fix — quiet engineer's marginal note
+
+```html
+<aside class="article-risk">
+  <p class="eyebrow">Risk to fix</p>
+  <p>
+    Local — the invite-resolution code path is a single function in
+    convex/invites.ts. Low blast radius; covered by integration tests.
+  </p>
+</aside>
+```
+
+Set in a soft tinted block with a `--rule`-colour left bar. Often
+empty at file time; populated during the BRB by the engineer.
+**Hidden when empty** — never displayed as a placeholder.
+
+### Steps to reproduce
+
+```html
+<ol>
+  <li>Open incognito; navigate to /sign-up?invite=ABC123.</li>
+  <li>Abandon the page without finishing the signup.</li>
+  <li>Open a new tab; navigate to /sign-up (no parameter).</li>
+  <li>Complete the signup with a fresh email.</li>
+  <li>Observe the user lands inside the ABC123 group.</li>
+</ol>
+```
+
+The CSS turns these into a leading-zero numbered list rendered in
+monospace in a left gutter, with the step text in the reading
+typeface.
+
+### Evidence
+
+Console first, server / network second, screenshots last. Each block
+has a small-caps heading. The screenshot gallery uses CSS Grid
+`grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))` and tiles
+have a hairline border, no shadow.
+
+### Right rail — desktop only
+
+```html
+<aside class="read-rail">
+  <div class="rail-block">
+    <dt>Test ID</dt>
+    <dd><code>P2-C1</code> · Gate 2.4</dd>
+  </div>
+  …
+</aside>
+```
+
+Hidden on mobile (no grid columns). Each block has small-caps `dt`
+and reading-typeface `dd`, separated by a hairline rule.
+
+### Recent runs — quiet list
+
+```html
+<li class="runs-list-item">
+  <a class="runs-list-link" href="runs/COORDINATOR-MERGE-2026-05-27.html">
+    <span class="runs-list-when"><time datetime="2026-05-27">2026-05-27</time> · Phase 2</span>
+    Two P0 bugs block sign-off.
+  </a>
+  <span class="runs-list-counts">
+    <span class="v-no">NO</span> · 2 / 3 / 5
+  </span>
+</li>
+```
+
+`v-yes` and `v-no` lift the word slightly above the count line, with
+the accent colour reserved for `NO`.
+
+### Filter bar — text affordances
+
+```html
+<nav class="filter-bar" aria-label="Filter">
+  <details class="filter">
     <summary>Priority</summary>
     <label><input type="checkbox" data-filter="priority" value="P0" checked> P0</label>
     <label><input type="checkbox" data-filter="priority" value="P1" checked> P1</label>
     <label><input type="checkbox" data-filter="priority" value="P2" checked> P2</label>
   </details>
-  <details class="filter-group">
-    <summary>Status</summary>
-    <label><input type="checkbox" data-filter="status" value="open" checked> Open</label>
-    <!-- … -->
-  </details>
+  …
 </nav>
 ```
 
-Pair with a tiny inline `<script>` that toggles `[hidden]` on each
-`.bug-card` based on its `data-priority` / `data-status` / `data-phase`.
+Open state turns the summary accent-coloured. Checkboxes use
+`accent-color: var(--ink)` so they sit in the same monochrome palette.
 
-### Footer
+### Thumb zone — mobile only
 
 ```html
-<footer class="footer">
-  <p class="footer-meta">
-    Generated <time datetime="{ISO}">{HUMAN}</time> by the
-    <code>running-bug-review-board</code> skill v0.2.
-    Markdown is the source of truth — edit
-    <a href="../bug-reports/">bug-reports/</a> and regenerate.
-  </p>
-</footer>
+<nav class="thumb-zone" aria-label="Mobile actions">
+  <a href="runs/COORDINATOR-MERGE-2026-05-27.html">Read the merge →</a>
+</nav>
 ```
+
+A sticky bottom shelf with one accent-underlined action. Hidden on
+tablet+ so it doesn't crowd the desktop reading column.
+
+## Mobile-first rules
+
+- **Single column always on mobile.** No right rail. No Kanban.
+- **Title is the first thing the eye hits.** Don't put a brand bar above
+  it that takes up the fold.
+- **Thumb-zone for the primary action.** On phones, duplicate the
+  verdict CTA as a sticky bottom bar so the user can read the merge
+  doc without scrolling back up.
+- **`padding-left/right: clamp(20px, 4vw, 48px)`** — generous gutters
+  on all sides.
+- **No hover-only affordances.** Anything that needs hover gets a
+  visible underline first.
+
+## Desktop rules
+
+- **Reading column stays 640px wide.** Don't widen prose just because
+  the viewport allows it.
+- **Right rail at ≥1024px** for bug detail pages. Quiet metadata
+  separated by hairlines.
+- **Generous top padding** (`--s-7`) so the verdict has air around it.
+
+## Accessibility
+
+- Contrast ≥ 7:1 for body text on `--paper`. The terracotta accent
+  has ≥ 4.8:1 against `--paper` for links.
+- Every priority and status pairs its colour with a label so colour
+  isn't the signal. (Here colour barely is the signal anyway.)
+- `:focus-visible` outlines use `--accent` at 2px, offset 3px.
+- `prefers-reduced-motion: reduce` disables all transitions.
+- The print stylesheet drops accent colour to black, removes
+  decorative borders, and keeps each bug on its own page.
 
 ## Rendering rules
 
-- **Escape all user-supplied text** (bug titles, summaries, body, console
-  errors). HTML entity escape; never trust the markdown.
+- **Escape all user-supplied text** (bug titles, summaries, body,
+  console errors). HTML entity escape; never trust the markdown.
 - **Image paths** are relative from the report folder back into the
-  existing assets folder: `../../bug-reports/assets/BUG-{NNN}/...`. Do not
-  copy images; reference in place.
-- **Strip secrets** from console blocks the same way `bug-filing.md`
-  rules already require — re-apply on render in case the markdown
-  contains stale tokens.
+  existing assets folder: `../../bug-reports/assets/BUG-{NNN}/...`.
+  Don't copy; reference in place.
+- **Strip secrets** from console blocks per `bug-filing.md`'s rules —
+  re-apply on render in case the markdown contains stale tokens.
 - **Preserve the version marker** when re-rendering. If the existing
-  file's marker doesn't match v0.2 (or has been removed), write to
-  `index.next.html` / `bugs/BUG-NNN.next.html` and tell the user to diff.
-- **Regenerate the whole `docs/qa/report/` folder each pass** — it's a
+  file's marker doesn't match v0.3 (or has been removed), write to
+  `index.next.html` / `bugs/BUG-NNN.next.html` and tell the user to
+  diff.
+- **Regenerate the whole `docs/qa/report/` folder each pass.** It's a
   view, not a state store. Old pages for deleted bugs disappear.
 - **Always rewrite `assets.css`** from the canonical version in
   [templates/html-report/assets.css](templates/html-report/assets.css).
 
-## Accessibility
-
-- Contrast ≥ 4.5:1 for body text, ≥ 3:1 for large text. The Apple system
-  palette already meets this on the chosen backgrounds.
-- Focus rings visible (`:focus-visible { outline: 2px solid var(--systemBlue); outline-offset: 2px; }`).
-- All chips and pills have text labels; no color-only signaling.
-- `prefers-reduced-motion: reduce` disables hover transitions.
-- Print stylesheet at the bottom of `assets.css` so a paper BRB looks
-  decent: hide filters + footer chrome, force monochrome chips with
-  borders, expand evidence images.
-
 ## When the agent is asked to "refresh the report"
 
-1. Read `docs/qa/qa-config.json` for `report.outputDir` and `report.title`
-   (default `docs/qa/report` and "QA Report").
+1. Read `docs/qa/qa-config.json` for `report.outputDir` and
+   `report.title` (defaults: `docs/qa/report` and "QA Report").
 2. Read every markdown bug file (skipping `_template.md`), every run
    report, and the latest coordinator merge.
 3. Write `assets.css` from the canonical template.
-4. Write `index.html` using the dashboard skeleton.
-5. Write one `bugs/BUG-{NNN}.html` per bug.
-6. Write one `runs/{slug}.html` per run + merge.
-7. Print a one-line summary: "Wrote {N} bug pages, {M} run pages, index
+4. For each bug, render `bugs/BUG-{NNN}.html` from
+   [templates/html-report/bug.html](templates/html-report/bug.html).
+   Substitute the `{{TOKEN}}` placeholders with HTML-escaped values
+   from the parsed markdown. Suppress conditional blocks
+   (`{{#NAME}}…{{/NAME}}`) when `NAME` is empty.
+5. For each run + merge, render `runs/<slug>.html` from
+   [templates/html-report/run.html](templates/html-report/run.html).
+6. Render `index.html` from
+   [templates/html-report/index.html](templates/html-report/index.html).
+   The bug list is rendered three times — once per priority group, P0
+   first — by concatenating the
+   `bug-list-item` snippet per bug.
+7. Print a one-line summary: "Wrote N bug pages, M run pages, index
    updated. Open `docs/qa/report/index.html`."
 
-## Optional: templating via a small Python script
+## Notes on the bug template
 
-If you prefer to render programmatically rather than inline (e.g. for very
-large bug corpora), an example script is documented at the bottom of
-[templates/html-report/](templates/html-report/). It is **optional** —
-the default is the agent renders the HTML directly.
+The HTML report's information hierarchy is set by what's available in
+the markdown front-matter and body sections. v0.3 added two new
+sections to [templates/bug-report.md](templates/bug-report.md):
+
+- **Impact** — what does a user experience if this ships unfixed?
+  Filed by the QA agent. Rendered as a serif pull-quote.
+- **Risk to fix** — engineer's marginal note about the difficulty
+  / blast radius of fixing. Usually empty at file time; populated
+  during the BRB. Rendered as a soft tinted aside. Hidden when empty.
+
+Old bugs without these sections render gracefully: the pull-quote
+and aside both disappear, and the eye flows straight from the deck
+into Actual / Expected.
+
+## Why this redesign
+
+v0.2 used coloured chips and pills to communicate priority and
+status. Two problems with that:
+
+1. **They drew the eye away from the text.** A reviewer trying to
+   scan ten open bugs got pulled into a colour pattern instead of
+   the prose of each title.
+2. **They felt cheap.** A row of red/orange/yellow swatches on the
+   side of a card reads like a status board, not a magazine of
+   considered bug reports.
+
+v0.3 removes them entirely. Priority is the word `P0` in small caps;
+status is the word `Open`. The eye reads the title first, the impact
+second, and only checks the priority when it needs to. Triage
+decisions get made on the text, not the swatch.
 
 ## Extending the style guide
 
-To add a new component (e.g. an "owner badge" once tracker assignees are
-pulled), add a row to the **Semantic role mapping** table, a recipe under
-**Components**, and the CSS in `assets.css`. Bump the version marker if
-the change is breaking. See
+To add a new component (e.g. an "owner badge" once tracker assignees
+are pulled), add a row to the **Component recipes** section, document
+the markup, and add the CSS in `assets.css`. Bump the version marker
+if the change breaks an existing layout. See
 [extending-the-skill.md](extending-the-skill.md).
