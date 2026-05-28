@@ -1,32 +1,11 @@
 ---
 name: running-bug-review-board
 description: >-
-  Runs a real-user manual QA pass against any web or iOS / iPadOS app
-  and turns the results into a Bug Review Board (BRB) feedback loop.
-  Use whenever the user says "QA this", "test phase N", "run a manual
-  test plan", "act as a real user", "find UX bugs", "sign off this
-  build", "file a bug report", "is this ready to ship?", or "triage
-  these bugs" — even if they only describe the symptoms ("the signup
-  flow feels broken", "check what's wrong before we move on", "we
-  finished feature X"). Drives the trifecta: PM (verifies user-promise),
-  QA (executes scenarios from a real user's perspective), and Engineer
-  (flags invalidated assumptions). Produces structured P0/P1/P2 bug
-  reports, a YES/NO sign-off per phase, and a self-contained
-  Apple-language HTML dashboard (`docs/qa/report/index.html`) with
-  embedded evidence. Discovers and confirms your issue tracker before
-  syncing (Linear, GitHub Issues, Jira, Notion — never assumed
-  silently). Bi-directional sync pulls engineering's status changes back
-  into local markdown. For iOS / iPadOS app repos, defers actual
-  simulator driving to the iOS community's purpose-built skills (Cameron
-  Cooke's AXe and XcodeBuildMCP, Rudrank Riyam's App Store Connect CLI
-  + skills, Conor Luddy's ios-simulator-skill, Josh Adams's
-  ios-build-verify, tddworks' baguette, and more). Includes a separate
-  **Interactive BRB** workflow with pattern-based triage suggestions —
-  run it in a different session from the auto pass to keep bias out.
-  Repo-agnostic, browser-tool-agnostic, scaffolds folders for bug
-  reports, run reports, coordinator merges, and `qa-config.json`. Works
-  alongside cursor-ide-browser, browser-use, Playwright, or manual
-  driving.
+  Runs real-user QA, manual test plans, UX bug hunts, build sign-off,
+  bug filing, and bug triage for web or iOS/iPadOS apps. Use when asked
+  "QA this", "is this ready to ship?", or similar. Produces P0/P1/P2
+  bug reports, YES/NO phase sign-off, tracker sync guidance, and an
+  HTML QA dashboard; keeps Interactive BRB triage in a separate session.
 ---
 
 # Running the Bug Review Board (BRB) QA pass
