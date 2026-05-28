@@ -8,6 +8,16 @@ Ray Fernando's collection of installable Skill files for AI coding agents.
 
 ---
 
+## What's new in v0.3.1
+
+- **Codex compatibility fix.** The Skill frontmatter description is now
+  concise enough for Codex's 1024-character metadata limit, while the
+  full workflow remains in the Skill body and references for progressive
+  disclosure in Codex app, desktop, IDE, and CLI surfaces.
+- **Release validation.** A repository validator now checks Skill and
+  plugin metadata before release so overlong descriptions cannot ship
+  again.
+
 ## What's new in v0.3
 
 - **HTML report redesigned around editorial typography.** Inspired by Zite and Dieter Rams. Magazine layout, 640px reading column, ink-on-paper palette, hairline rules. **No coloured chips, no pills, no shadows.** Priority is the word `P0` in small caps in the eyebrow; status is the word `Open`; verdict is a single display-type word (`YES` or `NO`). One ink colour for body, one quiet terracotta accent for links and CTAs. On desktop, bug detail pages gain a quiet right rail for metadata; on mobile, a sticky `thumb-zone` shelf keeps the primary action in reach without scrolling back up. Light + dark + print stylesheets.
@@ -75,9 +85,10 @@ Factory Droid's plugin manager reads the same `.claude-plugin/marketplace.json` 
 
 Docs: [docs.factory.ai/cli/configuration/plugins](https://docs.factory.ai/cli/configuration/plugins).
 
-### Codex CLI
+### Codex app, desktop, IDE, and CLI
 
-Add the marketplace from your shell:
+Codex supports Skills across the app, desktop experience, IDE extension,
+and CLI. If you use the CLI, add the marketplace from your shell:
 
 ```bash
 codex plugin marketplace add RayFernando1337/rayfernando-skills
@@ -89,7 +100,23 @@ Then install the plugin. On Codex CLI 0.126 and later, the second step is one CL
 codex plugin add running-bug-review-board@rayfernando-skills
 ```
 
-On Codex CLI 0.125 and earlier, the `plugin add` subcommand isn't there yet. Open `codex`, type `/plugins`, switch to the `rayfernando-skills` tab, and select Install. Codex's marketplace loader supports `.claude-plugin/marketplace.json` as a legacy-compatible source, so the same repo works for both flows.
+On Codex CLI 0.125 and earlier, the `plugin add` subcommand isn't there
+yet. Open Codex, type `/plugins`, switch to the `rayfernando-skills`
+tab, and select Install. In Codex app or desktop surfaces, use the
+Plugins / Skills installer UI for the same marketplace and restart Codex
+after installing so the skill cache reloads. Codex's marketplace loader
+supports `.claude-plugin/marketplace.json` as a legacy-compatible source,
+so the same repo works for both flows.
+
+If Codex shows:
+
+```text
+invalid description: exceeds maximum length of 1024 characters
+```
+
+you are likely running a cached `running-bug-review-board` 0.3.0 install.
+Update or reinstall `running-bug-review-board@rayfernando-skills`, then
+restart Codex app, desktop, IDE, or CLI so it refreshes the plugin cache.
 
 Docs: [developers.openai.com/codex/plugins/build](https://developers.openai.com/codex/plugins/build).
 

@@ -4,6 +4,31 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-05-28
+
+### Fixed
+
+- **Codex skill loading compatibility.** Shortened the
+  `running-bug-review-board` `SKILL.md` frontmatter description from
+  more than 1,600 characters to concise routing metadata under Codex's
+  1,024-character hard limit. The detailed trigger language, tracker
+  notes, iOS companion-skill context, and Interactive BRB guidance stay
+  in the skill body and references where Codex can load them through
+  progressive disclosure.
+
+### Changed
+
+- Shortened plugin and marketplace descriptions so Codex app, desktop,
+  IDE, and CLI surfaces receive compact metadata instead of changelog-
+  length summaries.
+
+### Added
+
+- Added `scripts/validate-skill-metadata.py`, a dependency-free release
+  validator for `SKILL.md` frontmatter and plugin marketplace
+  descriptions. The release workflow now runs it before building the
+  skill zip so future releases cannot ship Codex-invalid descriptions.
+
 ## [0.3.0] — 2026-05-27
 
 ### Changed
@@ -77,6 +102,7 @@ better — unobtrusive chrome, honest hierarchy, no decoration) to put
 the prose first and let the engineer make triage decisions on the
 text, not the swatch.
 
+[0.3.1]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.3.1
 [0.3.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.3.0
 
 ## [0.2.0] — 2026-05-27

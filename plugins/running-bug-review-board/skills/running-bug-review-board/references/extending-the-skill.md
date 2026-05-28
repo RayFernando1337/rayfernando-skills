@@ -56,6 +56,11 @@ plugins/running-bug-review-board/
 
 - **SKILL.md** stays under 500 lines. It's the discovery surface — the
   agent reads it on every activation. Detail lives in references.
+- **Frontmatter descriptions stay short.** Codex rejects `description`
+  values over 1,024 characters and may shorten much smaller descriptions
+  to fit its skills metadata budget. Treat the description as routing
+  metadata: front-load trigger words, keep it under ~350 characters when
+  practical, and move procedure details into the body or references.
 - **References** are loaded on demand. Keep each under 500 lines too;
   split if a topic grows.
 - **Progressive disclosure.** References can link to other references
@@ -177,6 +182,10 @@ Treat any change that requires consumers to re-read the documentation
 - [ ] `README.md` → update the "What's new" callout at the top + the
       skill list table if relevant.
 - [ ] `SKILL.md` frontmatter description if the surface area changed.
+- [ ] Validate Codex-compatible metadata before tagging:
+      ```bash
+      python3 scripts/validate-skill-metadata.py
+      ```
 - [ ] **Push an annotated git tag.** GitHub Releases only update when
       a `v*` tag is pushed (the `.github/workflows/release.yml`
       workflow fires on tag push, builds `running-bug-review-board.zip`,
