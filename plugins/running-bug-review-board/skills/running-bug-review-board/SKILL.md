@@ -82,10 +82,14 @@ for the full investigation playbook. The short version:
 4. Read the bug-reports index — open bugs are scenarios you must re-test
    first.
 5. **Detect the project type.** Web app → use
-   [browser-playbook.md](references/browser-playbook.md). iOS / iPadOS
-   app project → use
+   [browser-playbook.md](references/browser-playbook.md). Native macOS
+   app → use [computer-use-playbook.md](references/computer-use-playbook.md).
+   iOS / iPadOS app project → use
    [ios-simulator-playbook.md](references/ios-simulator-playbook.md).
-   Other → no UI playbook activates.
+   Other → no UI playbook activates. Also note whether **Codex Computer
+   Use** is available (macOS only) — it enables a human-fidelity pass on
+   web apps and is the only way to reach a native Mac app. Most VMs (Cursor
+   cloud, CI) won't have it, so never make the pass depend on it.
 6. **Detect the issue tracker** (Linear, GitHub, Jira, Notion, or
    none). Surface every signal found and **ask the user to confirm**
    before writing `qa-config.json`. See
@@ -124,6 +128,7 @@ Detail in [references/workflow.md](references/workflow.md).
 | Solo agent, small surface | Sequential, ordered top-to-bottom | [references/sequential-wrapup.md](references/sequential-wrapup.md) |
 | Re-testing 1–3 fixed bugs after engineering shipped | Sequential, scoped to bug Test IDs | [references/sequential-wrapup.md](references/sequential-wrapup.md) |
 | **Need to triage the open bug backlog with the human** | **Interactive BRB (separate session)** | [references/brb-interactive.md](references/brb-interactive.md) |
+| **Repo is a native macOS app, or you want a human-fidelity pass on the real signed-in app** | Auto pass + Computer Use playbook (macOS) | [references/computer-use-playbook.md](references/computer-use-playbook.md) |
 | **Repo is an iOS / iPadOS app** | Auto pass + iOS playbook (use a companion skill for input) | [references/ios-simulator-playbook.md](references/ios-simulator-playbook.md) |
 | No test plan exists yet | Generate plan first | [references/test-plan.md](references/test-plan.md) |
 | Phase doc lists features not yet implemented in code | Stop. Tell user — QA needs a working build | — |
@@ -135,7 +140,8 @@ Detected during the discovery step. Match repo signals to a playbook
 
 | Surface | Signals | Playbook |
 |---------|---------|----------|
-| **Web app** | `package.json` with web framework deps, `app/` / `pages/` / `src/routes/`, deploy config for Vercel / Netlify / Cloudflare | [browser-playbook.md](references/browser-playbook.md) |
+| **Web app** | `package.json` with web framework deps, `app/` / `pages/` / `src/routes/`, deploy config for Vercel / Netlify / Cloudflare | [browser-playbook.md](references/browser-playbook.md) (add [Computer Use](references/computer-use-playbook.md) for a human-fidelity pass on a Mac) |
+| **Native macOS app** | `*.xcodeproj` / `Package.swift` with `.macOS(...)`, a `.app` bundle, Electron / Tauri config, `Info.plist` with `LSMinimumSystemVersion` | [computer-use-playbook.md](references/computer-use-playbook.md) |
 | **iOS / iPadOS app** | `*.xcodeproj`, `*.xcworkspace`, `Package.swift` with `.iOS(...)`, `Podfile` with `platform :ios`, `Info.plist` with `UIDeviceFamily`, `ios/` directory | [ios-simulator-playbook.md](references/ios-simulator-playbook.md) |
 | **Mixed (monorepo)** | Multiple of the above | Both — the test plan gets per-platform scenario blocks |
 | **CLI / library / backend** | No UI signals | Neither UI playbook; QA focuses on integration tests + error paths |
@@ -381,7 +387,8 @@ Adapt paths to whatever the target repo already uses.
 - [references/test-plan.md](references/test-plan.md) — derive a phase manual test plan from spec + phase doc + gate
 - [references/test-accounts.md](references/test-accounts.md) — Clerk / Auth0 / Supabase / custom — and the "ask the user" pattern
 - [references/session-hygiene.md](references/session-hygiene.md) — stale storage, rate limits, persona suffixing
-- [references/browser-playbook.md](references/browser-playbook.md) — cursor-ide-browser, browser-use, Playwright recipes (web apps only)
+- [references/browser-playbook.md](references/browser-playbook.md) — cursor-ide-browser, Chrome DevTools MCP, browser-use, Playwright recipes + how to drive like a human (web apps)
+- [references/computer-use-playbook.md](references/computer-use-playbook.md) — Codex Computer Use for web and native macOS apps (macOS; graceful fallback to a browser driver elsewhere)
 - [references/ios-simulator-playbook.md](references/ios-simulator-playbook.md) — iOS / iPadOS app QA, curated companion-skill ladder (AXe, baguette, XcodeBuildMCP, ios-simulator-skill, ios-build-verify, …)
 - [references/parallel-coordinator.md](references/parallel-coordinator.md) — shard map, write-path-first rule, copy-paste shard prompts
 - [references/sequential-wrapup.md](references/sequential-wrapup.md) — single-agent finish; copy-paste prompt
