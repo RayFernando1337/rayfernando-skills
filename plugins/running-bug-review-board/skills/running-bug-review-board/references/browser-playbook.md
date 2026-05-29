@@ -96,6 +96,88 @@ browser_cdp Runtime.evaluate
   returnByValue: true
 ```
 
+## Chrome DevTools for agents specifics
+
+`chrome-devtools-mcp` is Google's official MCP server (now stable). It drives
+Chrome via Puppeteer and **automatically waits for each action's result**, so
+the "clicked too early / stale ref" failures that plague naive drivers mostly
+disappear. It pairs driving with DevTools-grade inspection.
+
+Add it to your MCP client (the exact command varies by client):
+
+```bash
+# Claude Code
+claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp@latest
+# Codex
+codex mcp add chrome-devtools -- npx chrome-devtools-mcp@latest
+# Generic MCP config
+{ "command": "npx", "args": ["-y", "chrome-devtools-mcp@latest"] }
+```
+
+Map the universal flow to its tools:
+
+```
+navigate_page          url
+take_snapshot          → accessibility-tree refs to act on (re-take after nav/click)
+take_screenshot        → visual evidence
+click / fill / fill_form / type_text / hover / press_key / drag
+wait_for               text / condition (in addition to built-in auto-wait)
+resize_page            375 × 812  ← primary mobile viewport
+emulate                CPU + network throttle, geolocation  ← simulate real conditions
+list_console_messages  → console errors with source-mapped stack traces
+list_network_requests / get_network_request  → 4xx/5xx evidence
+lighthouse_audit       → accessibility / SEO / best-practices gate
+evaluate_script        → clear storage, read storage, custom checks
+performance_start_trace / performance_stop_trace  → LCP/INP/CLS investigation
+```
+
+The recipes elsewhere in this playbook translate directly: viewport →
+`resize_page`; console capture → `list_console_messages`; network failure →
+`list_network_requests` + `get_network_request`; storage clear → `evaluate_script`.
+
+Useful flags: `--headless` (no UI), `--isolated` (throwaway profile),
+`--slim` (3 core tools), `--viewport=375x812`. For multiple agents/tabs on one
+server, `--experimentalPageIdRouting` + `--isolated`. *(Flag names verified at
+release — check the upstream `chrome-devtools-mcp` README for current options.)*
+
+## Drive like a real human (don't trip the tests)
+
+The most common reason an automated run "fails a test the app actually
+passes" is that the browser doesn't look like a person to the site. Two
+levers fix the bulk of it:
+
+1. **Attach to the user's real, already-signed-in Chrome** instead of a fresh
+   automated profile. A WebDriver-launched browser is exactly what bot
+   defenses (Cloudflare Turnstile, hCaptcha, "anomaly detected" on auth) are
+   built to catch — and it starts logged out, so every scenario re-fights
+   auth. Connecting to the real session sidesteps both. With
+   `chrome-devtools-mcp`:
+   - **`--autoConnect`** (Chrome 144+): enable remote debugging at
+     `chrome://inspect/#remote-debugging`, then the server attaches to your
+     running Chrome and shares its state between manual and agent testing.
+   - **`--browser-url=http://127.0.0.1:9222`**: for sandboxed/VM setups, start
+     Chrome yourself with `--remote-debugging-port=9222` and a **dedicated**
+     `--user-data-dir`, then point the MCP at it.
+
+   Security caveat (the reason for the dedicated profile): the remote
+   debugging port lets *any* local app drive that browser and it carries your
+   real session — don't browse sensitive sites while it's open, and treat it
+   like handing someone your logged-in window.
+
+2. **Let the driver auto-wait.** Chrome DevTools MCP and Playwright both wait
+   for navigation/network/elements before acting. That removes most of the
+   `pointer-events: none` / "ref not found" failures in the
+   [Common UI gotchas](#common-ui-gotchas-universal) table below — which are
+   usually timing, not real bugs.
+
+**Pick the right tool for the job, too.** This skill's pass is "drive a live
+page *and* inspect it like a user," which is squarely where Chrome DevTools
+MCP shines. For large nightly cross-browser regression suites, Playwright is
+still the right call. For a native macOS app or a maximum-human-fidelity pass,
+escalate to [Codex Computer Use](computer-use-playbook.md). Chrome DevTools MCP
+is Chrome-only, and emulation is not a real device — for iOS *app* projects use
+[ios-simulator-playbook.md](ios-simulator-playbook.md).
+
 ## browser-use specifics
 
 browser-use exposes a flat action vocabulary: `goto`, `type`, `click`,
