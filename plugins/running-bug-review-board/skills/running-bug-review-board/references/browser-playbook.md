@@ -21,12 +21,18 @@ Use whichever is available. The shape of the work is identical.
 | # | Tool | When |
 |---|------|------|
 | 1 | **cursor-ide-browser** MCP | Default inside Cursor / Claude Code with this MCP installed |
-| 2 | **browser-use** MCP | Provider-agnostic; works in many agent environments |
-| 3 | **Playwright** (CLI or MCP) | Repo already has it; or for headless CI-style runs |
-| 4 | Manual + screenshot relay | No browser tool — drive yourself, paste console errors and screenshots into chat |
+| 2 | **Chrome DevTools for agents** (`chrome-devtools-mcp`) | Strong general-purpose choice. Puppeteer-based with built-in auto-wait (fewer race/stale-ref failures), plus DevTools-grade network/console/Lighthouse/performance/accessibility introspection. Best when you're not in Cursor, or want richer inspection — see [specifics](#chrome-devtools-for-agents-specifics). |
+| 3 | **browser-use** MCP | Provider-agnostic; works in many agent environments |
+| 4 | **Playwright** (CLI or MCP) | Repo already has it; or for headless CI-style runs |
+| 5 | **Codex Computer Use** (macOS) | Human-fidelity pass against the *real signed-in* app — see [computer-use-playbook.md](computer-use-playbook.md). Not available in most VMs/Linux; keep it as an add-on, not a dependency. |
+| 6 | Manual + screenshot relay | No browser tool — drive yourself, paste console errors and screenshots into chat |
 
 If multiple work, prefer cursor-ide-browser when running in Cursor — its
-snapshot YAML and `browser_cdp` give the richest control.
+snapshot YAML and `browser_cdp` give the richest control. Outside Cursor,
+Chrome DevTools for agents is usually the best balance of reliable driving
+and deep inspection. Whatever you pick, the run must succeed with what the
+environment actually has — most VMs (Cursor cloud, CI) won't have Computer
+Use, so never make the pass depend on it.
 
 ## The universal flow
 
