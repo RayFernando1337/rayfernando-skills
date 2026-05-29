@@ -4,6 +4,45 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-29
+
+### Added
+
+- **Computer Use playbook** (`references/computer-use-playbook.md`). The skill
+  now discovers whether **Codex Computer Use** is available (macOS only) and,
+  when it is, drives web apps and **native macOS apps** by seeing, clicking,
+  and typing — the highest-fidelity way to test the real, signed-in app, and
+  the only way this skill can reach a desktop Mac app. It degrades gracefully:
+  most VMs (Cursor cloud, CI) lack it, so a pass still succeeds with a browser
+  driver alone, and iOS app QA still defers to the iOS simulator playbook.
+- **Chrome DevTools for agents (`chrome-devtools-mcp`)** added as a first-class
+  rung in the browser playbook, with a new "drive like a human (don't trip the
+  tests)" section: attach to your real, already-signed-in Chrome via
+  `--autoConnect` / `--browser-url` so auth flows don't get bot-flagged, and
+  lean on its built-in auto-wait to remove stale-ref / timing failures.
+- **Native macOS app** surface detection wired through `SKILL.md` (surfaces
+  table, mode picker, project-type discovery, and the browser-tools ladder).
+
+### Changed
+
+- **README rewritten for humans first.** It now leads with what you get,
+  screenshots of the HTML report (the prioritized bug list and a single bug
+  report), and copy-paste example prompts, then links into the deeper sections
+  for people and agents auditing the skill. The stacked "What's new in vX"
+  blocks at the top are replaced by a short Changelog pointer near the bottom.
+- **Corrected the README repo-structure tree** to match the repository — it had
+  drifted several references and scripts out of date.
+- Trimmed duplicate rows from the `SKILL.md` anti-patterns table so each
+  remaining entry explains a distinct *why* instead of repeating the
+  Always / Never lists.
+
+### Notes
+
+- The HTML report design is unchanged in this release, so its
+  `<!-- skill:running-bug-review-board v0.3 -->` version marker stays put.
+- Credits: the Chrome DevTools team for `chrome-devtools-mcp`, and OpenAI for
+  Codex Computer Use.
+
 ## [0.3.1] — 2026-05-28
 
 ### Fixed
