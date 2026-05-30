@@ -81,15 +81,26 @@ for the full investigation playbook. The short version:
    are your highest-value finds.
 4. Read the bug-reports index — open bugs are scenarios you must re-test
    first.
-5. **Detect the project type.** Web app → use
-   [browser-playbook.md](references/browser-playbook.md). Native macOS
-   app → use [computer-use-playbook.md](references/computer-use-playbook.md).
-   iOS / iPadOS app project → use
+5. **Detect the project type** (check in this order — first match
+   wins, so desktop-app signals beat generic web signals):
+   **Electron / Tauri desktop app** (has `electron`, `@electron/`,
+   `@tauri-apps/` in `package.json`, or `electron-builder.yml` /
+   `tauri.conf.json`) → use
+   [computer-use-playbook.md](references/computer-use-playbook.md).
+   These projects also contain `package.json` and web framework deps
+   but ship as native desktop apps — do **not** fall through to the
+   browser path.
+   **Web app** (web framework deps without Electron / Tauri markers) → use
+   [browser-playbook.md](references/browser-playbook.md).
+   **Native macOS app** (Xcode / Swift project targeting macOS) → use
+   [computer-use-playbook.md](references/computer-use-playbook.md).
+   **iOS / iPadOS app** → use
    [ios-simulator-playbook.md](references/ios-simulator-playbook.md).
-   Other → no UI playbook activates. Also note whether **Codex Computer
-   Use** is available (macOS only) — it enables a human-fidelity pass on
-   web apps and is the only way to reach a native Mac app. Most VMs (Cursor
-   cloud, CI) won't have it, so never make the pass depend on it.
+   **Other** → no UI playbook activates.
+   Also note whether **Codex Computer Use** is available (macOS only) —
+   it enables a human-fidelity pass on web apps and is the only way to
+   reach a native Mac or Electron/Tauri app. Most VMs (Cursor cloud, CI)
+   won't have it, so never make the pass depend on it.
 6. **Detect the issue tracker** (Linear, GitHub, Jira, Notion, or
    none). Surface every signal found and **ask the user to confirm**
    before writing `qa-config.json`. See
@@ -140,8 +151,9 @@ Detected during the discovery step. Match repo signals to a playbook
 
 | Surface | Signals | Playbook |
 |---------|---------|----------|
-| **Web app** | `package.json` with web framework deps, `app/` / `pages/` / `src/routes/`, deploy config for Vercel / Netlify / Cloudflare | [browser-playbook.md](references/browser-playbook.md) (add [Computer Use](references/computer-use-playbook.md) for a human-fidelity pass on a Mac) |
-| **Native macOS app** | `*.xcodeproj` / `Package.swift` with `.macOS(...)`, a `.app` bundle, Electron / Tauri config, `Info.plist` with `LSMinimumSystemVersion` | [computer-use-playbook.md](references/computer-use-playbook.md) |
+| **Electron / Tauri desktop app** *(check first — beats Web app)* | `electron`, `@electron/`, or `@tauri-apps/` in `package.json`; `electron-builder.yml`; `tauri.conf.json` | [computer-use-playbook.md](references/computer-use-playbook.md) |
+| **Web app** | `package.json` with web framework deps (no Electron / Tauri markers), `app/` / `pages/` / `src/routes/`, deploy config for Vercel / Netlify / Cloudflare | [browser-playbook.md](references/browser-playbook.md) (add [Computer Use](references/computer-use-playbook.md) for a human-fidelity pass on a Mac) |
+| **Native macOS app** | `*.xcodeproj` / `Package.swift` with `.macOS(...)`, a `.app` bundle, `Info.plist` with `LSMinimumSystemVersion` | [computer-use-playbook.md](references/computer-use-playbook.md) |
 | **iOS / iPadOS app** | `*.xcodeproj`, `*.xcworkspace`, `Package.swift` with `.iOS(...)`, `Podfile` with `platform :ios`, `Info.plist` with `UIDeviceFamily`, `ios/` directory | [ios-simulator-playbook.md](references/ios-simulator-playbook.md) |
 | **Mixed (monorepo)** | Multiple of the above | Both — the test plan gets per-platform scenario blocks |
 | **CLI / library / backend** | No UI signals | Neither UI playbook; QA focuses on integration tests + error paths |
