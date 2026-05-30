@@ -31,8 +31,10 @@ After reading, you should be able to answer:
 - **What is the primary job-to-be-done?** (one sentence)
 - **What are the success metrics?** (e.g. "create group + invite in 2
   minutes", "page loads under 2 seconds")
-- **What are the supported viewports?** (mobile-only, mobile-first,
-  desktop, all)
+- **Which device modes, and which is primary?** We test **mobile, tablet,
+  and desktop**; the spec's primary target leads. If it's unclear, ask the
+  user; if the user isn't available, infer the primary from the repo and
+  note the assumption.
 - **What auth provider, payment provider, data backend?** (affects test
   account playbook and DB verification path)
 - **What are the role permissions?** (admin / member / co-admin / etc.)
@@ -67,11 +69,13 @@ this is common in early-stage projects — ask **before** guessing. A
 >
 > If none exists, I can document one as part of the pass.
 
-**Primary viewport (when ambiguous):**
+**Primary device mode (when ambiguous):**
 
-> The app's product spec says "mobile-first" — should I default the
-> browser to **375 × 812** for every scenario, or do you want a specific
-> physical phone profile (iPhone 14, Pixel 7, etc.)?
+> I'll test mobile, tablet, and desktop. Which is the **primary** target I
+> should lead with and weight most heavily — or is there a specific device
+> profile (iPhone 14, iPad, 1440px desktop) you care about? If you're not
+> around, I'll infer the primary from the repo's responsive setup and note
+> the assumption.
 
 **Phase scope (when phase doc is partial):**
 

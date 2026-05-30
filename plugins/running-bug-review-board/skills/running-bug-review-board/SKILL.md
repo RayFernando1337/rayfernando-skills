@@ -253,9 +253,16 @@ If a different layout already exists in the repo (e.g. `tests/manual/`,
 - **Real user perspective.** Drive the app, not the source. Test from
   URLs and clicks (or simulator taps), not from `convex/users.ts` or
   the API layer alone.
-- **Primary viewport first.** Default to **375 × 812 (mobile)** for web
-  apps unless the product spec says otherwise. For iOS apps, the
-  primary device matrix comes from `qa-config.json#platforms.ios.devices`.
+- **Test mobile, tablet, and desktop.** Real users arrive on all three,
+  and layout / overflow / tap-target bugs hide at the breakpoint you skip.
+  Cover all three modes for web apps — reference sizes **mobile 375 × 812,
+  tablet 768 × 1024, desktop 1280 × 800** (adjust to the spec's
+  breakpoints). Lead with the app's **primary** target: take it from the
+  product spec; if the spec is unclear, ask the user which mode matters
+  most; if the user isn't available, infer the most likely primary from
+  what you discovered in the repo (responsive CSS / breakpoints, framework
+  defaults, marketing copy) and note the assumption. For iOS apps, the
+  device matrix comes from `qa-config.json#platforms.ios.devices`.
 - **One browser tab per agent.** Parallel agents on a shared tab cause
   auth-provider rate limits and stale sessions.
 - **Capture evidence.** Snapshot or screenshot at the moment of failure,

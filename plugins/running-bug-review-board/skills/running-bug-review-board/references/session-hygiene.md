@@ -56,7 +56,7 @@ Scenario hygiene:
 - [ ] If "fresh user": signed out of any prior auth session
 - [ ] Browser tab: only this agent uses it
 - [ ] Last auth attempt was > 30s ago (provider rate-limit safety)
-- [ ] Browser viewport set to spec (default 375 × 812)
+- [ ] Browser viewport set to the device mode under test (mobile / tablet / desktop)
 - [ ] DevTools console open, ready to capture
 ```
 

@@ -5,7 +5,7 @@
 | **Agent** | {QA-X or SEQUENTIAL} |
 | **Phase** | {N} |
 | **Environment** | local (`http://localhost:3000`) |
-| **Viewport** | 375 × 812 |
+| **Device modes** | mobile 375 × 812 · tablet 768 × 1024 · desktop 1280 × 800 (primary: ___) |
 | **Build** | `<validate command>` {PASS/FAIL} at start |
 | **Shared artifacts** | {group ID, invite URL, admin email — fill from coordinator} |
 

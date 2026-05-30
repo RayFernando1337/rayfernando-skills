@@ -71,7 +71,7 @@ Spot-check the dev environment:
 
 - Backend / database / API up
 - Auth provider keys configured
-- Browser viewport set to the primary supported size
+- Browser viewport set to the device mode under test (cover mobile / tablet / desktop)
 
 ## 5. Choose mode
 

@@ -90,7 +90,7 @@ What actually happened.
 
 | Item | Value |
 |------|--------|
-| Device / browser | e.g. iPhone 14 Safari, Chrome 375px emulation |
+| Device / browser | e.g. iPhone 14 Safari (mobile), iPad (tablet), Chrome 1280px (desktop) |
 | Account | e.g. fresh incognito, admin@test |
 | URL | Full URL when bug occurred |
 | Provider-specific (invite code, tenant, share link) | If relevant |

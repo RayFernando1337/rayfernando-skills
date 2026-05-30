@@ -14,7 +14,7 @@ You are QA agent **QA-{SHARD_LETTER}** for {PROJECT} Phase {PHASE_NUM} at {REPO_
 ## Environment (confirmed running by coordinator)
 
 - http://localhost:3000 — `<dev command>`
-- Viewport: **375 × 812**
+- Device modes: **mobile 375 × 812 / tablet 768 × 1024 / desktop 1280 × 800** (lead with the spec's primary)
 - Auth test fixtures: see ~/.agents/skills/running-bug-review-board/references/test-accounts.md
 - Test email pattern: `*+test+run{RUN_TAG}-{SHARD_LETTER}@example.com`
 - Passwords: from team vault

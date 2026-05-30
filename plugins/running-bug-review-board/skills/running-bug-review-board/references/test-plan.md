@@ -45,7 +45,7 @@ exists (e.g. `2.5`).
 Use [templates/test-plan.md](templates/test-plan.md) as the skeleton. At
 minimum:
 
-1. **Header** — phase number, date, gate links, viewport rule
+1. **Header** — phase number, date, gate links, device-mode coverage (mobile / tablet / desktop + primary)
 2. **Setup before testing** — env, browser, accounts, data tables to watch
 3. **Out of scope** — items deferred to later phases (call out by name)
 4. **Scenarios** — grouped by block, each scenario one table row with

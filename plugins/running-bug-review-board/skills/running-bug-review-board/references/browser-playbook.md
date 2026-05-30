@@ -38,7 +38,7 @@ Use, so never make the pass depend on it.
 
 ```
 list  tabs                       → see what's open
-resize/devtools to 375×812       → primary viewport
+resize to the mode under test    → mobile 375×812 / tablet 768×1024 / desktop 1280×800
 lock  the tab (one agent only)
 navigate http://localhost:3000/...
 snapshot                         → fresh element refs (REQUIRED before each click)
@@ -81,9 +81,19 @@ issues in Electron); use the dedicated input tools instead.
 
 ### Setting viewport via CDP
 
+Run each scenario at every mode the app supports — mobile, tablet, and
+desktop — leading with the spec's primary target:
+
 ```
+# mobile
 browser_cdp Emulation.setDeviceMetricsOverride
   { width: 375, height: 812, deviceScaleFactor: 1, mobile: true }
+# tablet
+browser_cdp Emulation.setDeviceMetricsOverride
+  { width: 768, height: 1024, deviceScaleFactor: 2, mobile: true }
+# desktop
+browser_cdp Emulation.setDeviceMetricsOverride
+  { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }
 ```
 
 ### Clearing app storage between scenarios
@@ -223,15 +233,22 @@ imperative steps in the run report.
 | Storage state | CDP Runtime.evaluate on storage |
 | Layout / overflow at small width | screenshot at exact viewport |
 
-## Mobile readability spot-checks
+## Responsive spot-checks (mobile / tablet / desktop)
 
-Every page touched at 375 × 812 — eyeball:
+Check every page at each mode the app supports — **mobile 375 × 812,
+tablet 768 × 1024, desktop 1280 × 800** — because layout bugs hide at
+the breakpoint you skip. Eyeball at every width:
+
+- No horizontal scroll on the body
+- Content reflows sensibly across breakpoints (no overlap, no cut-off
+  text, no stranded elements at tablet / desktop widths)
+- Text contrast readable in the default theme
+
+On mobile (and narrow tablet) especially:
 
 - All tap targets ≥ **44 × 44 px**
-- No horizontal scroll on body
-- Text contrast readable in default theme
-- Form fields visible above on-screen keyboard (focus an input near page
-  bottom and confirm)
+- Form fields visible above the on-screen keyboard (focus an input near
+  the page bottom and confirm)
 - Submit button reachable without scroll-to-find
 - Modal close affordance on-screen
 

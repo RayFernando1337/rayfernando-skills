@@ -25,6 +25,14 @@ All notable changes to this collection are documented here. The format follows [
 
 ### Changed
 
+- **Web QA now covers mobile, tablet, and desktop.** The skill no longer
+  defaults to a single mobile viewport. It tests all three device modes
+  (reference sizes 375×812 / 768×1024 / 1280×800) and leads with the
+  product spec's primary target; when the spec is unclear it asks the user,
+  and when the user isn't available it infers the primary from the repo and
+  notes the assumption. Updated across `SKILL.md`, the browser playbook,
+  discovery, session hygiene, the test-plan / run-report / shard / sequential
+  templates, and the bug template.
 - **README rewritten for humans first.** It now leads with what you get,
   screenshots of the HTML report (the prioritized bug list and a single bug
   report), and copy-paste example prompts, then links into the deeper sections

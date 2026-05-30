@@ -22,7 +22,7 @@ P0/P1 list.
 
 1. `<validate command>` — must PASS before testing
 2. `<dev command>` — http://localhost:3000
-3. Viewport **375 × 812**
+3. Test **mobile 375 × 812**, **tablet 768 × 1024**, **desktop 1280 × 800** (lead with the spec's primary)
 4. Auth test fixtures: see ~/.agents/skills/running-bug-review-board/references/test-accounts.md
 
 ## Existing test data (from prior pass)

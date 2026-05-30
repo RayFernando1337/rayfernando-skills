@@ -4,7 +4,7 @@
 **Last updated:** {YYYY-MM-DD}
 **Maps to:** [QA Gate {N}](../QA_GATES.md#gate-{N}--{slug})
 
-Use **mobile viewport (375px minimum)** unless noted. Use **incognito / private windows** for fresh-user flows.
+Test **mobile (375 × 812), tablet (768 × 1024), and desktop (1280 × 800)**, leading with the spec's primary target. Use **incognito / private windows** for fresh-user flows.
 
 When a scenario fails, file a bug: [bug-reports/README.md](./bug-reports/README.md).
 
