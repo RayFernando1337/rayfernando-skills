@@ -89,7 +89,10 @@ for the full investigation playbook. The short version:
    [computer-use-playbook.md](references/computer-use-playbook.md).
    These projects also contain `package.json` and web framework deps
    but ship as native desktop apps — do **not** fall through to the
-   browser path.
+   browser path. (On non-macOS hosts where Computer Use is unavailable,
+   the playbook's graceful-degradation table directs you to drive the
+   app's dev-server URL via
+   [browser-playbook.md](references/browser-playbook.md) instead.)
    **Web app** (web framework deps without Electron / Tauri markers) → use
    [browser-playbook.md](references/browser-playbook.md).
    **iOS / iPadOS app** (an iOS-specific marker is present — `.iOS(...)`,
