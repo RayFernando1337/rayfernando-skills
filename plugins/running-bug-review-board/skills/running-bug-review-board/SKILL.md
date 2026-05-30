@@ -82,10 +82,11 @@ for the full investigation playbook. The short version:
 4. Read the bug-reports index — open bugs are scenarios you must re-test
    first.
 5. **Detect the project type.** Web app → use
-   [browser-playbook.md](references/browser-playbook.md). Native macOS
-   app → use [computer-use-playbook.md](references/computer-use-playbook.md).
+   [browser-playbook.md](references/browser-playbook.md).
    iOS / iPadOS app project → use
    [ios-simulator-playbook.md](references/ios-simulator-playbook.md).
+   Native macOS app (only when no iOS-specific signals are present) → use
+   [computer-use-playbook.md](references/computer-use-playbook.md).
    Other → no UI playbook activates. Also note whether **Codex Computer
    Use** is available (macOS only) — it enables a human-fidelity pass on
    web apps and is the only way to reach a native Mac app. Most VMs (Cursor
@@ -141,8 +142,8 @@ Detected during the discovery step. Match repo signals to a playbook
 | Surface | Signals | Playbook |
 |---------|---------|----------|
 | **Web app** | `package.json` with web framework deps, `app/` / `pages/` / `src/routes/`, deploy config for Vercel / Netlify / Cloudflare | [browser-playbook.md](references/browser-playbook.md) (add [Computer Use](references/computer-use-playbook.md) for a human-fidelity pass on a Mac) |
-| **Native macOS app** | `*.xcodeproj` / `Package.swift` with `.macOS(...)`, a `.app` bundle, Electron / Tauri config, `Info.plist` with `LSMinimumSystemVersion` | [computer-use-playbook.md](references/computer-use-playbook.md) |
 | **iOS / iPadOS app** | `*.xcodeproj`, `*.xcworkspace`, `Package.swift` with `.iOS(...)`, `Podfile` with `platform :ios`, `Info.plist` with `UIDeviceFamily`, `ios/` directory | [ios-simulator-playbook.md](references/ios-simulator-playbook.md) |
+| **Native macOS app** | `Package.swift` with `.macOS(...)`, a `.app` bundle, Electron / Tauri config, `Info.plist` with `LSMinimumSystemVersion` | [computer-use-playbook.md](references/computer-use-playbook.md) |
 | **Mixed (monorepo)** | Multiple of the above | Both — the test plan gets per-platform scenario blocks |
 | **CLI / library / backend** | No UI signals | Neither UI playbook; QA focuses on integration tests + error paths |
 
