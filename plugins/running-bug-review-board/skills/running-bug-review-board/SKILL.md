@@ -142,7 +142,7 @@ Detected during the discovery step. Match repo signals to a playbook
 | Surface | Signals | Playbook |
 |---------|---------|----------|
 | **Web app** | `package.json` with web framework deps, `app/` / `pages/` / `src/routes/`, deploy config for Vercel / Netlify / Cloudflare | [browser-playbook.md](references/browser-playbook.md) (add [Computer Use](references/computer-use-playbook.md) for a human-fidelity pass on a Mac) |
-| **iOS / iPadOS app** | `*.xcodeproj`, `*.xcworkspace`, `Package.swift` with `.iOS(...)`, `Podfile` with `platform :ios`, `Info.plist` with `UIDeviceFamily`, `ios/` directory | [ios-simulator-playbook.md](references/ios-simulator-playbook.md) |
+| **iOS / iPadOS app** | `Package.swift` with `.iOS(...)`, `Podfile` with `platform :ios`, `Info.plist` with `UIDeviceFamily`, `ios/` directory (bare `*.xcodeproj` / `*.xcworkspace` are shared with macOS — require at least one of these iOS-specific markers) | [ios-simulator-playbook.md](references/ios-simulator-playbook.md) |
 | **Native macOS app** | `Package.swift` with `.macOS(...)`, a `.app` bundle, Electron / Tauri config, `Info.plist` with `LSMinimumSystemVersion` | [computer-use-playbook.md](references/computer-use-playbook.md) |
 | **Mixed (monorepo)** | Multiple of the above | Both — the test plan gets per-platform scenario blocks |
 | **CLI / library / backend** | No UI signals | Neither UI playbook; QA focuses on integration tests + error paths |
