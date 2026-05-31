@@ -75,6 +75,7 @@ def block_indent(line: str) -> int:
 def parse_block_scalar(lines: list[str], start: int, parent_indent: int, style: str) -> tuple[str, int]:
     block_lines: list[str] = []
     index = start
+    content_indent: int | None = None
 
     while index < len(lines):
         line = lines[index]
@@ -87,7 +88,10 @@ def parse_block_scalar(lines: list[str], start: int, parent_indent: int, style: 
         if indent <= parent_indent:
             break
 
-        block_lines.append(line[parent_indent + 1 :])
+        if content_indent is None:
+            content_indent = indent
+
+        block_lines.append(line[content_indent:])
         index += 1
 
     chomp_strip = style.endswith("-")
