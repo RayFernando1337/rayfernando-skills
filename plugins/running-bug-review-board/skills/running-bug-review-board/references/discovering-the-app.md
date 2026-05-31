@@ -158,10 +158,13 @@ Before you start scenarios, you should have:
 
 1. A 2-paragraph mental model of the app: target user, job-to-be-done,
    success metrics.
-2. The **project type** (web / native macOS / iOS / mixed / other) and
-   which playbook activates — plus whether **Codex Computer Use** is
-   available (macOS only) for a human-fidelity pass on web apps or to reach
-   a native Mac app. Don't assume it's there; most VMs (Cursor cloud, CI)
+2. The **project type(s)** (web / native macOS / iOS / Electron-Tauri /
+   mixed / other) and which playbook(s) activate. A **mixed** monorepo
+   (e.g. web + iOS) activates **every** matched playbook — collect all
+   surfaces present and never let a web match short-circuit a co-located
+   iOS or macOS pass. Plus whether **Codex Computer Use** is available
+   (macOS only) for a human-fidelity pass on web apps or to reach a
+   native Mac app. Don't assume it's there; most VMs (Cursor cloud, CI)
    lack it, so the pass must still succeed with a browser driver alone.
 3. A list of public + authenticated routes.
 4. A list of personas with expected permissions per route.

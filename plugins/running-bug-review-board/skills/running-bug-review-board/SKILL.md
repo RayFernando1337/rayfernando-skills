@@ -81,29 +81,43 @@ for the full investigation playbook. The short version:
    are your highest-value finds.
 4. Read the bug-reports index — open bugs are scenarios you must re-test
    first.
-5. **Detect the project type** (check in this order — first match
-   wins, so desktop-app signals beat generic web signals):
-   **Electron / Tauri desktop app** (has `electron`, `@electron/`,
-   `@tauri-apps/` in `package.json`, or `electron-builder.yml` /
-   `tauri.conf.json`) → use
-   [computer-use-playbook.md](references/computer-use-playbook.md).
-   These projects also contain `package.json` and web framework deps
-   but ship as native desktop apps — do **not** fall through to the
-   browser path. (On non-macOS hosts where Computer Use is unavailable,
-   the playbook's graceful-degradation table directs you to drive the
-   app's dev-server URL via
-   [browser-playbook.md](references/browser-playbook.md) instead.)
-   **Web app** (web framework deps without Electron / Tauri markers) → use
-   [browser-playbook.md](references/browser-playbook.md).
-   **iOS / iPadOS app** (an iOS-specific marker is present — `.iOS(...)`,
-   `platform :ios`, `UIDeviceFamily`, or an `ios/` directory) → use
-   [ios-simulator-playbook.md](references/ios-simulator-playbook.md).
-   **Native macOS app** (a macOS-specific marker is present — `.macOS(...)`,
-   a `.app` bundle, or `LSMinimumSystemVersion` — and no iOS marker) → use
-   [computer-use-playbook.md](references/computer-use-playbook.md). A bare
-   `*.xcodeproj` / `*.xcworkspace` is shared between the two, so don't
-   classify on it alone.
-   **Other** → no UI playbook activates.
+5. **Detect the project type(s).** A repo can ship more than one app —
+   a **web + iOS monorepo** is common — so **collect every surface whose
+   signals are present** instead of stopping at the first hit. Two
+   disambiguation rules resolve *overlapping signals inside a single
+   app*; they are **not** a reason to skip a genuinely separate surface:
+   - **Electron / Tauri beats Web app for the same app.** An Electron /
+     Tauri project (`electron`, `@electron/`, `@tauri-apps/` in
+     `package.json`, or `electron-builder.yml` / `tauri.conf.json`) also
+     contains `package.json` and web framework deps, but those deps
+     belong to the desktop app — count it **once** as a desktop app, do
+     **not** also count it as a separate **Web app**.
+   - **macOS vs iOS on a shared `*.xcodeproj` / `*.xcworkspace`.** A bare
+     Xcode project is shared between the two, so don't classify on it
+     alone — require a platform-specific marker (below).
+
+   The surfaces, with the playbook each activates:
+   - **Electron / Tauri desktop app** → use
+     [computer-use-playbook.md](references/computer-use-playbook.md). (On
+     non-macOS hosts where Computer Use is unavailable, the playbook's
+     graceful-degradation table directs you to drive the app's dev-server
+     URL via [browser-playbook.md](references/browser-playbook.md)
+     instead.)
+   - **Web app** (web framework deps without Electron / Tauri markers) → use
+     [browser-playbook.md](references/browser-playbook.md).
+   - **iOS / iPadOS app** (an iOS-specific marker is present — `.iOS(...)`,
+     `platform :ios`, `UIDeviceFamily`, or an `ios/` directory) → use
+     [ios-simulator-playbook.md](references/ios-simulator-playbook.md).
+   - **Native macOS app** (a macOS-specific marker is present — `.macOS(...)`,
+     a `.app` bundle, or `LSMinimumSystemVersion` — and no iOS marker) → use
+     [computer-use-playbook.md](references/computer-use-playbook.md).
+   - **Mixed (monorepo)** — signals for two or more distinct surfaces
+     above (e.g. web framework deps **and** an iOS marker) → run **every**
+     matched playbook; the test plan gets per-platform scenario blocks.
+     A web match must **never** short-circuit a co-located iOS (or macOS)
+     pass.
+   - **Other** (no UI signals) → no UI playbook activates.
+
    Also note whether **Codex Computer Use** is available (macOS only) —
    it enables a human-fidelity pass on web apps and is the only way to
    reach a native Mac or Electron/Tauri app. Most VMs (Cursor cloud, CI)
@@ -153,8 +167,10 @@ Detail in [references/workflow.md](references/workflow.md).
 
 ## Surfaces — which playbook activates
 
-Detected during the discovery step. Match repo signals to a playbook
-**once** per repo; record the choice in `docs/qa/qa-config.json`.
+Detected during the discovery step. Match repo signals to the
+playbook(s) for **every** surface present — usually one, but a monorepo
+matches more than one (see **Mixed** below). Record the choice(s) in
+`docs/qa/qa-config.json` so later passes don't re-litigate it.
 
 | Surface | Signals | Playbook |
 |---------|---------|----------|
@@ -162,7 +178,7 @@ Detected during the discovery step. Match repo signals to a playbook
 | **Web app** | `package.json` with web framework deps (no Electron / Tauri markers), `app/` / `pages/` / `src/routes/`, deploy config for Vercel / Netlify / Cloudflare | [browser-playbook.md](references/browser-playbook.md) (add [Computer Use](references/computer-use-playbook.md) for a human-fidelity pass on a Mac) |
 | **iOS / iPadOS app** | `Package.swift` with `.iOS(...)`, `Podfile` with `platform :ios`, `Info.plist` with `UIDeviceFamily`, `ios/` directory (bare `*.xcodeproj` / `*.xcworkspace` are shared with macOS — require at least one of these iOS-specific markers) | [ios-simulator-playbook.md](references/ios-simulator-playbook.md) |
 | **Native macOS app** | `Package.swift` with `.macOS(...)`, a `.app` bundle, `Info.plist` with `LSMinimumSystemVersion` | [computer-use-playbook.md](references/computer-use-playbook.md) |
-| **Mixed (monorepo)** | Multiple of the above | Both — the test plan gets per-platform scenario blocks |
+| **Mixed (monorepo)** | Signals for two or more distinct surfaces above (e.g. web + iOS) — a web match must not short-circuit the iOS / macOS pass | Run **every** matched playbook — the test plan gets per-platform scenario blocks |
 | **CLI / library / backend** | No UI signals | Neither UI playbook; QA focuses on integration tests + error paths |
 
 For iOS app QA, our skill **orchestrates** (discovery, test plan, bug
