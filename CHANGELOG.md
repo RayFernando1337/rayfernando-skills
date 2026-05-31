@@ -54,6 +54,17 @@ All notable changes to this collection are documented here. The format follows [
   (`.iOS(...)`, `platform :ios`, `UIDeviceFamily`, `ios/`), the iOS row is
   matched before macOS, and the iOS-simulator playbook's signal table carries
   the same caveat. (Cursor Bugbot.)
+- **Mixed monorepos no longer skip native iOS QA.** The project-type
+  detection in `SKILL.md` previously read as ordered "first match wins,"
+  so a web + iOS monorepo matched **Web app** and stopped before the iOS
+  check — contradicting the **Mixed (monorepo)** surface that says both
+  playbooks should run. Detection now **collects every distinct surface
+  present** (a web match never short-circuits a co-located iOS or macOS
+  pass), with first-match precedence kept only as a disambiguation rule
+  for overlapping signals inside a *single* app (Electron/Tauri vs web;
+  macOS vs iOS on a shared `*.xcodeproj`). Reconciled across the
+  discovery step, the surfaces table/intro, and the discovery-output
+  checklist in `references/discovering-the-app.md`. (Cursor Bugbot.)
 
 ### Notes
 
@@ -61,6 +72,8 @@ All notable changes to this collection are documented here. The format follows [
   `<!-- skill:running-bug-review-board v0.3 -->` version marker stays put.
 - Credits: the Chrome DevTools team for `chrome-devtools-mcp`, and OpenAI for
   Codex Computer Use.
+
+[0.4.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.4.0
 
 ## [0.3.1] — 2026-05-28
 
