@@ -16,6 +16,10 @@ success | partial | blocked
 ## Scope
 <the exact slice this worker owned: data range / area / paths>
 
+## Coverage
+- Read: <what you actually read of your scope, with counts, e.g. 388/388 lines or rows>
+- Skipped: <anything in scope you did not read, and why — or "none">
+
 ## Key findings
 - [high|med|low] <finding> — evidence: <file:line | msg id+date | URL | metric> — sources agreeing: <N>
 - <finding …>
@@ -56,6 +60,9 @@ success | partial | blocked
 ## Notes & deviations
 - <assumptions, surprises, broken invariants, anything the parent must know>
 
+## Confidence & risk
+- Risk: <low | med | high> — <blast radius / what could break / what you did NOT test>
+
 ## Suggested follow-ups
 - <tasks the orchestrator should consider>
 ```
@@ -85,14 +92,17 @@ accept | revise | reject — <one line why>
 ## How the orchestrator reads a handoff
 
 1. **Status** ≠ `success` → decide: retry, repair scope, or spawn a clarifying task.
-2. **Key findings** → each must carry inline evidence + a confidence tag. A claim
+2. **Coverage** → check scope vs read vs skipped **first**, before trusting any
+   findings. If the worker didn't read its whole slice, the gap is a silent blind
+   spot — re-task it rather than synthesizing on partial reads.
+3. **Key findings** → each must carry inline evidence + a confidence tag. A claim
    with no traceable source is unverified — demote, re-task, or send to a
    verifier. Skim for claims that contradict expectations or another worker.
-3. **Sources / Confidence & verification** → keep; accept `verified` /
+4. **Sources / Confidence & verification** → keep; accept `verified` /
    corroborated findings outright. Route `low` / `single-sourced` /
    unresolved-citation findings to a verifier worker or escalate; carry the
    surviving confidence label into the final deliverable.
-4. **Open questions / Suggested follow-ups** → the richest section; each bullet is
+5. **Open questions / Suggested follow-ups** → the richest section; each bullet is
    a candidate second-wave task. Accept, reject, or consolidate.
 
 ## Why a fixed shape

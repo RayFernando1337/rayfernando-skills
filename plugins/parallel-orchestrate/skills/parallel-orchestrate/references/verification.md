@@ -112,7 +112,7 @@ Before declaring done (Fable's habit on served artifacts):
   sources) or a one-round debate; facts both sides drop are usually the false ones.
 - **Three tiers:** auto-accept (high-confidence + corroborated) → verify (medium)
   → escalate (low / single-sourced / unresolved): re-task narrower → dedicated
-  verifier → stronger model → ask the user.
+  verifier → ask the user (who may choose a stronger model).
 - **Carry confidence into the synthesis.** Mark surviving claims `verified /
   single-sourced / unverified`; never launder a `low` into a confident sentence.
   Prefer "couldn't confirm X" over a confident guess.

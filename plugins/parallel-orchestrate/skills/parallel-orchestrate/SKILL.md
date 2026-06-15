@@ -13,8 +13,8 @@ deliverable. Workers are isolated and return exactly one handoff.
 
 This is the local, zero-setup adaptation of the Cursor team's `orchestrate`
 plugin (which spawns *cloud* agents over the Cursor SDK). Same principles —
-planners plan, workers hand off up, no cross-talk — without API keys, `bun`, git
-branches, or Slack. For heavyweight cloud fan-out, see "Escalating" below.
+planners plan, workers hand off up, no cross-talk — without any of that cloud
+setup. For heavyweight cloud fan-out, see "Escalating" below.
 
 ## When to use
 
@@ -53,8 +53,7 @@ Adapted from `orchestrate`. These keep the run converging without coordination.
 
 ## The loop
 
-Track it with `TodoWrite` (or the host's planning tool, e.g. `TaskCreate`) so the
-waves stay visible.
+Track it with `TodoWrite` so the waves stay visible.
 
 ### Step 0 — Discover first (serial, in the main session)
 
@@ -66,9 +65,9 @@ mis-sized slices.
 
 ### Step 0.5 — Stage the data (when it's remote or messy)
 
-`explore` workers run **locally and offline** (no SSH, no network, no MCP). If
-the source is on a remote host, in a database, or wrapped in noise, the
-orchestrator must stage clean inputs **before** fanning out:
+`explore` workers are **read-only with no MCP or internet access**, so they can't
+reach remote hosts, databases, or networked sources. If the source is remote or
+wrapped in noise, the orchestrator must stage clean inputs **before** fanning out:
 
 - **Pull remote → local.** SSH/`rsync`/export the relevant data to a local
   scratch dir so read-only workers can read it (e.g. query a remote SQLite
@@ -98,7 +97,9 @@ Split along whichever axis makes slices independent:
 
 Each slice needs: a one-line scope, what to look at, and a defined output. For a
 big wave (roughly 5+ workers), state the decomposition plan to the user before
-spawning so they can redirect cheaply.
+spawning so they can redirect cheaply. If you have many slices, fan out in
+**waves** (launch a batch, let it complete, launch the next) rather than all at
+once, so you stay within practical concurrency limits.
 
 ### Step 2 — Fan out in parallel
 
@@ -108,8 +109,8 @@ run concurrently. Set `run_in_background: true` on each (Multitask Mode). Pick
 self-contained `prompt` ending with the required handoff format.
 
 Then **end your turn.** You are notified as each background worker completes —
-do **not** `AwaitShell`, poll, or read output files in a loop. (One quick
-status read right after spawning, to confirm they started, is fine.)
+do **not** `AwaitShell`, poll, or read output files in a loop. The `Task` call
+itself confirms the launch.
 
 ### Step 3 — Collect and synthesize
 
@@ -156,8 +157,9 @@ multi-wave run one unchecked bad handoff compounds into the synthesis.
   claims — give it the claim + sources but **not** the generator's reasoning.
 - **Measure & cross-check** — re-run the oracle, recount from source, require ≥2
   independent sources.
-- **Escalate** low-confidence / conflicting findings (re-task → verifier →
-  stronger model → ask the user) instead of folding them in.
+- **Escalate** low-confidence / conflicting findings (re-task with a tighter
+  prompt → dedicated verifier → ask the user, who may choose a stronger model)
+  instead of folding them in.
 
 Strongest on objective, checkable work (counts, code, facts-with-sources); on
 taste/judgment, verify the sub-claims, don't fake a grade. Full playbook:
@@ -168,13 +170,18 @@ taste/judgment, verify the sub-claims, don't fake a grade. Full playbook:
 | Slice is… | Use | Notes |
 |---|---|---|
 | Read-only code/data exploration | `explore` | Fast, **read-only**, **no MCP/internet**. Pass thoroughness: "quick" / "medium" / "very thorough". |
-| Research needing web / MCP (Exa, Ref, docs) | `generalPurpose` | Multi-step; has internet + MCP. Do **not** set `readonly: true` (that disables MCP/internet). |
+| Research needing web / MCP (Exa, Ref, docs) | `generalPurpose` | Multi-step; can use available web/MCP tools. Do **not** set `readonly: true` (that disables MCP/internet). |
 | Multi-step work mixing read + light reasoning | `generalPurpose` | The general workhorse. |
 | Shell/git heavy investigation | `shell` | Command execution specialist. |
-| Browser testing / UI verification | `browser-use` | Stateful; navigates and screenshots. |
-| Competing/parallel **code** attempts | `best-of-n-runner` | Each runs in an **isolated git worktree** — safe for parallel writes. |
+| Browser testing / UI verification | `browser-use` | Navigates and screenshots. **Stateful: auto-resumes one shared instance, so don't fan out `browser-use` in parallel** — use a single serial UI slice. Needs agent mode (not `readonly`). |
+| Competing attempts at the same task | `best-of-n-runner` | Each runs in an **isolated git worktree/branch** — safe from shared-checkout clobbering; you then compare attempts and merge the winner. |
 
-Only pass `model` when the user explicitly requests a specific model.
+Only pass `model` when the user explicitly requests a specific model (and if a
+requested model is unavailable, say so rather than silently substituting).
+
+For review/audit slices, Cursor also exposes specialized subagents when available
+(e.g. `bugbot`, `security-review`, `ci-investigator`, `ci-watcher`) — prefer them
+for those slice types.
 
 ## Worker prompt = the contract
 
@@ -191,6 +198,13 @@ Write each as if you get one shot. Every worker prompt includes:
    sources, not training data."
 6. **Scope boundaries** — what's explicitly OUT of scope (so it doesn't overlap a
    sibling worker).
+7. **Return only the handoff.** The worker's entire final message becomes your
+   context — tell it to return *only* the structured handoff and to write any
+   large artifact to a file and cite the path instead of pasting it inline.
+8. **Edit workers: you are not alone.** For implementation slices, warn the
+   worker that siblings may be active: own only the listed paths, don't revert
+   others' changes, and **never spawn its own subagents** (only the orchestrator
+   fans out).
 
 See `references/handoff-format.md` for the copy-paste worker handoff template and
 `references/examples.md` for a full worked run (the health-coach research job in
@@ -198,22 +212,29 @@ the screenshots) plus reusable decomposition recipes.
 
 ## Parallel writes (the local gotcha)
 
-Cloud `orchestrate` gives every worker its own repo clone, so parallel edits are
-safe there. **Local subagents share one working directory.** Concurrent writes
-to overlapping files clobber each other.
+**Local subagents share one working directory.** Concurrent writes to overlapping
+files clobber each other.
 
 - Parallel **reads/research/analysis**: always safe. This is the default use.
-- Parallel **edits**: only when path sets are strictly disjoint, **or** use
-  `best-of-n-runner` (git worktrees), **or** do edits serially after the
-  research waves finish.
+- **Disjoint edits you keep all of**: use regular workers only when path sets are
+  strictly disjoint, or do the edits serially after the research waves finish.
+- **Competing attempts at the same task**: use `best-of-n-runner` (each in its
+  own git worktree/branch), then **inspect, test, and merge the chosen result
+  yourself** — worktrees prevent clobbering, not the merge.
 
 ## Escalating to cloud orchestration
 
 For genuinely large builds (many concurrent code-writing agents, runs that
-outlive this session, PRs per task), use the Cursor team's `orchestrate` plugin
-instead. It spawns cloud agents via the Cursor SDK, isolates each on its own
-branch, and reconciles handoffs from disk/git. It needs `CURSOR_API_KEY` + `bun`
-(and optionally Slack). Invoke it explicitly with `/orchestrate <goal>`.
+outlive this session, PRs per task), escalate to the Cursor team's `orchestrate`
+plugin **if it's installed**. It spawns cloud agents via the Cursor SDK, isolates
+each on its own branch, and reconciles handoffs from disk/git. It requires its
+own setup (credentials and a runtime, plus optional Slack) — check its docs — and
+is invoked explicitly (e.g. `/orchestrate <goal>`).
+
+> Cursor subagent mechanics here were checked on 2026-06-15. The details most
+> likely to drift: the cloud `orchestrate` plugin's setup, and whether Cursor
+> caps concurrent background subagents (not officially documented). Re-verify
+> those if they matter to your run.
 
 ## Checklist
 
