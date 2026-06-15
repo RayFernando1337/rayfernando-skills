@@ -86,6 +86,9 @@ dedicated verifier workers for the ~20% of findings the deliverable hinges on.
   `single-sourced` (flag). For citations, ≥3 independent agreement ≈ 95% reliable.
 - **Decompose then verify (SAFE).** Split a long-form claim into atomic facts;
   check each against a fresh source rather than judging the paragraph whole.
+- **Panel cross-check.** Running the same high-stakes/contested claim across
+  several models and synthesizing the results (consensus vs lone-model) is a
+  strong cross-check — see SKILL "Multi-model fan-out".
 
 ## 6. Verify the deliverable, not just the handoffs
 

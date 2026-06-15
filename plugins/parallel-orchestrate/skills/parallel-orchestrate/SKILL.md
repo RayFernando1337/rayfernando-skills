@@ -155,6 +155,8 @@ multi-wave run one unchecked bad handoff compounds into the synthesis.
   "double-check yourself"; give an oracle or a separate verifier.)
 - **Dedicated verifier worker** for high-stakes / contested / citation-heavy
   claims — give it the claim + sources but **not** the generator's reasoning.
+  For the highest-stakes calls, a multi-model panel + synthesis checks harder
+  still (see "Multi-model fan-out").
 - **Measure & cross-check** — re-run the oracle, recount from source, require ≥2
   independent sources.
 - **Escalate** low-confidence / conflicting findings (re-task with a tighter
@@ -177,11 +179,43 @@ taste/judgment, verify the sub-claims, don't fake a grade. Full playbook:
 | Competing attempts at the same task | `best-of-n-runner` | Each runs in an **isolated git worktree/branch** — safe from shared-checkout clobbering; you then compare attempts and merge the winner. |
 
 Only pass `model` when the user explicitly requests a specific model (and if a
-requested model is unavailable, say so rather than silently substituting).
+requested model is unavailable, say so rather than silently substituting). The
+deliberate exception is a user-requested multi-model panel — see "Multi-model
+fan-out" below.
 
 For review/audit slices, Cursor also exposes specialized subagents when available
 (e.g. `bugbot`, `security-review`, `ci-investigator`, `ci-watcher`) — prefer them
 for those slice types.
+
+## Multi-model fan-out (panel + synthesize)
+
+The default fan-out runs each *slice* on one model. A **high-stakes** slice —
+an architecture/design call, a risky correctness question, a security or audit
+pass, or a key research synthesis — fan the **same** slice out to a **panel of
+different models**, then act as judge and synthesizer.
+
+Reconcile; don't concatenate. Label **CONSENSUS** (2+ models agree) vs
+**lone-model** findings, resolve contradictions, dedupe overlap, and carry each
+claim's confidence into one answer. The synthesis is where most of the value
+lives — per OpenRouter's Fusion research, roughly three-quarters of the gain
+comes from the synthesis step, not the model diversity — so invest there rather
+than stapling outputs together. Evidence: a panel of independent models + a
+judge + a synthesizer matched and surpassed a single top-tier model on hard,
+deep-research problems (OpenRouter, *Surpassing Frontier Performance with
+Fusion*, openrouter.ai/blog/announcements/fusion-beats-frontier/).
+
+Run it in Cursor: pass a **different `model`** to each sibling `Task` worker on
+the same slice, launch them in **one message** with `run_in_background: true`
+(parallel), then synthesize. This is the one time the orchestrator picks
+models — only when the user asks for a multi-model pass or the slice is
+explicitly high-stakes — so **ask which models to use; don't guess slugs.**
+That's the deliberate exception to the default rule (otherwise don't set
+`model`).
+
+Caveat: a panel multiplies token cost (you pay every worker) and adds latency —
+reserve it for high-stakes slices, not routine ones. The adversarial multi-model
+review (a panel of reviewer models + one synthesized verdict) is this same
+pattern applied to code review.
 
 ## Worker prompt = the contract
 

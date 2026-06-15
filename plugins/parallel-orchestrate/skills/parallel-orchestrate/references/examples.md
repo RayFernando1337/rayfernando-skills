@@ -102,6 +102,23 @@ report. Pairs well with specialized review subagents when available.
 Only with **disjoint** file sets per worker, or `best-of-n-runner` (one git
 worktree each). Otherwise do research in parallel and edits serially.
 
+### Multi-model panel (the Fusion pattern)
+
+When a slice is **high-stakes** — a design call, a risky correctness/security
+question, a key research synthesis — fan the **same** prompt to N different
+models in one parallel wave (ask the user which models; don't guess slugs),
+then synthesize one answer rather than trusting any single output:
+
+- **Label CONSENSUS** (2+ models agree) vs **lone-model** findings.
+- **Resolve contradictions** instead of averaging them.
+- **Dedupe overlap** and carry each claim's confidence forward.
+
+The synthesis carries most of the gain (per OpenRouter's Fusion research, ~3/4
+from the synthesis step, not the diversity), and cost/latency scale with panel
+size — so reserve it for high-stakes slices. The adversarial multi-model code
+review (reviewer panel → one synthesized verdict) is the same recipe — see the
+SKILL "Multi-model fan-out" section for the Cursor mechanics.
+
 ## Anti-patterns
 
 - **Pointing read-only workers at remote/un-staged data.** `explore` workers are
