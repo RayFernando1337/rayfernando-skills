@@ -21,8 +21,14 @@ jobs:
 
       - name: Build claude.ai-compatible zips
         run: |
+          declare -A seen
           for skill_dir in plugins/*/skills/*; do
             name=$(basename "$skill_dir")
+            if [[ -n "${seen[$name]:-}" ]]; then
+              echo "ERROR: duplicate skill basename '$name' from '$skill_dir' and '${seen[$name]}'" >&2
+              exit 1
+            fi
+            seen[$name]="$skill_dir"
             (cd "$(dirname "$skill_dir")" && zip -r "${GITHUB_WORKSPACE}/${name}.zip" "$name")
           done
           ls -la "${GITHUB_WORKSPACE}"/*.zip
