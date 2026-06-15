@@ -4,13 +4,24 @@ A collection of installable **Skill files** for AI coding agents. It started wit
 
 [![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-> **`running-bug-review-board`** — point an AI agent at your *live* app and it QAs it like a real, slightly unforgiving customer: drives the UI, files structured P0/P1/P2 bug reports with reproduction steps, and gives you a **YES/NO** "is this ready to ship?" verdict — plus a self-contained HTML report you can hand to the team.
+## Skills in this collection
 
-**Jump to:** [What you get](#what-you-get) · [See the output](#see-the-output) · [Example prompts](#example-prompts) · [Quick start](#quick-start) · [Install](#install) · [How it works](#how-the-skill-file-works) · [What's inside](#whats-inside-the-skill) · [Contributing](#contributing)
+| Skill | What it does | Primary install (Claude Code) |
+|---|---|---|
+| **[running-bug-review-board](#running-bug-review-board--real-user-qa)** · QA | Point an AI agent at your *live* app; it QAs like a real user, files P0/P1/P2 bug reports, and returns a **YES/NO** ship verdict plus a shareable HTML report. | `/plugin install running-bug-review-board@rayfernando-skills` |
+| **[parallel-orchestrate](#parallel-orchestrate--fan-out-to-parallel-agents)** · Cursor + Codex | Fan one big research, analysis, or audit job out to parallel subagents, verify each structured handoff, and synthesize one deliverable. | `/plugin install parallel-orchestrate@rayfernando-skills` |
+
+Each skill installs into Claude Code, Cursor, Codex, and ~50 other agents — full per-agent steps are in the sections below.
+
+**Jump to:** [running-bug-review-board (QA)](#running-bug-review-board--real-user-qa) · [parallel-orchestrate](#parallel-orchestrate--fan-out-to-parallel-agents) · [Repo structure](#repo-structure) · [Contributing](#contributing)
 
 ---
 
-## What you get
+## running-bug-review-board — real-user QA
+
+> **`running-bug-review-board`** — point an AI agent at your *live* app and it QAs it like a real, slightly unforgiving customer: drives the UI, files structured P0/P1/P2 bug reports with reproduction steps, and gives you a **YES/NO** "is this ready to ship?" verdict — plus a self-contained HTML report you can hand to the team.
+
+### What you get
 
 Most AI workflows point at *code review* and miss where users actually hit bugs: the live app, on a real phone, with stale storage from yesterday and a flaky auth provider the unit tests never see. This Skill file encodes a battle-tested QA cadence so an agent can find those bugs for you.
 
@@ -22,7 +33,7 @@ Most AI workflows point at *code review* and miss where users actually hit bugs:
 
 ---
 
-## See the output
+### See the output
 
 The agent regenerates a self-contained HTML report at the end of every pass — designed to read like a magazine, not a Kanban board (editorial typography, ink-on-paper palette, no chips or pills). Here is what you instantly get:
 
@@ -35,7 +46,7 @@ It is responsive, too — on a phone the dashboard collapses to a single column 
 
 ---
 
-## Example prompts
+### Example prompts
 
 Once the skill is installed, just ask your agent in plain language:
 
@@ -55,7 +66,7 @@ The skill activates on phrases like *"QA this"*, *"is this ready to ship?"*, *"f
 
 ---
 
-## Quick start
+### Quick start
 
 After [installing](#install), the agent walks itself through:
 
@@ -78,11 +89,11 @@ This creates `docs/qa/` with the bug template, run-report skeletons, gates check
 
 ---
 
-## Install
+### Install
 
 Pick the section for the agent you use. Each one installs the same Skill file; they differ only in how the agent discovers it.
 
-### Claude Code
+#### Claude Code
 
 ```
 /plugin marketplace add RayFernando1337/rayfernando-skills
@@ -91,7 +102,7 @@ Pick the section for the agent you use. Each one installs the same Skill file; t
 
 To pin a specific release tag, append it to the marketplace add (e.g. `@v0.4.0`). Docs: [code.claude.com/docs/en/plugin-marketplaces](https://code.claude.com/docs/en/plugin-marketplaces).
 
-### Factory Droid
+#### Factory Droid
 
 ```bash
 droid plugin marketplace add https://github.com/RayFernando1337/rayfernando-skills
@@ -100,7 +111,7 @@ droid plugin install running-bug-review-board@rayfernando-skills
 
 Factory Droid reads the same `.claude-plugin/marketplace.json` Claude Code uses. Docs: [docs.factory.ai/cli/configuration/plugins](https://docs.factory.ai/cli/configuration/plugins).
 
-### Codex (app, desktop, IDE, and CLI)
+#### Codex (app, desktop, IDE, and CLI)
 
 On Codex CLI, add the marketplace and install:
 
@@ -117,7 +128,7 @@ On older Codex CLI without `plugin add`, open Codex, type `/plugins`, switch to 
 You are likely running a cached `running-bug-review-board` 0.3.0 install. Update or reinstall `running-bug-review-board@rayfernando-skills`, then restart Codex (app, desktop, IDE, or CLI) so it refreshes the plugin cache. (0.3.1+ ships Codex-valid metadata and the release pipeline now validates it.)
 </details>
 
-### Cursor
+#### Cursor
 
 Cursor's `/add-plugin` is reserved for the [cursor.com/marketplace](https://cursor.com/marketplace) listings, so for this repo use the cross-vendor installer — it writes the Skill folder into `~/.cursor/skills/`, which Cursor reads on startup:
 
@@ -127,7 +138,7 @@ npx skills add https://github.com/RayFernando1337/rayfernando-skills/tree/main/p
 
 Docs: [cursor.com/docs/skills](https://cursor.com/docs/skills).
 
-### Cross-vendor: `npx skills add`
+#### Cross-vendor: `npx skills add`
 
 The [`vercel-labs/skills`](https://github.com/vercel-labs/skills) installer detects every supported agent CLI on your machine and writes the Skill folder into each one's expected location (Claude Code, Cursor, Codex, Factory Droid, Windsurf, Zencoder, and ~50 others):
 
@@ -137,7 +148,7 @@ npx skills add https://github.com/RayFernando1337/rayfernando-skills/tree/main/p
 
 Add `-a <agent>` to target one tool (`-a cursor`, `-a codex`, `-a droid`) or `--all` for every detected agent.
 
-### claude.ai (Settings → Features → Skills)
+#### claude.ai (Settings → Features → Skills)
 
 Download `running-bug-review-board.zip` from the [latest release](https://github.com/RayFernando1337/rayfernando-skills/releases/latest) and upload it. To build the zip from a local clone (claude.ai expects a zip whose root contains `SKILL.md`):
 
@@ -146,7 +157,7 @@ cd plugins/running-bug-review-board/skills
 zip -r ../../../running-bug-review-board.zip running-bug-review-board
 ```
 
-### Manual install (any other agent)
+#### Manual install (any other agent)
 
 Clone once and symlink the Skill folder into whichever directory your agent reads:
 
@@ -160,14 +171,45 @@ Replace `~/.<agent>/skills/` with your agent's path (`~/.cursor/skills/`, `~/.co
 
 ---
 
-## Also in this collection: parallel-orchestrate
+### How it works
+
+- **Drives the live app.** The agent works through URLs and clicks; marking PASS from code inspection alone is forbidden.
+- **Three hats, one pass.** Every pass wears PM (does it still deliver the promise?), QA (run the user scenarios with evidence), and Engineer (catch invalidated assumptions). Finding gaps is the point.
+- **BRB cadence.** Bugs live in a versioned folder with status transitions (`open → in-progress → fixed → verified`). P0/P1/P2 tells the team what to ship and what to defer. Triage happens in a separate **Interactive Bug Review Board** session so triage bias never contaminates discovery.
+- **Tool- and repo-agnostic.** Adopts whatever conventions exist and scaffolds folders when there are none. Parallel or sequential QA modes.
+
+#### Browser & Computer Use
+
+The agent drives the UI with the best driver your environment has, falling back gracefully — so a pass succeeds whether you're in Cursor, another IDE, or a headless cloud VM:
+
+1. **cursor-ide-browser** MCP (default inside Cursor)
+2. **[Chrome DevTools for agents](https://github.com/ChromeDevTools/chrome-devtools-mcp)** (`chrome-devtools-mcp`) — auto-waits for results (fewer flaky races) and adds network / console / Lighthouse / accessibility introspection; can attach to your *real signed-in Chrome* so auth flows don't get bot-flagged
+3. **browser-use** MCP / **Playwright**
+4. **Codex Computer Use** (macOS) — a human-fidelity pass that sees, clicks, and types in the *real* app, and the only way to reach a native macOS app
+5. Manual driving with screenshot/console relay
+
+Details and "drive like a human (don't trip the tests)" recipes live in the [browser playbook](plugins/running-bug-review-board/skills/running-bug-review-board/references/browser-playbook.md) and the [Computer Use playbook](plugins/running-bug-review-board/skills/running-bug-review-board/references/computer-use-playbook.md). For iOS/iPadOS apps the skill **orchestrates** and defers simulator driving to the [iOS community's purpose-built skills](plugins/running-bug-review-board/skills/running-bug-review-board/references/ios-simulator-playbook.md) — and never spins up an iOS simulator for a web-only app.
+
+---
+
+### What's inside
+
+Each Skill file uses **progressive disclosure**: a lean `SKILL.md` entry point, with references loaded only when needed. Auditing the skill (or asking your own agent to security-check it) starts at:
+
+- [`SKILL.md`](plugins/running-bug-review-board/skills/running-bug-review-board/SKILL.md) — the entry point: workflow, surfaces, modes, deliverables.
+- [`references/`](plugins/running-bug-review-board/skills/running-bug-review-board/references/) — the detailed playbooks (discovery, test plan, browser, Computer Use, iOS, trackers, triage, HTML report, extending).
+- [`scripts/`](plugins/running-bug-review-board/skills/running-bug-review-board/scripts/) — tiny shell helpers (scaffold a QA folder, list bugs needing tracker sync/pull). No magic; the agent does the work.
+
+---
+
+## parallel-orchestrate — fan out to parallel agents
 
 Turn one big task into a team of agents. `parallel-orchestrate` is an orchestrator-worker skill: the lead agent discovers the shape of the work, splits it into independent slices, fans them out to parallel workers, verifies each structured handoff, and synthesizes one deliverable. It ships in two tool-tuned variants with different prompts:
 
-- **`parallel-orchestrate`** — for **Cursor**, built around the `Task` tool and Multitask Mode (local subagents on a shared filesystem).
-- **`parallel-orchestrate-codex`** — for **Codex**, built around Codex subagents, `spawn_agents_on_csv`, `config.toml` limits, and `codex exec` fleets.
+- **[`parallel-orchestrate`](plugins/parallel-orchestrate/skills/parallel-orchestrate/SKILL.md)** — for **Cursor**, built around the `Task` tool and Multitask Mode (local subagents on a shared filesystem).
+- **[`parallel-orchestrate-codex`](plugins/parallel-orchestrate-codex/skills/parallel-orchestrate-codex/SKILL.md)** — for **Codex**, built around Codex subagents, `spawn_agents_on_csv`, `config.toml` limits, and `codex exec` fleets.
 
-It activates on phrases like "fan out", "spin up multiple agents", "parallelize this", "analyze all my X and find patterns", "research A/B/C and build a roadmap", or "audit this repo".
+Reach for it when a single linear pass would be slow and the work splits into independent slices — big research, analysis, audits, or codebase/data exploration. It activates on phrases like "fan out", "spin up multiple agents", "parallelize this", "analyze all my X and find patterns", "research A/B/C and build a roadmap", or "audit this repo".
 
 **Cursor:**
 
@@ -188,36 +230,7 @@ codex plugin add parallel-orchestrate-codex@rayfernando-skills
 
 ---
 
-## How the skill file works
-
-- **Drives the live app.** The agent works through URLs and clicks; marking PASS from code inspection alone is forbidden.
-- **Three hats, one pass.** Every pass wears PM (does it still deliver the promise?), QA (run the user scenarios with evidence), and Engineer (catch invalidated assumptions). Finding gaps is the point.
-- **BRB cadence.** Bugs live in a versioned folder with status transitions (`open → in-progress → fixed → verified`). P0/P1/P2 tells the team what to ship and what to defer. Triage happens in a separate **Interactive Bug Review Board** session so triage bias never contaminates discovery.
-- **Tool- and repo-agnostic.** Adopts whatever conventions exist and scaffolds folders when there are none. Parallel or sequential QA modes.
-
-### Browser & Computer Use
-
-The agent drives the UI with the best driver your environment has, falling back gracefully — so a pass succeeds whether you're in Cursor, another IDE, or a headless cloud VM:
-
-1. **cursor-ide-browser** MCP (default inside Cursor)
-2. **[Chrome DevTools for agents](https://github.com/ChromeDevTools/chrome-devtools-mcp)** (`chrome-devtools-mcp`) — auto-waits for results (fewer flaky races) and adds network / console / Lighthouse / accessibility introspection; can attach to your *real signed-in Chrome* so auth flows don't get bot-flagged
-3. **browser-use** MCP / **Playwright**
-4. **Codex Computer Use** (macOS) — a human-fidelity pass that sees, clicks, and types in the *real* app, and the only way to reach a native macOS app
-5. Manual driving with screenshot/console relay
-
-Details and "drive like a human (don't trip the tests)" recipes live in the [browser playbook](plugins/running-bug-review-board/skills/running-bug-review-board/references/browser-playbook.md) and the [Computer Use playbook](plugins/running-bug-review-board/skills/running-bug-review-board/references/computer-use-playbook.md). For iOS/iPadOS apps the skill **orchestrates** and defers simulator driving to the [iOS community's purpose-built skills](plugins/running-bug-review-board/skills/running-bug-review-board/references/ios-simulator-playbook.md) — and never spins up an iOS simulator for a web-only app.
-
----
-
-## What's inside the skill
-
-Each Skill file uses **progressive disclosure**: a lean `SKILL.md` entry point, with references loaded only when needed. Auditing the skill (or asking your own agent to security-check it) starts at:
-
-- [`SKILL.md`](plugins/running-bug-review-board/skills/running-bug-review-board/SKILL.md) — the entry point: workflow, surfaces, modes, deliverables.
-- [`references/`](plugins/running-bug-review-board/skills/running-bug-review-board/references/) — the detailed playbooks (discovery, test plan, browser, Computer Use, iOS, trackers, triage, HTML report, extending).
-- [`scripts/`](plugins/running-bug-review-board/skills/running-bug-review-board/scripts/) — tiny shell helpers (scaffold a QA folder, list bugs needing tracker sync/pull). No magic; the agent does the work.
-
-### Repo structure
+## Repo structure
 
 ```
 rayfernando-skills/
@@ -296,7 +309,7 @@ Ray spent 12 years at Apple working across many parts of the system. The lesson 
 
 ## Changelog
 
-This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/). Recent highlights: a Computer Use + Chrome DevTools driver playbook, an editorial HTML report (Zite + Dieter Rams), and confirmed two-way issue-tracker sync. Full history in [`CHANGELOG.md`](CHANGELOG.md).
+This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/). Recent highlights: a new `parallel-orchestrate` skill (Cursor and Codex variants) for parallel agent fan-out; plus a Computer Use + Chrome DevTools driver playbook, an editorial HTML report (Zite + Dieter Rams), and confirmed two-way issue-tracker sync. Full history in [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 

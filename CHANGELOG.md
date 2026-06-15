@@ -32,6 +32,23 @@ All notable changes to this collection are documented here. The format follows [
   builds one claude.ai-compatible zip per skill folder and attaches
   all of them. The `running-bug-review-board` plugin is unchanged.
 
+### Changed
+
+- **README reworked into a multi-skill collection landing page.** It now
+  opens with a "Skills in this collection" overview and gives
+  `parallel-orchestrate` a first-class section (per-tool install for
+  Cursor, Codex, and Claude Code) alongside the existing
+  `running-bug-review-board` QA depth, which is preserved under its own
+  section.
+- **`parallel-orchestrate` (Cursor variant) hardened after a multi-model
+  adversarial review.** Corrected the `browser-use` (stateful, can't be
+  fanned out) and `explore` (read-only, no MCP/internet) capability
+  notes, gated the cloud-orchestrate escalation on "if installed",
+  separated competing-attempt worktrees from disjoint edits, and added
+  `Coverage` + `Confidence & risk` handoff fields, a batch-into-waves
+  concurrency note, and return-only-the-handoff / no-recursion worker
+  guardrails.
+
 [0.5.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.5.0
 
 ## [0.4.0] — 2026-05-29
