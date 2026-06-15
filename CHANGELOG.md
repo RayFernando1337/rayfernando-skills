@@ -4,6 +4,36 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-06-15
+
+### Added
+
+- **`parallel-orchestrate` — an orchestrator-worker skill for fanning
+  one big task out to a team of agents.** The lead agent discovers the
+  shape of the work, verifies coverage, splits it into independent
+  slices, fans them out to parallel workers, verifies each structured
+  handoff, and synthesizes one deliverable. Built for large research,
+  analysis, audits, and codebase or data exploration where a single
+  linear pass would be slow.
+- **Two tool-tuned variants with different prompts.**
+  `parallel-orchestrate` (for **Cursor**) is built around the `Task`
+  tool and Multitask Mode — local subagents on a shared filesystem.
+  `parallel-orchestrate-codex` (for **Codex**) is built around Codex
+  subagents, `spawn_agents_on_csv`, `config.toml` limits, and
+  `codex exec` fleets; it ships an `agents/openai.yaml` and a
+  `recommended-config.md` for role and concurrency setup. Both share
+  the same orchestrator-worker principles and verified-handoff
+  discipline (`references/handoff-format.md`,
+  `references/verification.md`).
+- **Marketplace catalog updated.** Both plugins are registered in
+  `.claude-plugin/marketplace.json`, each with its own
+  `plugins/<name>/.claude-plugin/plugin.json`, and the marketplace
+  `metadata.version` is bumped to **0.5.0**. The release workflow now
+  builds one claude.ai-compatible zip per skill folder and attaches
+  all of them. The `running-bug-review-board` plugin is unchanged.
+
+[0.5.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.5.0
+
 ## [0.4.0] — 2026-05-29
 
 ### Added

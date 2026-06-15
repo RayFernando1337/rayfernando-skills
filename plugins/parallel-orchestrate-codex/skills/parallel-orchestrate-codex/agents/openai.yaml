@@ -1,0 +1,7 @@
+interface:
+  display_name: "Parallel Orchestrate"
+  short_description: "Fan out independent work to Codex subagents, verify evidence, and synthesize structured handoffs."
+  default_prompt: "Use parallel-orchestrate-codex to discover the task shape, verify coverage, decompose into independent slices, spawn Codex subagents, collect evidence-backed handoffs, verify important claims, and synthesize one deliverable."
+
+policy:
+  allow_implicit_invocation: true

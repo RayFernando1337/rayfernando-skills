@@ -1,6 +1,6 @@
 # rayfernando-skills
 
-A collection of installable **Skill files** for AI coding agents. Today it ships one — and it is the one most teams are missing.
+A collection of installable **Skill files** for AI coding agents. It started with the one most teams are missing — real-user QA — and now also ships `parallel-orchestrate`, an orchestrator-worker skill that fans one big task out to a team of agents (Cursor and Codex variants).
 
 [![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
@@ -160,6 +160,34 @@ Replace `~/.<agent>/skills/` with your agent's path (`~/.cursor/skills/`, `~/.co
 
 ---
 
+## Also in this collection: parallel-orchestrate
+
+Turn one big task into a team of agents. `parallel-orchestrate` is an orchestrator-worker skill: the lead agent discovers the shape of the work, splits it into independent slices, fans them out to parallel workers, verifies each structured handoff, and synthesizes one deliverable. It ships in two tool-tuned variants with different prompts:
+
+- **`parallel-orchestrate`** — for **Cursor**, built around the `Task` tool and Multitask Mode (local subagents on a shared filesystem).
+- **`parallel-orchestrate-codex`** — for **Codex**, built around Codex subagents, `spawn_agents_on_csv`, `config.toml` limits, and `codex exec` fleets.
+
+It activates on phrases like "fan out", "spin up multiple agents", "parallelize this", "analyze all my X and find patterns", "research A/B/C and build a roadmap", or "audit this repo".
+
+**Cursor:**
+
+```bash
+npx skills add https://github.com/RayFernando1337/rayfernando-skills/tree/main/plugins/parallel-orchestrate/skills/parallel-orchestrate -a cursor
+```
+
+**Codex:**
+
+```bash
+codex plugin marketplace add RayFernando1337/rayfernando-skills
+codex plugin add parallel-orchestrate-codex@rayfernando-skills
+```
+
+**Claude Code:** `/plugin install parallel-orchestrate@rayfernando-skills` (Cursor-tuned) or `/plugin install parallel-orchestrate-codex@rayfernando-skills` (Codex-tuned).
+
+**Cross-vendor (`npx skills add`):** point the installer at either skill folder and pass `-a <agent>` (e.g. `-a codex`, `-a claude-code`, `--all`).
+
+---
+
 ## How the skill file works
 
 - **Drives the live app.** The agent works through URLs and clicks; marking PASS from code inspection alone is forbidden.
@@ -196,37 +224,52 @@ rayfernando-skills/
 ├── .claude-plugin/
 │   └── marketplace.json                 # marketplace catalog
 ├── plugins/
-│   └── running-bug-review-board/
+│   ├── running-bug-review-board/
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json               # plugin manifest
+│   │   └── skills/
+│   │       └── running-bug-review-board/
+│   │           ├── SKILL.md              # lean entry point; references load on demand
+│   │           ├── references/           # loaded on demand
+│   │           │   ├── workflow.md
+│   │           │   ├── discovering-the-app.md
+│   │           │   ├── test-plan.md
+│   │           │   ├── test-accounts.md
+│   │           │   ├── session-hygiene.md
+│   │           │   ├── browser-playbook.md
+│   │           │   ├── computer-use-playbook.md
+│   │           │   ├── ios-simulator-playbook.md
+│   │           │   ├── parallel-coordinator.md
+│   │           │   ├── sequential-wrapup.md
+│   │           │   ├── bug-filing.md
+│   │           │   ├── gate-merge.md
+│   │           │   ├── issue-trackers.md
+│   │           │   ├── brb-interactive.md
+│   │           │   ├── triage-heuristics.md
+│   │           │   ├── html-report-style-guide.md
+│   │           │   ├── extending-the-skill.md
+│   │           │   └── templates/        # bug, test-plan, run-report, merge, BRB,
+│   │           │       │                 #   qa-config, and html-report/ + samples/
+│   │           │       └── html-report/
+│   │           └── scripts/
+│   │               ├── scaffold-qa.sh           # create the QA folder layout
+│   │               ├── bugs-needing-sync.sh     # list bugs missing a tracker ID
+│   │               └── bugs-needing-pull.sh     # list bugs with stale tracker sync
+│   ├── parallel-orchestrate/                     # Cursor variant (Task tool + Multitask Mode)
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   └── skills/
+│   │       └── parallel-orchestrate/
+│   │           ├── SKILL.md
+│   │           └── references/           # examples, handoff-format, verification
+│   └── parallel-orchestrate-codex/               # Codex variant (subagents + config.toml)
 │       ├── .claude-plugin/
-│       │   └── plugin.json               # plugin manifest
+│       │   └── plugin.json
 │       └── skills/
-│           └── running-bug-review-board/
-│               ├── SKILL.md              # lean entry point; references load on demand
-│               ├── references/           # loaded on demand
-│               │   ├── workflow.md
-│               │   ├── discovering-the-app.md
-│               │   ├── test-plan.md
-│               │   ├── test-accounts.md
-│               │   ├── session-hygiene.md
-│               │   ├── browser-playbook.md
-│               │   ├── computer-use-playbook.md
-│               │   ├── ios-simulator-playbook.md
-│               │   ├── parallel-coordinator.md
-│               │   ├── sequential-wrapup.md
-│               │   ├── bug-filing.md
-│               │   ├── gate-merge.md
-│               │   ├── issue-trackers.md
-│               │   ├── brb-interactive.md
-│               │   ├── triage-heuristics.md
-│               │   ├── html-report-style-guide.md
-│               │   ├── extending-the-skill.md
-│               │   └── templates/        # bug, test-plan, run-report, merge, BRB,
-│               │       │                 #   qa-config, and html-report/ + samples/
-│               │       └── html-report/
-│               └── scripts/
-│                   ├── scaffold-qa.sh           # create the QA folder layout
-│                   ├── bugs-needing-sync.sh     # list bugs missing a tracker ID
-│                   └── bugs-needing-pull.sh     # list bugs with stale tracker sync
+│           └── parallel-orchestrate-codex/
+│               ├── SKILL.md
+│               ├── agents/openai.yaml
+│               └── references/           # adaptation-notes, examples, handoff-format, recommended-config, verification
 ├── scripts/
 │   └── validate-skill-metadata.py        # release-time Codex-metadata validator
 ├── .github/workflows/release.yml         # builds the claude.ai zip on tag push

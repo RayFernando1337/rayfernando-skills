@@ -19,25 +19,31 @@ jobs:
       - name: Validate skill metadata
         run: python3 scripts/validate-skill-metadata.py
 
-      - name: Build claude.ai-compatible zip
+      - name: Build claude.ai-compatible zips
         run: |
-          cd plugins/running-bug-review-board/skills
-          zip -r "${GITHUB_WORKSPACE}/running-bug-review-board.zip" running-bug-review-board
+          for skill_dir in plugins/*/skills/*; do
+            name=$(basename "$skill_dir")
+            (cd "$(dirname "$skill_dir")" && zip -r "${GITHUB_WORKSPACE}/${name}.zip" "$name")
+          done
+          ls -la "${GITHUB_WORKSPACE}"/*.zip
 
       - name: Verify zip contents
         run: |
-          unzip -l running-bug-review-board.zip
-          python3 - <<'PY'
-          from zipfile import ZipFile
-          with ZipFile("running-bug-review-board.zip") as archive:
-              if "running-bug-review-board/SKILL.md" not in archive.namelist():
-                  raise SystemExit("running-bug-review-board/SKILL.md missing from zip")
-          PY
+          for skill_dir in plugins/*/skills/*; do
+            name=$(basename "$skill_dir")
+            echo "== ${name}.zip =="
+            unzip -l "${GITHUB_WORKSPACE}/${name}.zip"
+            if ! unzip -l "${GITHUB_WORKSPACE}/${name}.zip" | grep -qF "${name}/SKILL.md"; then
+              echo "${name}/SKILL.md missing from ${name}.zip" >&2
+              exit 1
+            fi
+          done
 
-      - name: Create GitHub Release with skill zip
+      - name: Create GitHub Release with skill zips
         uses: softprops/action-gh-release@v2
         with:
-          files: running-bug-review-board.zip
+          files: |
+            *.zip
           generate_release_notes: true
           body: |
             ## Install
@@ -46,10 +52,12 @@ jobs:
             ```
             /plugin marketplace add RayFernando1337/rayfernando-skills@${{ github.ref_name }}
             /plugin install running-bug-review-board@rayfernando-skills
+            /plugin install parallel-orchestrate@rayfernando-skills
+            /plugin install parallel-orchestrate-codex@rayfernando-skills
             ```
 
             **claude.ai (Settings > Features > Skills):**
-            Download `running-bug-review-board.zip` below and upload it.
+            Download the skill zip you want below (`running-bug-review-board.zip`, `parallel-orchestrate.zip`, or `parallel-orchestrate-codex.zip`) and upload it.
 
             **Cursor / Codex / Droid:** see the [README](https://github.com/RayFernando1337/rayfernando-skills#install) for current install instructions.
 
