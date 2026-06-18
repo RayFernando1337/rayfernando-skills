@@ -4,6 +4,24 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+### Added
+
+- **`bootstrap-ios` — a router/loader meta-skill for Apple-platform app
+  agents.** It detects iOS, iPadOS, macOS, SwiftPM, Xcode, SwiftUI,
+  SwiftData/Core Data, Swift Testing, simulator, and build/debug work; then
+  routes agents to focused community Swift skills, XcodeBuildMCP, Merowing
+  public rules, AppCreator buildability ideas, and the existing
+  `running-bug-review-board` iOS QA playbook without vendoring third-party
+  content.
+- **Optional `bootstrap-ios-skills.sh` helper.** The helper dry-runs by
+  default in the docs, installs verified public GitHub skill folders through
+  `npx skills add`, points at concrete skill-folder URLs where repos keep
+  `SKILL.md` below root, and exposes optional XcodeBuildMCP agent-skill
+  initialization.
+- **Marketplace catalog updated.** `bootstrap-ios` is registered in
+  `.claude-plugin/marketplace.json`, the collection metadata version is bumped
+  to **0.6.0**, and the README now documents the new install path.
+
 ## [0.5.0] — 2026-06-15
 
 ### Added

@@ -1,6 +1,6 @@
 # rayfernando-skills
 
-A collection of installable **Skill files** for AI coding agents. It started with the one most teams are missing — real-user QA — and now also ships `parallel-orchestrate`, an orchestrator-worker skill that fans one big task out to a team of agents (Cursor and Codex variants).
+A collection of installable **Skill files** for AI coding agents. It started with the one most teams are missing — real-user QA — and now also ships `parallel-orchestrate`, an orchestrator-worker skill that fans one big task out to a team of agents (Cursor and Codex variants), plus `bootstrap-ios`, a single entry point for loading Ray's iOS/macOS agent skill stack.
 
 [![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
@@ -10,10 +10,11 @@ A collection of installable **Skill files** for AI coding agents. It started wit
 |---|---|---|
 | **[running-bug-review-board](#running-bug-review-board--real-user-qa)** · QA | Point an AI agent at your *live* app; it QAs like a real user, files P0/P1/P2 bug reports, and returns a **YES/NO** ship verdict plus a shareable HTML report. | `/plugin install running-bug-review-board@rayfernando-skills` |
 | **[parallel-orchestrate](#parallel-orchestrate--fan-out-to-parallel-agents)** · Cursor + Codex | Fan one big research, analysis, or audit job out to parallel subagents, verify each structured handoff, and synthesize one deliverable. | `/plugin install parallel-orchestrate@rayfernando-skills` |
+| **[bootstrap-ios](#bootstrap-ios--load-the-ios-agent-stack)** · iOS/macOS | One entry point for Swift, SwiftUI, SwiftData/Core Data, Swift Testing, Xcode build/test/simulator, XcodeBuildMCP, and curated community iOS skills. | `/plugin install bootstrap-ios@rayfernando-skills` |
 
 Each skill installs into Claude Code, Cursor, Codex, and ~50 other agents — full per-agent steps are in the sections below.
 
-**Jump to:** [running-bug-review-board (QA)](#running-bug-review-board--real-user-qa) · [parallel-orchestrate](#parallel-orchestrate--fan-out-to-parallel-agents) · [Repo structure](#repo-structure) · [Contributing](#contributing)
+**Jump to:** [running-bug-review-board (QA)](#running-bug-review-board--real-user-qa) · [parallel-orchestrate](#parallel-orchestrate--fan-out-to-parallel-agents) · [bootstrap-ios](#bootstrap-ios--load-the-ios-agent-stack) · [Repo structure](#repo-structure) · [Contributing](#contributing)
 
 ---
 
@@ -230,6 +231,47 @@ codex plugin add parallel-orchestrate-codex@rayfernando-skills
 
 ---
 
+## bootstrap-ios — load the iOS agent stack
+
+`bootstrap-ios` is a meta-skill for Apple-platform app work. It gives agents one
+place to start before touching iOS, iPadOS, macOS, Swift, SwiftUI, SwiftData,
+Core Data, Swift Testing, Xcode build/test/debug, Simulator, or App Intents.
+
+It does not try to paste every community Swift rule into context. It routes the
+agent to the right focused references and tools:
+
+- Paul Hudson / Hacking with Swift skill packs for SwiftUI, concurrency,
+  Swift Testing, and SwiftData.
+- Antoine van der Lee / SwiftLee skill packs, including Xcode Build
+  Optimization.
+- Official OpenAI build iOS/macOS plugin references.
+- Krzysztof Zablocki's public Merowing rules and rule-loader approach.
+- AppCreator buildability ideas.
+- XcodeBuildMCP for parseable Xcode build, test, simulator, and debug flows.
+
+**Install the skill:**
+
+```bash
+/plugin install bootstrap-ios@rayfernando-skills
+```
+
+**Cursor / cross-vendor install:**
+
+```bash
+npx skills add https://github.com/RayFernando1337/rayfernando-skills/tree/main/plugins/bootstrap-ios/skills/bootstrap-ios -a cursor
+```
+
+**Optional one-command helper, after installing or cloning:**
+
+```bash
+bash plugins/bootstrap-ios/skills/bootstrap-ios/scripts/bootstrap-ios-skills.sh --dry-run --agent cursor
+```
+
+Run without `--dry-run` only when you really want to install the public
+community skill packs into that agent environment.
+
+---
+
 ## Repo structure
 
 ```
@@ -275,14 +317,23 @@ rayfernando-skills/
 │   │       └── parallel-orchestrate/
 │   │           ├── SKILL.md
 │   │           └── references/           # examples, handoff-format, verification
-│   └── parallel-orchestrate-codex/               # Codex variant (subagents + config.toml)
+│   ├── parallel-orchestrate-codex/               # Codex variant (subagents + config.toml)
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   └── skills/
+│   │       └── parallel-orchestrate-codex/
+│   │           ├── SKILL.md
+│   │           ├── agents/openai.yaml
+│   │           └── references/           # adaptation-notes, examples, handoff-format, recommended-config, verification
+│   └── bootstrap-ios/                            # iOS/macOS router skill + optional installer helper
 │       ├── .claude-plugin/
 │       │   └── plugin.json
 │       └── skills/
-│           └── parallel-orchestrate-codex/
+│           └── bootstrap-ios/
 │               ├── SKILL.md
-│               ├── agents/openai.yaml
-│               └── references/           # adaptation-notes, examples, handoff-format, recommended-config, verification
+│               ├── references/           # workflow, skill map, XcodeBuildMCP, sources
+│               └── scripts/
+│                   └── bootstrap-ios-skills.sh
 ├── scripts/
 │   └── validate-skill-metadata.py        # release-time Codex-metadata validator
 ├── .github/workflows/release.yml         # builds the claude.ai zip on tag push
