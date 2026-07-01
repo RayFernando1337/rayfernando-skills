@@ -38,6 +38,9 @@ official docs describe it as experimental.
 - Decomposition recipes: data chunks, multi-stream research, repo audit, and
   parallel implementation with explicit ownership.
 - Continuous motion until every slice is terminal or explicitly out of scope.
+- Entropy-first decomposition: reduce uncertainty (dig locally, then attached
+  resources, then ask the user only if it pays) before slicing; cascade a
+  decomposition wave into an execution wave; order the plan least-to-most.
 
 ## Cursor-to-Codex Swaps
 
@@ -60,6 +63,8 @@ official docs describe it as experimental.
 | Dedicated verifier worker | Custom Codex verifier agent, normal `explorer`/`default` verifier prompts, or `spawn_agents_on_csv` verifier-per-row batch when available. |
 | "Verify before you trust" | Codex manager runs pre-fan-out gates, cheap handoff checks, separate verifier waves, and final deliverable validation. |
 | Recursive subplanner idea | Dropped from the default. Current docs say `agents.max_depth` defaults to `1`; raise it only for explicit recursive delegation. |
+| Entropy-first decomposition (dig locally then attached resources then ask only if it pays; scouting wave then execution wave; least-to-most) | Portable as-is; `update_plan` replaces `TodoWrite` for the living plan. |
+| "Route scouting/read waves to Composer 2.5 (fast) via the `model` field" | Route scouting/read waves to `gpt-5.5` at `low` effort (or `gpt-5.4-mini`) via the per-spawn `reasoning_effort` field. `model_reasoning_effort` is the config/TOML key. `service_tier` / `/fast` is a user-enabled speed tier, not a forced default. |
 
 ## Things That Do Not Translate Exactly
 
@@ -79,6 +84,12 @@ official docs describe it as experimental.
 - `~/.codex/skills` may be present in local/plugin flows, but the current
   official skill authoring locations emphasize `.agents/skills` and
   `$HOME/.agents/skills`.
+- Codex effort has two field names: the live per-spawn `spawn_agent` field is
+  `reasoning_effort`, while the config / custom-agent TOML key is
+  `model_reasoning_effort`. `service_tier` (`fast` / `flex`) and the `/fast`
+  toggle are user-facing speed levers, not general model routing. Reasoning
+  levels are `minimal`, `low`, `medium`, `high`, `xhigh`; `gpt-5.4-mini` and
+  `gpt-5.3-codex-spark` are lighter/faster options for read-heavy subagent work.
 
 ## Why the Final Skill Is Opinionated
 

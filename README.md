@@ -210,6 +210,8 @@ Turn one big task into a team of agents. **WAVE = Workers · Aggregate · Verify
 - **[`waves`](plugins/waves/skills/waves/SKILL.md)** — for **Cursor**, built around the `Task` tool and Multitask Mode (local subagents on a shared filesystem).
 - **[`waves-codex`](plugins/waves-codex/skills/waves-codex/SKILL.md)** — for **Codex**, built around Codex subagents, `spawn_agents_on_csv`, `config.toml` limits, and `codex exec` fleets.
 
+Two upgrades in 0.8.0: **entropy-first decomposition** — before slicing a vague, high-entropy goal ("build a Flappy Bird game") it reduces uncertainty along an information-gain ladder (dig locally → pull from attached resources → ask the user only if it pays), then cascades a decomposition wave into an execution wave, ordered least-to-most; and **per-slice model routing** — send cheap read/scouting waves to a fast model (Composer 2.5 on Cursor, `gpt-5.5` at `low` effort on Codex) and reserve frontier models for high-stakes verification and synthesis.
+
 Reach for it when a single linear pass would be slow and the work splits into independent slices — big research, analysis, audits, or codebase/data exploration. Because a run spawns more agents than usual, it's **opt-in: invoke it explicitly with `/waves` (or `/waves-codex`)** rather than relying on auto-trigger (`disable-model-invocation: true`). Good prompts to pair with it: "fan out", "spin up multiple agents", "parallelize this", "analyze all my X and find patterns", "research A/B/C and build a roadmap", or "audit this repo".
 
 **Cursor:**
@@ -360,7 +362,7 @@ Ray spent 12 years at Apple working across many parts of the system. The lesson 
 
 ## Changelog
 
-This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/). Recent highlights: a new `waves` skill (Cursor and Codex variants) for parallel agent fan-out; plus a Computer Use + Chrome DevTools driver playbook, an editorial HTML report (Zite + Dieter Rams), and confirmed two-way issue-tracker sync. Full history in [`CHANGELOG.md`](CHANGELOG.md).
+This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/). Recent highlights: entropy-first decomposition and per-slice model routing in `waves` (Cursor + Codex); the `waves` skill for parallel agent fan-out; plus a Computer Use + Chrome DevTools driver playbook, an editorial HTML report (Zite + Dieter Rams), and confirmed two-way issue-tracker sync. Full history in [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
