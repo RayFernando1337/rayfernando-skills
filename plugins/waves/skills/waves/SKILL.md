@@ -68,6 +68,52 @@ Adapted from `orchestrate`. These keep the run converging without coordination.
 6. **Verify before you trust.** A worker's `Status: success` is a claim, not
    evidence. Check each handoff against something re-openable before folding it
    into the synthesis. See "Verification" below and `references/verification.md`.
+7. **Decomposition is entropy reduction.** A vague goal is high-entropy — many
+   plausible plans still fit it. Your first job is to shrink that space (dig
+   locally, then pull from attached resources, then ask the user only if it
+   pays) *before* you slice it; slicing a high-entropy goal yields overlapping,
+   mis-sized slices. See "Entropy-first decomposition."
+
+## Entropy-first decomposition
+
+Before you fan out, treat the goal as an **entropy-reduction** problem: shrink
+how many plausible interpretations and plans still fit what you know. A vague,
+high-entropy request ("build a Flappy Bird game", "make my app faster") doesn't
+slice cleanly yet — reduce the uncertainty first, then decompose the
+low-entropy version. Name what's uncertain, because the two kinds resolve
+differently:
+
+- **Specification uncertainty** — what the *user* wants (ambiguous goal, missing
+  acceptance criteria, unstated constraints). Resolve by stating an explicit
+  assumption and proceeding — or, only when a wrong guess is expensive, by
+  asking.
+- **Environment / knowledge uncertainty** — facts you don't have yet but *can*
+  get (repo shape, schema, API behavior, current docs, data size). Resolve by
+  gathering, not by asking.
+
+Spend the cheapest action that buys the most certainty first — an
+**information-gain ladder**:
+
+1. **Dig locally first (cheap).** Tool calls in the main session (list, read the
+   schema/README, grep, sample data). This *is* Step 0, framed as entropy
+   reduction; it often collapses most of the uncertainty for free.
+2. **Then pull from attached resources.** If the environment doesn't hold the
+   answer, spawn a small **scouting wave** of research workers to fetch it (web,
+   Exa/Ref MCP, docs) — route these read-heavy slices to the cheap, fast model
+   (see "Picking the model per slice").
+3. **Ask the user last, and only when it pays.** Ask only when residual
+   *specification* uncertainty is high and the question's expected information
+   gain clearly beats its cost. Most requests carry enough to proceed on a
+   stated assumption; over-asking is its own failure mode.
+
+Then **cascade**: one high-level request becomes a **decomposition wave**
+(understand → locate unknowns → draft the plan) → verify → an **execution wave**
+that builds the ordered subtasks, with more scouting sub-waves wherever entropy
+stays high. Order the plan least-to-most — do the first-order subtasks first and
+let each verified result lower the uncertainty for the next. Keep the living
+plan in `TodoWrite`, and stop reducing when entropy is low enough to act: the
+verification gate doubles as "is the uncertainty low enough to commit?" (Worked
+example + wave shape: `references/examples.md`.)
 
 ## The loop
 
@@ -243,10 +289,31 @@ playbook: `references/verification.md`.
 | Browser testing / UI verification | `browser-use` | Navigates and screenshots. **Stateful: auto-resumes one shared instance, so don't fan out `browser-use` in parallel** — use a single serial UI slice. Needs agent mode (not `readonly`). |
 | Competing attempts at the same task | `best-of-n-runner` | Each runs in an **isolated git worktree/branch** — safe from shared-checkout clobbering; you then compare attempts and merge the winner. |
 
-Only pass `model` when the user explicitly requests a specific model (and if a
-requested model is unavailable, say so rather than silently substituting). The
-deliberate exception is a user-requested multi-model panel — see "Multi-model
-fan-out" below.
+### Picking the model per slice (cost / speed routing)
+
+Model choice is a cost/speed lever — route it, don't put every slice on a
+frontier model:
+
+- **Scouting / decomposition / read-heavy exploration → the cheap, fast model.**
+  Cursor's built-in `explore` and search subagents already default to the
+  Composer fast family (e.g. `composer-2.5-fast`) for exactly this: fast, cheap,
+  and tuned for codebase understanding and tool use — so read waves are cheap by
+  default and you often need not set `model` at all. To pin it, pass
+  `model: "composer-2.5"` (or `composer-2.5-fast`) on the `Task` worker, or set
+  the `model` field (`inherit` | `fast` | a slug) on a custom `.cursor/agents/`
+  subagent. This is the entropy-reduction workhorse.
+- **High-stakes verification, synthesis, or a multi-model panel → stronger
+  reasoning, chosen deliberately.** For a user-requested or high-stakes
+  multi-model panel, **ask which models to use; don't guess slugs** (see
+  "Multi-model fan-out").
+- Otherwise honor a model the user named; if a requested model is unavailable,
+  say so rather than silently substituting.
+
+Caveats: availability varies (Max Mode, plan, or admin restrictions can force a
+fallback to a compatible model); slugs drift, so read them off Cursor's model
+picker rather than hardcoding volatile ones; `inherit` can be unreliable in some
+surfaces (omit `model` to inherit). Respect the user's cost and model
+preferences over any default here.
 
 For review/audit slices, Cursor also exposes specialized subagents when available
 (e.g. `bugbot`, `security-review`, `ci-investigator`, `ci-watcher`) — prefer them
@@ -271,11 +338,11 @@ Fusion*, openrouter.ai/blog/announcements/fusion-beats-frontier/).
 
 Run it in Cursor: pass a **different `model`** to each sibling `Task` worker on
 the same slice, launch them in **one message** with `run_in_background: true`
-(parallel), then synthesize. This is the one time the orchestrator picks
-models — only when the user asks for a multi-model pass or the slice is
-explicitly high-stakes — so **ask which models to use; don't guess slugs.**
-That's the deliberate exception to the default rule (otherwise don't set
-`model`).
+(parallel), then synthesize. This is the **high-stakes** end of model routing —
+the orchestrator picks frontier models only when the user asks for a multi-model
+pass or the slice is explicitly high-stakes — so **ask which models to use;
+don't guess slugs.** (The cheap end — routing scouting and read-heavy waves to
+Composer 2.5 — is under "Picking the model per slice.")
 
 Caveat: a panel multiplies token cost (you pay every worker) and adds latency —
 reserve it for high-stakes slices, not routine ones. The adversarial multi-model
@@ -355,7 +422,11 @@ is invoked explicitly (e.g. `/orchestrate <goal>`).
 ## Checklist
 
 - [ ] Discovered the problem shape before decomposing.
+- [ ] Reduced entropy before slicing (dug locally → pulled from attached
+      resources → asked the user only if it paid); sliced the low-entropy goal.
 - [ ] Triaged each slice (worker type + verification tier).
+- [ ] Routed scouting / read-heavy waves to the cheap fast model (Composer 2.5);
+      reserved frontier / panel models for high-stakes slices.
 - [ ] Slices are independent (disjoint data/areas/paths).
 - [ ] Each worker prompt is fully self-contained (no reliance on chat history).
 - [ ] All `Task` calls sent in one message, `run_in_background: true`.

@@ -80,6 +80,27 @@ notifications (no polling).
 
 ## Reusable recipes
 
+### Decomposition of a vague build ("build a Flappy Bird game")
+
+A single high-level request expands into understanding + plan + subtasks:
+
+1. **Locate the entropy.** Specification unknowns (web or native? which
+   engine/framework? scope — one screen, score, difficulty curve?) vs
+   environment unknowns (what's already in the repo? build tooling? asset
+   pipeline?).
+2. **Reduce it cheaply.** Dig locally (read the repo, package manifest, existing
+   scaffolding). For anything the repo can't answer, spawn a small scouting wave
+   (e.g. one worker per candidate engine/framework) on the cheap fast model, and
+   verify. State assumptions for the specification gaps ("web canvas, vanilla
+   TS, one screen + score") instead of blocking — ask only the one question
+   whose answer would change the whole plan.
+3. **Decompose least-to-most.** The plan is now low-entropy: game loop → render
+   pipes/bird → input + gravity → collision → score/state → polish. First-order
+   subtasks first; each verified piece lowers the uncertainty for the next.
+4. **Execute in waves.** Build with disjoint-ownership workers (or serially —
+   see "Parallel writes"), verify the served artifact, and open another scouting
+   sub-wave only where a subtask is still high-entropy.
+
 ### Data-chunk fan-out (large corpus → patterns)
 
 Discover size → split into N disjoint ranges → N `explore` workers, each owning
@@ -123,6 +144,15 @@ SKILL "Multi-model fan-out" section for the Cursor mechanics.
 
 A wave isn't one move — pick the shape from how much you know about the problem.
 
+### Decomposition / scouting wave (reduce entropy before the big wave)
+When the goal is vague or high-entropy ("build a Flappy Bird game", "make it
+faster"), the first wave's job is to *reduce uncertainty*, not to build. Dig
+locally, then fan a small scouting wave at the unknowns (stack, constraints,
+current APIs, repo shape) on the cheap fast model, verify what came back, and
+only then decompose the low-entropy version into the execution wave. The scout
+de-risks the build the way the artifact wave does — see "Entropy-first
+decomposition" in the SKILL.
+
 ### Exploratory wave (you don't know the shape yet)
 When the problem space is unmapped (QA, an unfamiliar repo, "what's wrong here?"),
 send a **broad** first wave — many workers probing different surfaces/flows at
@@ -156,6 +186,9 @@ the seam a loop doesn't give you.
 - **Pointing read-only workers at remote/un-staged data.** `explore` workers are
   local + offline; pull and clean the data locally first (see SKILL Step 0.5).
 - **Fan out before discovering.** Produces overlapping or mis-sized slices.
+- **Slicing a high-entropy goal before reducing its uncertainty.** Vague goals
+  decompose into overlapping, mis-sized slices; dig locally → pull from attached
+  resources → ask only if it pays, *then* slice (see "Entropy-first decomposition").
 - **Fan out before verifying coverage.** Check counts/bounds/partition-sum first;
   a missing chunk is a silent blind spot.
 - **Thin worker prompts.** Workers can't see chat history; vague scope = drift.
@@ -166,3 +199,14 @@ the seam a loop doesn't give you.
   or `grep` critical files before depending on them.
 - **Parallel writes to shared paths.** Corruption. Partition or use worktrees.
 - **Forwarding raw handoffs as the answer.** The orchestrator must synthesize.
+
+## Grounding (why entropy-first works)
+
+Framing decomposition as uncertainty reduction is well-supported. Value a probe
+or clarification by its **expected information gain** / expected value of perfect
+information, and act once uncertainty is low enough — not before, not forever
+(Uncertainty of Thoughts, NeurIPS 2024; EVPI-based clarification, arXiv
+2511.08798). Separate **specification** uncertainty (assume, or ask when it
+pays) from **environment/model** uncertainty (gather via tools) (arXiv
+2606.19559). Then solve the low-entropy plan **least-to-most**, each step feeding
+the next (Least-to-Most, arXiv 2205.10625; Plan-and-Solve, arXiv 2305.04091).
