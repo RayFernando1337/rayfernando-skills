@@ -4,6 +4,63 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-07-01
+
+### Added
+
+- **Skill evals for both `waves` variants, modeled on Anthropic's
+  skill-creator methodology.** Each skill now ships `evals/evals.json`
+  (skill-creator format: `id`/`prompt`/`expected_output`/`files`/
+  `expectations`), fixtures with known ground truth (a 40-row support-ticket
+  CSV with seeded theme counts, plus three pre-written worker handoffs — one
+  containing a deliberately wrong count and a phantom citation for the
+  verification-catch scenario), and an `evals/README.md` documenting the
+  with-skill vs baseline A/B protocol in fresh sessions, PASS/FAIL grading
+  with cited evidence and no partial credit, blind grading, programmatic
+  recounts, benchmark-style aggregation, the iterate loop, and a retirement
+  check (trim guidance the base model has absorbed). Six behavior scenarios
+  per variant cover coverage-gated data fan-out, entropy-first handling of a
+  vague build, multi-stream research with confidence labels, catching a bad
+  handoff before synthesis, refusing unsafe parallel writes, and bounded-wave
+  stop discipline.
+- **`scripts/validate-skill-evals.py` + tests, wired into release CI.**
+  Stdlib-only validator: parses each `evals/evals.json`, checks
+  `skill_name` matches the skill directory, requires unique integer ids,
+  non-empty prompts/expectations, and verifies referenced fixture files exist
+  inside the skill directory.
+
+### Changed
+
+- **Deeper paper diligence in both `waves` variants.** The grounding notes now
+  extract the actionable mechanism from each cited paper instead of
+  name-dropping it, with corrected attribution: probe selection that halves
+  the surviving interpretations (Uncertainty of Thoughts, arXiv 2402.03271);
+  ask-vs-act value thresholds and the specification-vs-model uncertainty
+  split (SAGE-Agent, arXiv 2511.08798); specification judgment before acting
+  with its overconfidence caveats (arXiv 2606.19559); least-to-most's
+  depth-dependent gains and domain-specific decomposition bottleneck (arXiv
+  2205.10625); and Plan-and-Solve's "plans fix missing steps, not a misread
+  goal" (arXiv 2305.04091) — plus an explicit note that the parallel fan-out
+  and inter-wave verification are this skill's multi-agent adaptation, not
+  claims from those single-model papers.
+- **Verification playbooks upgraded from the sources.** CoVe factored checks
+  now include the factor-revise cross-check step and open-not-yes/no question
+  phrasing; self-consistency guidance moves to 5–10 samples with real
+  sampling variation and agreement-as-confidence; new rules from the
+  self-correction literature (never let a retry loop peek at the expected
+  answer; at matched budget, k samples + majority vote beats critique/debate
+  loops); judge hygiene from the LLM-judge literature (hide authorship
+  labels, swap pairwise orderings, keep reference-matching judges from
+  over-reasoning, disjoint-family panels per PoLL); SAFE's self-contained
+  atomic-fact rewrite step; and sourced citation-hallucination rates (3–13%
+  fabricated URLs, arXiv 2604.03173) with a URL-health mitigation. The
+  unsupported "≥3 independent agreement ≈ 95% reliable" claim is replaced
+  with an honest Condorcet framing that names its independence assumptions.
+  Both plugins bump to **0.4.0**; marketplace `metadata.version` to
+  **0.9.0**.
+
+[0.9.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.9.0
+
 ## [0.8.0] — 2026-07-01
 
 ### Added

@@ -212,6 +212,8 @@ Turn one big task into a team of agents. **WAVE = Workers · Aggregate · Verify
 
 Two upgrades in 0.8.0: **entropy-first decomposition** — before slicing a vague, high-entropy goal ("build a Flappy Bird game") it reduces uncertainty along an information-gain ladder (dig locally → pull from attached resources → ask the user only if it pays), then cascades a decomposition wave into an execution wave, ordered least-to-most; and **per-slice model routing** — send cheap read/scouting waves to a fast model (Composer 2.5 on Cursor, `gpt-5.5` at `low` effort on Codex) and reserve frontier models for high-stakes verification and synthesis.
 
+New in 0.9.0: **deeper paper grounding** (each cited arXiv paper now contributes a verified, actionable mechanism — probe selection that halves the interpretation space, ask-vs-act value thresholds, factored verification with open check questions, judge blinding and disjoint-family panels, sourced citation-hallucination rates) and **skill evals** — both variants ship `evals/evals.json` + fixtures following Anthropic's skill-creator methodology (with-skill vs baseline A/B in fresh sessions, PASS/FAIL expectations graded against the transcript), so the skills can be measured and improved instead of just edited. See each skill's `evals/README.md`.
+
 Reach for it when a single linear pass would be slow and the work splits into independent slices — big research, analysis, audits, or codebase/data exploration. Because a run spawns more agents than usual, it's **opt-in: invoke it explicitly with `/waves` (or `/waves-codex`)** rather than relying on auto-trigger (`disable-model-invocation: true`). Good prompts to pair with it: "fan out", "spin up multiple agents", "parallelize this", "analyze all my X and find patterns", "research A/B/C and build a roadmap", or "audit this repo".
 
 **Cursor:**
@@ -318,7 +320,8 @@ rayfernando-skills/
 │   │   └── skills/
 │   │       └── waves/
 │   │           ├── SKILL.md
-│   │           └── references/           # examples, handoff-format, verification
+│   │           ├── references/           # examples, handoff-format, verification
+│   │           └── evals/                # evals.json + fixtures + eval README
 │   ├── waves-codex/               # Codex variant (subagents + config.toml)
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
@@ -326,7 +329,8 @@ rayfernando-skills/
 │   │       └── waves-codex/
 │   │           ├── SKILL.md
 │   │           ├── agents/openai.yaml
-│   │           └── references/           # adaptation-notes, examples, handoff-format, recommended-config, verification
+│   │           ├── references/           # adaptation-notes, examples, handoff-format, recommended-config, verification
+│   │           └── evals/                # evals.json + fixtures + eval README
 │   └── bootstrap-ios/                            # iOS/macOS router skill + optional installer helper
 │       ├── .claude-plugin/
 │       │   └── plugin.json
@@ -337,7 +341,8 @@ rayfernando-skills/
 │               └── scripts/
 │                   └── bootstrap-ios-skills.sh
 ├── scripts/
-│   └── validate-skill-metadata.py        # release-time Codex-metadata validator
+│   ├── validate-skill-metadata.py        # release-time Codex-metadata validator
+│   └── validate-skill-evals.py           # release-time skill-eval validator
 ├── .github/workflows/release.yml         # builds the claude.ai zip on tag push
 ├── CHANGELOG.md
 ├── LICENSE
@@ -362,7 +367,7 @@ Ray spent 12 years at Apple working across many parts of the system. The lesson 
 
 ## Changelog
 
-This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/). Recent highlights: entropy-first decomposition and per-slice model routing in `waves` (Cursor + Codex); the `waves` skill for parallel agent fan-out; plus a Computer Use + Chrome DevTools driver playbook, an editorial HTML report (Zite + Dieter Rams), and confirmed two-way issue-tracker sync. Full history in [`CHANGELOG.md`](CHANGELOG.md).
+This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/). Recent highlights: skill evals and deeper paper grounding for `waves` (Cursor + Codex); entropy-first decomposition and per-slice model routing in `waves`; the `waves` skill for parallel agent fan-out; plus a Computer Use + Chrome DevTools driver playbook, an editorial HTML report (Zite + Dieter Rams), and confirmed two-way issue-tracker sync. Full history in [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
