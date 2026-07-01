@@ -19,6 +19,9 @@ jobs:
       - name: Validate skill metadata
         run: python3 scripts/validate-skill-metadata.py
 
+      - name: Validate skill evals
+        run: python3 scripts/validate-skill-evals.py
+
       - name: Build claude.ai-compatible zips
         run: |
           declare -A seen

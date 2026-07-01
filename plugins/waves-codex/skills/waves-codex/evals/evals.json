@@ -1,0 +1,90 @@
+{
+  "skill_name": "waves-codex",
+  "notes": "Behavior evals for the waves-codex orchestration skill (Codex variant). Run each prompt twice in fresh Codex sessions -- once with the skill installed and invoked, once baseline without it -- and grade the expectations PASS/FAIL against the full transcript, not just the final output. See evals/README.md for the protocol, grading rules, and aggregation.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "coverage-gated-data-fanout",
+      "prompt": "Use the waves-codex skill. Analyze all the support tickets in evals/files/support-tickets.csv and give me the recurring complaint themes, each with evidence and a rough share of tickets.",
+      "files": ["evals/files/support-tickets.csv"],
+      "expected_output": "One synthesized theme report (login timeouts 12/40, export failures 9/40, dark-mode contrast 6/40, billing double-charges 5/40) with ticket-id evidence, produced by parallel Codex subagents over disjoint row ranges after a verified coverage gate.",
+      "expectations": [
+        "The manager read or sampled the CSV and established the total row count (40) before spawning any subagents",
+        "The transcript shows a pre-fan-out coverage gate: per-slice bounds whose counts sum back to the total (partition-sum check)",
+        "All first-wave subagents were spawned in the same manager turn, each owning a disjoint ticket range within agents.max_threads",
+        "Every worker prompt was self-contained (goal context, exact slice, where to look, required handoff format) without assuming access to the manager's context",
+        "Read-only analysis workers used the explorer role (or an equivalent read-only custom agent) at low reasoning effort rather than a write-capable worker",
+        "The final deliverable is one synthesized theme report with ticket-id evidence, not concatenated raw handoffs",
+        "The reported theme counts match the fixture data: 12 login-timeout, 9 export-failure, 6 dark-mode, and 5 billing tickets"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "entropy-first-vague-build",
+      "prompt": "Use the waves-codex skill. Build me a Flappy Bird game.",
+      "expected_output": "An entropy-reduction pass (local dig, stated assumptions, at most one high-value question) followed by a least-to-most ordered plan tracked with update_plan and bounded execution -- not an immediate blind fan-out.",
+      "expectations": [
+        "The agent distinguished specification unknowns (platform, scope, engine) from environment unknowns (repo contents, tooling) before decomposing",
+        "The agent inspected the local environment (listed files or read manifests) before any web scouting or user question",
+        "Specification gaps were resolved by stating explicit assumptions, and the agent asked the user at most one clarifying question",
+        "The plan is ordered least-to-most (game loop and rendering before scoring and polish) and tracked with update_plan",
+        "No subagents were spawned before the goal was reduced to independent, well-scoped slices"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "multi-stream-research-confidence",
+      "prompt": "Use the waves-codex skill. Research three options for adding realtime voice to my app -- OpenAI Realtime, LiveKit, and Pipecat -- and build me a comparison with a recommendation.",
+      "expected_output": "Three isolated research workers (one per option) returning cited handoffs; the manager produces the cross-option comparison and recommendation with per-claim confidence labels.",
+      "expectations": [
+        "Exactly one research worker was assigned per option, and no worker was asked to compare across options",
+        "Research worker prompts required live or current sources, per-claim citations, and confidence tags",
+        "Research workers used a docs/web-capable role (default or a custom docs researcher), not a read-only local explorer",
+        "The comparison and recommendation were synthesized by the manager, not forwarded from a single worker",
+        "The deliverable distinguishes verified, single-sourced, and unverified claims instead of presenting everything with equal confidence"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "verification-catches-bad-handoff",
+      "prompt": "Use the waves-codex skill. A prior wave analyzed evals/files/support-tickets.csv and returned three worker handoffs: evals/files/handoff-chunk-1.md, evals/files/handoff-chunk-2.md, and evals/files/handoff-research.md. Verify them and synthesize the findings into one report.",
+      "files": [
+        "evals/files/support-tickets.csv",
+        "evals/files/handoff-chunk-1.md",
+        "evals/files/handoff-chunk-2.md",
+        "evals/files/handoff-research.md"
+      ],
+      "expected_output": "A synthesis that keeps chunk-1's verified findings, catches and corrects chunk-2's wrong billing count (claims 9/20; actual 3) and its phantom T-058 citation, and carries the research handoff's single-sourced claim with its low-confidence label.",
+      "expectations": [
+        "The billing claim in handoff-chunk-2 (9 of 20 tickets) was recounted against the CSV and identified as wrong (actual: 3 billing tickets in T-021..T-040)",
+        "The citation of ticket T-058 was flagged as non-resolving (the fixture contains only tickets T-001..T-040)",
+        "Neither unsupported claim from handoff-chunk-2 appears uncorrected in the final report",
+        "The single-sourced US-East degradation claim from handoff-research is carried with a low-confidence or unverified label, not stated as fact",
+        "Correct findings from handoff-chunk-1 were accepted and appear in the synthesis (no blanket rejection of the wave)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "parallel-writes-refusal",
+      "prompt": "Use the waves-codex skill. Spin up three parallel subagents to fix the three TODO comments in src/report.py -- one agent per TODO.",
+      "expected_output": "The agent declines to run three concurrent editors on one shared file and instead edits serially (or proposes isolated worktrees / one codex exec per attempt), explaining the write-conflict risk.",
+      "expectations": [
+        "The agent identified that all three edits target the same file and that overlapping edits are a merge/clobbering risk",
+        "No parallel write-capable workers were spawned against overlapping paths",
+        "The agent proposed a safe alternative: serial edits in the manager thread, disjoint ownership, or isolated git worktrees"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "bounded-waves-stop-discipline",
+      "prompt": "Use the waves-codex skill. Keep spawning waves of research agents on the question 'what is the best database for my startup' until the answer is perfect.",
+      "expected_output": "A bounded run: explicit width and depth caps stated up front, waves stopped on stagnation with a verification-based justification, and one synthesized recommendation instead of an endless loop.",
+      "expectations": [
+        "The agent set explicit caps up front (roughly 3-8 workers per wave within agents.max_threads and no more than 2-3 waves) instead of accepting the unbounded loop",
+        "The run stopped when a wave surfaced nothing new, with the stop justified by verification results rather than effort spent",
+        "Only distilled, verified findings were carried between waves -- no raw transcripts or losing candidates forwarded",
+        "The final answer is a single synthesized recommendation with per-claim confidence labels"
+      ]
+    }
+  ]
+}

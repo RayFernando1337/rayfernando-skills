@@ -1,0 +1,41 @@
+ticket_id,date,severity,area,summary
+T-001,2026-05-01,P1,auth,Login times out after 30 seconds on the web app
+T-002,2026-05-01,P2,export,CSV export fails for files larger than 50 MB
+T-003,2026-05-02,P1,auth,Session expires mid-login and returns a timeout error
+T-004,2026-05-02,P3,ui,Dark mode text is unreadable on the settings screen
+T-005,2026-05-03,P1,auth,Login spinner hangs then shows a timeout message
+T-006,2026-05-04,P2,export,Export to CSV silently fails on the quarterly report
+T-007,2026-05-04,P3,mobile,App icon badge count never clears on iOS
+T-008,2026-05-05,P1,auth,Timeout when signing in with SSO from the EU region
+T-009,2026-05-06,P2,export,Large workspace export times out and produces an empty file
+T-010,2026-05-06,P3,ui,Dark mode toggle leaves dropdown menus with white-on-white text
+T-011,2026-05-07,P1,auth,Login request times out on corporate VPN
+T-012,2026-05-08,P0,billing,Charged twice for the May invoice
+T-013,2026-05-08,P2,export,Export button greys out and fails for 100k-row tables
+T-014,2026-05-09,P1,auth,Two-factor prompt never loads and the login times out
+T-015,2026-05-10,P3,docs,API reference page 404s from the sidebar link
+T-016,2026-05-11,P3,ui,Contrast too low in dark mode charts
+T-017,2026-05-12,P1,auth,Login timeout after the latest browser update
+T-018,2026-05-12,P2,export,Scheduled export job fails for workspaces over 2 GB
+T-019,2026-05-13,P0,billing,Duplicate charge shown on the same day for one seat
+T-020,2026-05-14,P1,auth,Intermittent login timeouts during morning peak hours
+T-021,2026-05-15,P3,search,Search results ignore the date filter
+T-022,2026-05-16,P2,export,PDF export fails on documents with embedded images
+T-023,2026-05-17,P1,auth,Login times out for all users behind our proxy
+T-024,2026-05-18,P3,ui,Dark mode makes the diff view borders invisible
+T-025,2026-05-19,P0,billing,Double-charged after switching from monthly to annual
+T-026,2026-05-20,P2,export,Exporting the audit log fails past 30 days of history
+T-027,2026-05-21,P1,auth,Timeout during login when MFA push is slow
+T-028,2026-05-22,P3,perf,Dashboard takes 12 seconds to load on first visit
+T-029,2026-05-23,P3,ui,Dark mode code blocks lose syntax highlighting contrast
+T-030,2026-05-26,P2,export,Bulk export fails with a 500 for archived projects
+T-031,2026-05-27,P1,auth,Login timeout loop after password reset
+T-032,2026-05-28,P3,notifications,Email digest arrives twice on Mondays
+T-033,2026-05-29,P0,billing,Two identical charges for the same subscription renewal
+T-034,2026-06-01,P2,export,Excel export fails when sheet names contain slashes
+T-035,2026-06-03,P3,search,Keyboard shortcut for search conflicts with the browser
+T-036,2026-06-05,P1,auth,SSO login times out on the mobile web view
+T-037,2026-06-08,P3,perf,Typing lag in large documents with many comments
+T-038,2026-06-10,P3,ui,Dark mode modal overlays are nearly opaque black-on-black
+T-039,2026-06-12,P0,billing,Charged twice when payment retry overlapped the original
+T-040,2026-06-15,P3,onboarding,Sample project link in the welcome email is broken
