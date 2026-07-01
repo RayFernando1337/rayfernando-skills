@@ -4,6 +4,54 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-07-01
+
+### Added
+
+- **Entropy-first decomposition in both `waves` variants.** A new
+  "Entropy-first decomposition" section (plus a `Decomposition is entropy
+  reduction` core principle) reframes decomposition as *uncertainty reduction*:
+  before slicing a vague, high-entropy goal ("build a Flappy Bird game"), shrink
+  the space of plausible plans along an **information-gain ladder** — dig
+  locally first, then pull from attached resources (a small **scouting wave** of
+  research workers), and ask the user *last*, only when a question's expected
+  information gain beats its cost. It separates **specification** uncertainty
+  (assume, or ask when it pays) from **environment/knowledge** uncertainty
+  (gather via tools), then **cascades** a decomposition wave into an execution
+  wave and orders the plan **least-to-most**. Grounded in the information-gain /
+  clarification and task-decomposition literature (Uncertainty of Thoughts;
+  EVPI-based clarification; Least-to-Most; Plan-and-Solve). `references/examples.md`
+  gains a worked "build a Flappy Bird game" recipe, a "decomposition / scouting
+  wave" shape, and a grounding/sources note.
+
+### Changed
+
+- **`waves` (Cursor) now routes the model per slice.** New "Picking the model
+  per slice (cost / speed routing)" guidance: send scouting / decomposition /
+  read-heavy exploration to the cheap, fast model — Cursor's built-in `explore`
+  and search subagents already default to the Composer fast family
+  (`composer-2.5-fast`), and you can pin `model: "composer-2.5"` on a `Task`
+  worker or the `model` field (`inherit` | `fast` | a slug) on a custom
+  `.cursor/agents/` subagent — and reserve frontier / multi-model-panel models
+  for high-stakes verification and synthesis. Documents availability caveats
+  (Max Mode / plan / admin fallbacks, drifting slugs, unreliable `inherit`) and
+  keeps model choice subordinate to the user's stated preference. The `waves`
+  plugin bumps to **0.3.0**.
+- **`waves-codex` ties reasoning effort to the entropy phase and adds model
+  precision.** Routes the fast scouting/decomposition reads to `gpt-5.5` at
+  `low` effort (with `gpt-5.4-mini` as an even lighter option), clarifies that
+  the live per-spawn field is `reasoning_effort` while the config / custom-agent
+  TOML key is `model_reasoning_effort`, and notes that Codex fast/priority
+  processing (`/fast`, `service_tier`) is a user-enabled speed tier, not a
+  forced default. Updated `references/recommended-config.md` and
+  `references/adaptation-notes.md` accordingly. The `waves-codex` plugin bumps
+  to **0.3.0**.
+- **Marketplace catalog** bumps `metadata.version` to **0.8.0**; both `waves`
+  plugins move to 0.3.0 with new discovery keywords/tags (`entropy-reduction`,
+  `decomposition`, `model-routing`).
+
+[0.8.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.8.0
+
 ## [0.7.1] — 2026-06-21
 
 ### Fixed
