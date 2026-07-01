@@ -35,8 +35,10 @@ Recommended defaults:
 - Manager/orchestrator: `gpt-5.5` with `xhigh` effort for complex problem
   solving, orchestration, deep thinking between steps, and synthesis before
   fan-out. Use `medium` only for simpler manager passes.
-- Read-heavy workers: `gpt-5.5` with `low` effort for fast file reads, greps,
-  counting, and simple scans.
+- Read-heavy / scouting / decomposition workers: `gpt-5.5` with `low` effort for
+  the fast reads, greps, counting, scans, and doc lookups that reduce entropy
+  before you slice. `gpt-5.4-mini` is an even lighter option for read-heavy scans
+  per current Codex docs.
 - Research/all-around workers: `gpt-5.5` with `medium` effort.
 - Implementation workers: `gpt-5.5` with `high` effort.
 - Reviewer/security/verifier workers: `gpt-5.5` with `high` effort.
@@ -44,6 +46,15 @@ Recommended defaults:
   on a machine and rate-limit budget that can handle it.
 - `max_depth`: keep `1`. Raise to `2` only for deliberate recursive delegation
   with strict instructions and budget awareness.
+
+Effort field names and speed tier:
+
+- The live per-spawn field is `reasoning_effort`; the config / custom-agent TOML
+  key is `model_reasoning_effort`. Set the effort on each spawned worker, not
+  only in config.
+- Speed/priority is a user preference. If the user has enabled Codex fast /
+  priority processing (`/fast`, or `service_tier = "fast"` / `"flex"`), it
+  applies; do not force a tier on the user.
 
 ## Optional Custom Agents
 

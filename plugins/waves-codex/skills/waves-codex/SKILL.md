@@ -78,6 +78,10 @@ Read these references when using the skill:
    it. Keep going until every slice is terminal and the synthesis is complete --
    stopping early while genuine follow-ups remain is the failure mode this skill
    guards against. (Stay within the depth/width caps in "Bounded Waves.")
+8. Decomposition is entropy reduction. A vague goal is high-entropy: many
+   plausible plans still fit. Shrink that space -- dig locally, then pull from
+   attached resources, then ask the user only if it pays -- before you slice it.
+   See "Entropy-First Decomposition."
 
 ## Bounded Waves - Size, Caps, and When to Stop
 
@@ -103,6 +107,44 @@ verifier exists; the signal is crisp/actionable (a failing test, not "try
 harder"); each iteration shows measurable progress; easy-medium difficulty; still
 hard-capped. Fits code-with-tests/exec-feedback; misfits open-ended
 research/writing/design.
+
+## Entropy-First Decomposition
+
+Before you fan out, treat the goal as an entropy-reduction problem: shrink how
+many plausible interpretations and plans still fit what you know. A vague,
+high-entropy request ("build a Flappy Bird game", "make my app faster") does not
+slice cleanly yet -- reduce the uncertainty first, then decompose the
+low-entropy version. Name what is uncertain, because the two kinds resolve
+differently:
+
+- Specification uncertainty -- what the user wants (ambiguous goal, missing
+  acceptance criteria, unstated constraints). Resolve by stating an explicit
+  assumption and proceeding, or -- only when a wrong guess is expensive -- by
+  asking.
+- Environment / knowledge uncertainty -- facts you do not have yet but can get
+  (repo shape, schema, API behavior, current docs, data size). Resolve by
+  gathering, not by asking.
+
+Spend the cheapest action that buys the most certainty first -- an
+information-gain ladder:
+
+1. Dig locally first (cheap): inspect local state in the manager thread (list,
+   read schema/README, grep, sample data). This is Step 0; it often collapses
+   most of the uncertainty for free.
+2. Then pull from attached resources: if local state lacks the answer, spawn a
+   small scouting wave of `explorer`/research workers to fetch it (docs, MCP,
+   web) on a fast low-effort model (`gpt-5.5` at `low`; see Step 2).
+3. Ask the user last, and only when it pays: when residual specification
+   uncertainty is high and a question's expected information gain beats its cost.
+   Most requests carry enough to proceed on a stated assumption.
+
+Then cascade: one request becomes a decomposition wave (understand -> locate
+unknowns -> draft the plan) -> verify -> an execution wave that builds the
+subtasks least-to-most (each verified result lowering uncertainty for the next),
+with more scouting sub-waves wherever entropy stays high. Track the living plan
+with `update_plan`; stop reducing when entropy is low enough to act -- the
+verification gate doubles as "is the uncertainty low enough to commit?" (Worked
+example: `references/examples.md`.)
 
 ## The Loop
 
@@ -192,11 +234,17 @@ Pick the smallest capable role:
 | Verification of important claims | custom verifier | Give claim + cited sources, not the generator's reasoning. |
 | Many row-shaped tasks | `spawn_agents_on_csv` | Experimental; use one CSV row per work item and require `report_agent_job_result`. |
 
-Use `gpt-5.5` for all manager and worker roles. Route cost/speed/capability with
-reasoning effort instead of older model families: low for fast reads/scans,
-medium for all-around work and research, high for coding and verifying, and
-`xhigh` for complex orchestration, deep problem solving, and synthesis before
-fan-out.
+Use `gpt-5.5` for manager and worker roles by default, and route
+cost/speed/capability with reasoning effort rather than older model families:
+`low` for the fast scouting/decomposition reads that reduce entropy (scans,
+greps, counting, doc lookups; `gpt-5.4-mini` is even lighter), `medium` for
+all-around work and research, `high` for coding and verifying, `xhigh` for
+orchestration, deep problem solving, and pre-fan-out synthesis. The live
+per-spawn field is `reasoning_effort`; the config / custom-agent TOML key is
+`model_reasoning_effort` -- set effort on each worker, not only in config. Speed
+tier is a user preference: honor `/fast` / `service_tier` if the user enabled it
+and don't force it; honor any model/effort the user named, and if a requested
+model is unavailable, say so rather than substituting.
 
 ### Step 3 - Collect and Verify Handoffs
 
@@ -431,6 +479,8 @@ reference/spec pattern, not a drop-in replacement for this interactive skill.
 
 - [ ] Used `update_plan` for multi-wave work.
 - [ ] Discovered the shape of the problem before decomposing.
+- [ ] Reduced entropy before slicing (dug locally -> pulled from attached
+      resources -> asked the user only if it paid); sliced the low-entropy goal.
 - [ ] Staged or normalized inputs when it materially helps.
 - [ ] Verified coverage before spawning: counts, bounds, partition-sum,
       gaps/duplicates.
@@ -438,6 +488,8 @@ reference/spec pattern, not a drop-in replacement for this interactive skill.
 - [ ] Each worker prompt is self-contained and ends with the handoff contract.
 - [ ] Picked `explorer`, `worker`, `default`, custom agents, verifier agents, or
       `spawn_agents_on_csv` deliberately.
+- [ ] Routed scouting / read-heavy waves to a fast low-effort model (`gpt-5.5`
+      `low`); reserved high effort for coding, verification, and synthesis.
 - [ ] Avoided manual polling loops; waited only when synthesis was blocked.
 - [ ] Read every handoff and resolved conflicts.
 - [ ] Preserved per-finding confidence labels.

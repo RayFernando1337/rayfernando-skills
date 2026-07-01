@@ -100,6 +100,29 @@ Return exactly the research/analysis handoff format.
   third wave is the default, not the exception.
 - Synthesize the roadmap yourself from the merged, verified handoffs.
 
+## Recipe: Decomposition of a Vague Build
+
+Use when a single high-level request ("build a Flappy Bird game") must expand
+into understanding + plan + subtasks.
+
+1. Locate the entropy. Specification unknowns (web or native? which
+   engine/framework? scope -- one screen, score, difficulty curve?) vs
+   environment unknowns (what is already in the repo? build tooling? asset
+   pipeline?).
+2. Reduce it cheaply. Dig locally (read the repo, package manifest, existing
+   scaffolding). For anything the repo cannot answer, spawn a small scouting wave
+   (one `explorer` per candidate engine/framework) on a fast low-effort model,
+   and verify. State assumptions for specification gaps ("web canvas, vanilla TS,
+   one screen + score") instead of blocking -- ask only the one question whose
+   answer would change the whole plan.
+3. Decompose least-to-most. The plan is now low-entropy: game loop -> render
+   pipes/bird -> input + gravity -> collision -> score/state -> polish.
+   First-order subtasks first; each verified piece lowers uncertainty for the
+   next.
+4. Execute in waves. Build with disjoint-ownership `worker`s (or serially -- see
+   "Parallel Writes in Codex"), verify the artifact, and open another scouting
+   sub-wave only where a subtask is still high-entropy.
+
 ## Recipe: Data-Chunk Fan-Out
 
 Use for large corpora: messages, tickets, logs, transcripts, documents, or
@@ -207,6 +230,12 @@ Risky patterns:
 
 A wave is not one move - pick the shape from how much you know about the problem.
 
+- Decomposition / scouting wave (reduce entropy before the big wave): when the
+  goal is vague or high-entropy ("build a Flappy Bird game", "make it faster"),
+  the first wave's job is to reduce uncertainty, not build. Dig locally, then fan
+  a small scouting wave at the unknowns (stack, constraints, current APIs, repo
+  shape) on a fast low-effort model, verify, and only then decompose the
+  low-entropy version into the execution wave. See "Entropy-First Decomposition."
 - Exploratory wave (you don't know the shape yet): when the space is unmapped
   (QA, an unfamiliar repo, "what's wrong here?"), send a broad first wave - many
   workers probing different surfaces/flows at once. Its job is to find the edges,
@@ -228,6 +257,9 @@ wave yourself, or let the verifier gate it automatically.
 ## Anti-Patterns
 
 - Fan out before discovering the shape of the task.
+- Slice a high-entropy goal before reducing its uncertainty. Vague goals
+  decompose into overlapping, mis-sized slices; dig locally -> pull from attached
+  resources -> ask only if it pays, then slice (see "Entropy-First Decomposition").
 - Fan out before verifying coverage.
 - Give workers vague prompts and hope they infer context.
 - Ask workers to "figure out the whole thing" instead of owning one slice.
@@ -246,3 +278,14 @@ wave yourself, or let the verifier gate it automatically.
 - Assume parallel writes automatically merge. Use disjoint ownership or
   worktrees.
 - Forward raw handoffs as the final answer.
+
+## Grounding (Why Entropy-First Works)
+
+Framing decomposition as uncertainty reduction is well-supported. Value a probe
+or clarification by its expected information gain / expected value of perfect
+information, and act once uncertainty is low enough -- not before, not forever
+(Uncertainty of Thoughts, NeurIPS 2024; EVPI-based clarification, arXiv
+2511.08798). Separate specification uncertainty (assume, or ask when it pays)
+from environment/model uncertainty (gather via tools) (arXiv 2606.19559). Then
+solve the low-entropy plan least-to-most, each step feeding the next
+(Least-to-Most, arXiv 2205.10625; Plan-and-Solve, arXiv 2305.04091).
