@@ -202,11 +202,45 @@ the seam a loop doesn't give you.
 
 ## Grounding (why entropy-first works)
 
-Framing decomposition as uncertainty reduction is well-supported. Value a probe
-or clarification by its **expected information gain** / expected value of perfect
-information, and act once uncertainty is low enough — not before, not forever
-(Uncertainty of Thoughts, NeurIPS 2024; EVPI-based clarification, arXiv
-2511.08798). Separate **specification** uncertainty (assume, or ask when it
-pays) from **environment/model** uncertainty (gather via tools) (arXiv
-2606.19559). Then solve the low-entropy plan **least-to-most**, each step feeding
-the next (Least-to-Most, arXiv 2205.10625; Plan-and-Solve, arXiv 2305.04091).
+Framing decomposition as uncertainty reduction is well-supported, and each
+source contributes a usable mechanism — not just a citation:
+
+- **Prefer the probe that halves the surviving interpretations.** Uncertainty
+  of Thoughts (UoT, arXiv 2402.03271, NeurIPS 2024) scores candidate questions
+  by expected information gain and shows the best probe is the one that splits
+  the remaining hypotheses ~50/50 (binary-answer entropy peaks at an even
+  split). Swapping that entropy reward into a tree search — not the search
+  itself — carried most of its +38% average success gain. Orchestrator use:
+  aim scouts at the unknown whose answer eliminates the most plans, not the
+  one easiest to look up.
+- **Ask only when the value of asking clears a threshold.** SAGE-Agent (arXiv
+  2511.08798) prices each candidate question by expected value of perfect
+  information minus a redundancy cost, asks only when that beats a fraction of
+  its confidence in the best current interpretation, and *acts* once that
+  confidence passes an execute threshold. Penalizing redundant questions cut
+  questions asked ~18–27% with under 3% quality loss — over-asking is
+  measurably wasteful. This paper is also the explicit source of the
+  specification-vs-model uncertainty split.
+- **Judge "is the goal fully specified?" before acting, and err toward
+  asking.** arXiv 2606.19559 gates clarification on a specification-uncertainty
+  score emitted *before* choosing an action; a conservative ask-threshold
+  silently failed (recall collapsed), while a generous one cost little. Two
+  honest caveats it adds: every extra self-assessment channel taxed task
+  success slightly, and verbalized confidence ran overconfident — treat
+  self-reported scores as rankings, not probabilities. ("Resolve environment
+  unknowns by gathering via tools" is this skill's operational extension, not
+  that paper's mechanism.)
+- **Order the plan least-to-most; invest in the decomposition itself.**
+  Least-to-Most (arXiv 2205.10625, ICLR 2023) solves subproblems in sequence,
+  each answer feeding the next; its gains concentrate on deep problems (5+
+  dependent steps — shallow tasks gain nothing), and its own error analysis
+  shows the decomposition step, not the solving, is the bottleneck — and that
+  decompositions don't transfer across domains. Plan-and-Solve (arXiv
+  2305.04091, ACL 2023) shows plan-then-execute cuts missing-step errors but
+  leaves misread-goal errors untouched — which is exactly why the
+  specification check above comes *before* planning.
+
+These are single-model prompting results. The parallel fan-out, the
+verification gates between waves, and "each **verified** result lowers
+uncertainty for the next" are this skill's multi-agent adaptation — the
+verification half is grounded separately in `verification.md`.

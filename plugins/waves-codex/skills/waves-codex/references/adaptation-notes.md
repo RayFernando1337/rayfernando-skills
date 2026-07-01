@@ -41,6 +41,16 @@ official docs describe it as experimental.
 - Entropy-first decomposition: reduce uncertainty (dig locally, then attached
   resources, then ask the user only if it pays) before slicing; cascade a
   decomposition wave into an execution wave; order the plan least-to-most.
+- Paper-grounded technique detail, mirrored with the Cursor skill: probe
+  selection that halves the surviving interpretations; ask-vs-act thresholds;
+  factored self-verification with open check questions; sample-and-vote with
+  agreement as a confidence flag; judge blinding (no authorship labels, both
+  orderings); disjoint-family judge panels; atomic-fact checks with
+  self-contained rewrites; citation URL-health passes. Sources listed in
+  `references/verification.md` ("Grounding") and `references/examples.md`.
+- Skill evals: both variants ship `evals/evals.json` + fixtures following the
+  Anthropic skill-creator format (prompt + expected_output + expectations,
+  graded PASS/FAIL with evidence against with-skill vs baseline transcripts).
 
 ## Cursor-to-Codex Swaps
 

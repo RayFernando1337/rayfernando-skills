@@ -44,7 +44,10 @@ If the gate does not reconcile, do not spawn workers yet.
 Every handoff gets a fast manager-side pass:
 
 - Evidence exists for each key finding.
-- File paths, URLs, message IDs, commands, or metrics resolve.
+- File paths, URLs, message IDs, commands, or metrics resolve. Research workers
+  hallucinate roughly 3-13% of citation URLs and 5-18% don't resolve at all; a
+  cheap URL-health pass before trusting links cuts non-resolving citations to
+  under 1%.
 - The cited evidence actually supports the claim.
 - Scope matches the assigned slice.
 - Headline numbers can be re-counted or queried.
@@ -65,12 +68,24 @@ Make every worker do cheap verification before returning:
 - Use live/current sources for versioned APIs, pricing, schedules, product
   behavior, laws, and docs.
 - Flag anything it could not verify.
-- For a single important number or recommendation, sample/re-derive more than
-  once and report whether it converged.
+- For a single important number, pick, or label (not prose), re-derive it
+  independently several times (5-10 samples with real sampling variation, not
+  repeated greedy calls) and report the majority plus how many agreed. Most of
+  the gain arrives in the first handful; low agreement is itself a
+  low-confidence flag.
+- For a top claim, factored self-verification: draft, list open check questions
+  ("When did X ship?", not yes/no -- models tend to agree with whatever a
+  yes/no question asserts), answer each in a fresh context without the draft,
+  cross-check the answers against the draft, then revise.
 
-Avoid vague "double-check yourself" prompts. Self-correction without external
-signal can be weak. Give the worker an oracle: a test, query, source URL,
-schema, command, count, or separate verifier.
+Avoid vague "double-check yourself" prompts. Self-correction without an
+external signal degrades reasoning -- models flip correct answers to wrong more
+often than the reverse. Give the worker an external check: a test, query,
+source URL, schema, command, count, or separate verifier. Never let a retry
+loop's stop condition peek at the expected answer (that measures the answer
+key, not the worker). Budget rule: at equal cost, k independent samples plus a
+majority vote usually beats critique/debate loops -- benchmark any added loop
+against that baseline.
 
 ## 4. Use Dedicated Verifier Workers
 
@@ -100,10 +115,24 @@ Make the verifier's job robust:
 - Anti-gaming: never show the generator the verifier's rubric, and prefer a
   verifier that can re-derive/execute over one that re-reads prose (verifiers get
   gamed; over-optimizing a weak proxy verifier makes true quality fall).
+- Hide authorship and order: never tell the verifier which worker or model
+  produced a claim -- judges strongly prefer whatever is labeled as their own,
+  and swapping the label flips the preference. For pairwise comparisons, run
+  both orderings and average; paraphrasing a candidate before judging also
+  blunts self-preference.
+- Keep the judge on task: for reference-matching checks ("does the answer match
+  the staged data?"), instruct the verifier to match against the reference only
+  and not inject outside knowledge -- strong models over-reason on what is
+  essentially entailment checking.
 - Different model (optional, strongest): a same-model verifier can self-prefer
-  even with an isolated context. For the highest-stakes calls, ask the user for a
-  different model family as the verifier. (Planned as a default in a later version
-  pending testing; for now an opt-in escalation - don't guess model slugs.)
+  even with an isolated context -- models recognize and favor their own output,
+  and the more capable the model, the stronger the effect. For the
+  highest-stakes calls, ask the user for a different model family as the
+  verifier; a small panel of judges from disjoint model families (majority vote
+  on binary verdicts, average on scores) beat a single frontier judge on human
+  agreement while cutting intra-model bias and cost. (Planned as a default in a
+  later version pending testing; for now an opt-in escalation - don't guess
+  model slugs.)
 
 The verifier returns:
 
@@ -125,8 +154,18 @@ Prefer direct oracles over prose review:
 - Re-run queries or regexes for headline numbers.
 - Use at least two independent sources that ENTAIL the claim before treating it
   as verified - check entailment, don't just count citations (a citation being
-  present is not the claim being supported).
-- Split long claims into atomic facts and verify each separately.
+  present is not the claim being supported; even strong models lack full
+  citation support on roughly half of long-form answers). Agreement compounds
+  only under real independence: three independent ~90%-accurate checks give
+  ~97% by majority vote, but a shared model family or shared search results
+  breaks the assumption - diversify both.
+- Split long claims into atomic facts, rewrite each to be self-contained
+  (resolve pronouns and vague references - the step most retellings skip), and
+  verify each separately. Sentence-level checks are too coarse: a large share
+  of sentences mix supported and unsupported facts. A cheap model with search
+  access is a strong fact-rater (it beat crowdworker annotators at a fraction
+  of the cost); the verifier does not need to be frontier-class when it has an
+  oracle to consult.
 - Panel / multi-pass cross-check: for a high-stakes or contested claim, run it
   across several independent passes (or different models, if the user approves)
   and synthesize consensus vs lone-result. That extra spawning is worth it for
@@ -180,3 +219,23 @@ Never launder low confidence into confident prose. Final claims should be marked
 Current public docs checked on 2026-06-14 do not confirm a general Codex
 claim-verification, eval, or critic hook that automatically grades subagent
 handoffs. Treat verifier agents and external oracles as the portable path.
+
+## Grounding (Sources for the Techniques Above)
+
+- Factored self-verification and open-not-yes/no check questions:
+  Chain-of-Verification, arXiv 2309.11495 (Findings of ACL 2024).
+- Sample-and-majority-vote with agreement as a confidence flag:
+  Self-Consistency, arXiv 2203.11171 (ICLR 2023).
+- Intrinsic self-correction degrades reasoning; debate loses to
+  self-consistency at matched budget; never gate a loop on the answer key:
+  arXiv 2310.01798 (ICLR 2024).
+- Atomic-fact decomposition with self-contained rewrites and search-backed
+  rating: SAFE / LongFact, arXiv 2403.18802 (NeurIPS 2024).
+- Judges recognize and favor their own output; hide authorship, swap orderings:
+  arXiv 2404.13076 (NeurIPS 2024).
+- Panel of judges from disjoint model families beats one big judge on human
+  agreement, bias, and cost: PoLL, arXiv 2404.18796 (industry preprint).
+- Citation presence is not claim support; check entailment: FActScore, arXiv
+  2305.14251; ALCE, arXiv 2305.14627 (both EMNLP 2023).
+- Research agents fabricate 3-13% of citation URLs; URL-health passes fix most:
+  arXiv 2604.03173.

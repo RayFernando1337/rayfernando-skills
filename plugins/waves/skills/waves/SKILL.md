@@ -92,7 +92,10 @@ differently:
   gathering, not by asking.
 
 Spend the cheapest action that buys the most certainty first — an
-**information-gain ladder**:
+**information-gain ladder** — and aim each probe at the unknown whose answer
+eliminates the most plans: the highest-information question is the one that
+splits the surviving interpretations roughly in half, not the one easiest to
+look up.
 
 1. **Dig locally first (cheap).** Tool calls in the main session (list, read the
    schema/README, grep, sample data). This *is* Step 0, framed as entropy
@@ -112,8 +115,11 @@ that builds the ordered subtasks, with more scouting sub-waves wherever entropy
 stays high. Order the plan least-to-most — do the first-order subtasks first and
 let each verified result lower the uncertainty for the next. Keep the living
 plan in `TodoWrite`, and stop reducing when entropy is low enough to act: the
-verification gate doubles as "is the uncertainty low enough to commit?" (Worked
-example + wave shape: `references/examples.md`.)
+verification gate doubles as "is the uncertainty low enough to commit?" One
+caution: a plan-then-execute pass fixes *missing steps*, not a *misread goal* —
+only the specification check above catches wrong framing, which is why it comes
+before planning. (Worked example + wave shape + paper grounding:
+`references/examples.md`.)
 
 ## The loop
 
@@ -260,11 +266,13 @@ multi-wave run one unchecked bad handoff compounds into the synthesis.
   COMPLETELY", live sources, flag-unverified. (Don't rely on freeform
   "double-check yourself"; give an oracle or a separate verifier.)
 - **Dedicated verifier worker** for high-stakes / contested / citation-heavy
-  claims — give it the claim + sources but **not** the generator's reasoning, and
-  have it reason against a rubric/reference before its verdict (reference-guided +
-  CoT is the cheapest reliable judge upgrade). Never show the generator the
-  verifier's rubric (anti-gaming). For the highest-stakes calls, a multi-model
-  panel + synthesis checks harder still (see "Multi-model fan-out").
+  claims — give it the claim + sources but **not** the generator's reasoning nor
+  any authorship label (judges favor output marked as their own; blind them),
+  and have it reason against a rubric/reference before its verdict
+  (reference-guided + CoT is the cheapest reliable judge upgrade). Never show
+  the generator the verifier's rubric (anti-gaming). For the highest-stakes
+  calls, a multi-model panel + synthesis checks harder still (see "Multi-model
+  fan-out").
 - **Measure & cross-check** — re-run the oracle, recount from source, require ≥2
   independent sources that actually *entail* the claim (a citation being present
   ≠ the claim being supported).
@@ -347,7 +355,10 @@ Composer 2.5 — is under "Picking the model per slice.")
 Caveat: a panel multiplies token cost (you pay every worker) and adds latency —
 reserve it for high-stakes slices, not routine ones. The adversarial multi-model
 review (a panel of reviewer models + one synthesized verdict) is this same
-pattern applied to code review.
+pattern applied to code review. For *grading* panels specifically, judges drawn
+from **disjoint model families** beat a single frontier judge on human agreement
+while cutting self-preference bias and cost (PoLL) — the family diversity, not
+the head count, is what does the work.
 
 ## Generate-and-filter & tournaments
 
@@ -365,6 +376,9 @@ candidates and **filter** — don't trust one attempt:
   own git worktree), then inspect/test/merge the winner yourself.
 - For high-stakes *judgment* calls, the multi-model panel (above) is the
   generate-and-filter of verification.
+- **Budget check.** At equal cost, k independent attempts + a majority vote or
+  cheap filter usually beats critique/debate loops — benchmark any iterative
+  loop against that baseline before paying for it.
 
 ## Worker prompt = the contract
 

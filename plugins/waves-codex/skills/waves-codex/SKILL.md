@@ -126,7 +126,9 @@ differently:
   gathering, not by asking.
 
 Spend the cheapest action that buys the most certainty first -- an
-information-gain ladder:
+information-gain ladder -- and aim each probe at the unknown whose answer
+eliminates the most plans (the highest-information question splits the
+surviving interpretations roughly in half):
 
 1. Dig locally first (cheap): inspect local state in the manager thread (list,
    read schema/README, grep, sample data). This is Step 0; it often collapses
@@ -287,7 +289,8 @@ citation-heavy, single-sourced, or low-confidence. Give the verifier:
 - The atomic claim.
 - The cited source paths/URLs/commands.
 - The acceptance question.
-- No generator reasoning.
+- No generator reasoning, and no authorship labels (judges favor output marked
+  as their own; blind them).
 
 The verifier returns `supported`, `partly-supported`, `unsupported`, or
 `source-not-found` per claim. For many claims, prefer `spawn_agents_on_csv` when
@@ -427,6 +430,9 @@ candidates and filter rather than trusting one attempt:
   only among finalists. A naive O(N^2) tournament wastes tokens on also-rans.
 - Competing implementations: use Codex app Worktree mode or `git worktree` plus
   one `codex exec` per attempt, then inspect/test/merge the winner.
+- Budget check: at equal cost, k independent attempts plus a majority vote or
+  cheap filter usually beats critique/debate loops -- benchmark any iterative
+  loop against that baseline before paying for it.
 
 ## Parallel Writes in Codex
 
