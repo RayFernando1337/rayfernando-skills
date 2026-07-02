@@ -40,7 +40,10 @@ Do not run other shards' scenarios.
   navigate → lock → snapshot → interact → unlock
 - Session hygiene per ~/.agents/skills/running-bug-review-board/references/session-hygiene.md
 - On FAIL: copy docs/qa/bug-reports/_template.md → BUG-NNN-*.md; screenshots in assets/BUG-NNN/
+  (use bug numbers from your assigned range: {BUG_RANGE})
 - On BLOCKED: note env reason (auth, backend, persona missing); do not mark PASS
+- Evidence goes to disk (assets/BUG-NNN/, the run report) — never paste
+  screenshots, console dumps, or snapshots into your chat return
 - Do NOT fix product code
 - Do NOT spawn child browser sub-agents (one tab per shard)
 
@@ -57,7 +60,17 @@ Final message in chat: one-paragraph summary + link to that report.
 
 ## When done
 
-Return final message with: scenarios run / passed / failed / blocked counts,
-bugs filed (IDs), and the report path. The coordinator will merge with
+Your final message is your handoff — the only thing the coordinator reads
+from this chat. Return EXACTLY this structure (details live in the run
+report on disk, not here):
+
+    Status: success | partial | blocked
+    Coverage: <scenarios run>/<scenarios assigned> (list any skipped + why)
+    Results: <passed> PASS / <failed> FAIL / <blocked> BLOCKED
+    Bugs filed: <BUG-NNN IDs, or none>
+    Report: docs/qa/runs/QA-{SHARD_LETTER}-run-{RUN_DATE}.md
+    Flags: <anything the coordinator must verify or that contradicts the plan>
+
+The coordinator will merge with
 ~/.agents/skills/running-bug-review-board/references/gate-merge.md.
 ```

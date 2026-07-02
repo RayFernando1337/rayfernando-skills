@@ -47,6 +47,14 @@ Generate the shard map from your test plan. Default skeleton:
 Keep shards **non-overlapping**. If two shards would touch the same
 record, merge them or split by persona.
 
+**Coverage gate (before launching anything).** Enumerate every Test ID in
+the phase manual test plan (per platform block for monorepos) and assign
+each to exactly one shard letter. Assert the partition: every scenario in
+exactly one shard, shard counts sum to the plan total, zero duplicates. A
+scenario that lands in no shard is a silent blind spot the merge will
+never catch; print the per-shard counts in the coordinator notes so the
+merge can check them off.
+
 ## Write-path-first rule
 
 The write-path shard (often "C") creates the artifact every other shard
@@ -76,11 +84,67 @@ Use the prompt template at
    letter).
 2. Paste the shared artifacts block from the write-path shard.
 3. Give the agent a fresh persona suffix (`+runMMDD-shardX`).
+4. Pre-assign each shard a BUG-NNN number range (e.g. A: 010–019,
+   B: 020–029) so parallel filers never collide; the merge renumbers
+   only if a range overflowed.
+
+## Run the pass as a wave (when `waves` / `waves-codex` is installed)
+
+If the orchestration skill pair `waves` (Cursor) / `waves-codex` (Codex)
+is installed, run this mode as a bounded wave instead of hand-rolling the
+fan-out — the shard map above is the decomposition, and the waves
+discipline supplies what this mode historically lacked. The
+correspondences and the QA-specific overrides:
+
+- **Shard map = wave manifest.** One row per shard: `shard | Test IDs |
+  personas | model | verification tier`. The coverage gate above is the
+  waves pre-fan-out partition-sum check.
+- **Write-path-first = two waves, not one burst.** Shard C (admin write
+  paths) is **Wave 1, serial** — it seeds the shared artifacts. The
+  dependent shards launch as **Wave 2 in parallel** only after Wave 1's
+  handoff. Never apply waves' "spawn all slices at once" here; D/E/F
+  depend on C's output, and parallel signups within ~30s trip auth rate
+  limits (stagger launches, unique persona suffixes).
+- **Run report = handoff.** Each shard writes its run report to disk and
+  returns only the compact structured summary (Status / Coverage /
+  counts / bugs filed / report path — see the shard prompt template).
+  The coordinator reads **run-report files, not shard transcripts**; a
+  shard's PASS claim is a claim, not evidence.
+- **Tiered verification, not uniform spot-checks.** Auto-accept PASS
+  rows from low-stakes scenarios; personally re-run the write-path and
+  highest-risk Test IDs; verify every FAIL/BLOCKED claim and every
+  backend-write scenario against the backend row (optimistic UI lies).
+  Spend coordinator time where a wrong verdict is expensive.
+- **Cheap-model routing.** Read-heavy, low-risk shards (public pages,
+  copy checks, static negative tests) can run on the fast/cheap model;
+  keep the write-path shard, anything auth-heavy, and the merge/verdict
+  on the strong model. Browser-driving shards stay serial *within* the
+  shard — never fan out extra browser workers inside one shard.
+- **Failure ladder before sequential fallback.** A stalled or partial
+  shard: (1) re-launch once, narrowed to its unfinished Test IDs with a
+  fresh persona suffix; (2) if it stalls again, fall back to
+  [sequential-wrapup.md](sequential-wrapup.md) for the remainder — which
+  is simply the bounded second wave (batch remaining scenarios and
+  fixed-bug re-tests into 1–3 scoped workers). Never write the verdict
+  while a shard's scenarios are unaccounted for; the coverage gate's
+  counts are the completion gate at merge time.
+- **Waves cannot replace the browser.** QA evidence comes from driving
+  the live app; read-only exploration workers can stage data, audit
+  copy against the spec, or cross-check backend rows, but a scenario is
+  only PASS with real-app evidence. Interactive BRB stays in its own
+  session regardless of orchestration.
+
+Token discipline for the run (applies with or without waves): all
+evidence — screenshots, console dumps, snapshots — goes to disk under
+`assets/BUG-NNN/` or the run report, never inline into chat returns; the
+coordinator's context should hold shard summaries and the merge, nothing
+larger.
 
 ## While shards run
 
-- Tail subagent transcripts to know when they finish (system
-  notifications fire on completion).
+- Wait for completion notifications (they fire when a subagent
+  finishes); don't tail full shard transcripts into your own context —
+  read each shard's **run report file** when it lands instead.
 - Spot-check **critical paths** yourself — the highest-risk Test ID for
   this phase. Even if a shard reports PASS, run the one or two
   highest-risk scenarios as coordinator.
@@ -91,9 +155,15 @@ Use the prompt template at
 ## Hand off if shards stall
 
 The 2026-05-19 Mokuhoe run had 3 of 5 parallel agents stall on Clerk
-rate-limits. The fix is **not** to relaunch in parallel — switch to
+rate-limits. The fix is **not** to relaunch them all in parallel. For a
+*single* stalled shard, one narrowed re-launch (unfinished Test IDs only,
+fresh persona suffix, after the rate-limit window passes) is worth one
+try. For multiple stalls — especially rate-limit stalls, which parallel
+retries make worse — switch to
 [sequential-wrapup.md](sequential-wrapup.md). Write what's done into a
-coordinator merge stub, then trigger the sequential pass.
+coordinator merge stub, then trigger the sequential pass. Either way,
+account for every scenario: the coverage-gate counts are the completion
+gate at merge time.
 
 Signs of stall:
 - Agent's last 5 minutes of output is the same retry loop
