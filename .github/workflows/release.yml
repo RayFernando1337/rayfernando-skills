@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate skill metadata
         run: python3 scripts/validate-skill-metadata.py
@@ -49,7 +49,7 @@ jobs:
           done
 
       - name: Create GitHub Release with skill zips
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             *.zip

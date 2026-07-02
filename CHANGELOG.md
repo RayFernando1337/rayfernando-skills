@@ -4,6 +4,14 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+### Changed
+
+- **Release workflow actions bumped off the deprecated Node 20 runtime.**
+  `actions/checkout` v4 → v7 and `softprops/action-gh-release` v2 → v3 (both
+  now target Node 24, which GitHub-hosted runners already provide). Checkout
+  v7's breaking change only affects `pull_request_target` / `workflow_run`
+  triggers; this workflow runs on tag push, so it is unaffected.
+
 ## [0.9.0] — 2026-07-01
 
 ### Added
