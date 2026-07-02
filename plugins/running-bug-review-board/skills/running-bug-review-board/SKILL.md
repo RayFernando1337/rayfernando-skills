@@ -156,6 +156,7 @@ Detail in [references/workflow.md](references/workflow.md).
 | Situation | Mode | Reference |
 |-----------|------|-----------|
 | Fresh full pass on a phase, multi-agent OK | Parallel coordinator | [references/parallel-coordinator.md](references/parallel-coordinator.md) |
+| Fresh full pass **and the `waves` / `waves-codex` skill is installed** | Parallel coordinator, run as a bounded wave (coverage gate, structured handoffs, tiered verification, cheap-model shards) | [references/parallel-coordinator.md § Run the pass as a wave](references/parallel-coordinator.md) |
 | Prior parallel run stalled or partial | Sequential wrap-up | [references/sequential-wrapup.md](references/sequential-wrapup.md) |
 | Solo agent, small surface | Sequential, ordered top-to-bottom | [references/sequential-wrapup.md](references/sequential-wrapup.md) |
 | Re-testing 1–3 fixed bugs after engineering shipped | Sequential, scoped to bug Test IDs | [references/sequential-wrapup.md](references/sequential-wrapup.md) |
@@ -434,7 +435,7 @@ Adapt paths to whatever the target repo already uses.
 - [references/browser-playbook.md](references/browser-playbook.md) — cursor-ide-browser, Chrome DevTools MCP, browser-use, Playwright recipes + how to drive like a human (web apps)
 - [references/computer-use-playbook.md](references/computer-use-playbook.md) — Codex Computer Use for web and native macOS apps (macOS; graceful fallback to a browser driver elsewhere)
 - [references/ios-simulator-playbook.md](references/ios-simulator-playbook.md) — iOS / iPadOS app QA, curated companion-skill ladder (AXe, baguette, XcodeBuildMCP, ios-simulator-skill, ios-build-verify, …)
-- [references/parallel-coordinator.md](references/parallel-coordinator.md) — shard map, write-path-first rule, copy-paste shard prompts
+- [references/parallel-coordinator.md](references/parallel-coordinator.md) — shard map, write-path-first rule, copy-paste shard prompts, and running the pass as a bounded wave when `waves` / `waves-codex` is installed
 - [references/sequential-wrapup.md](references/sequential-wrapup.md) — single-agent finish; copy-paste prompt
 - [references/bug-filing.md](references/bug-filing.md) — bug template, severity, evidence rules, status transitions
 - [references/gate-merge.md](references/gate-merge.md) — merge shard reports → gates + verdict

@@ -123,6 +123,52 @@ report. Pairs well with specialized review subagents when available.
 Only with **disjoint** file sets per worker, or `best-of-n-runner` (one git
 worktree each). Otherwise do research in parallel and edits serially.
 
+### Implement a reviewed plan (plan → edit wave → verify wave)
+
+The end-to-end SWE shape — three waves with different jobs:
+
+1. **Wave A — spec.** A small wave (or the orchestrator alone) turns the goal
+   into a written plan: ordered subtasks, explicit file ownership per subtask,
+   `Done when:` criteria. Verify it (the artifact-then-bigger-wave shape); the
+   verified plan is the contract every edit worker anchors to.
+2. **Wave B — disjoint edits.** One `worker` per plan subtask with strictly
+   disjoint path sets (or `best-of-n-runner` worktrees for contested designs).
+   Each prompt carries the plan excerpt for its subtask, its exact paths, the
+   "you are not alone" warning, and the code/edit handoff format.
+3. **Wave C — verify.** Read-only workers run the oracles: tests, type checks,
+   lint, a reviewer pass over the combined diff, regression checks on sibling
+   routes. Route failures back as narrow fix tasks (bounded — don't loop).
+   The orchestrator merges, re-reads critical files, and delivers.
+
+Interleave cheaply: Wave C slices that only touch Wave B's finished subtasks
+can start while slower edits finish. Keep the plan in `TodoWrite` and the
+per-subtask status in the wave manifest.
+
+### Codemod / migration across many files (row-shaped)
+
+When the same mechanical change applies to N files/callsites (rename an API,
+swap a client, migrate a schema field):
+
+1. **Stage the target list.** Grep/list the exact targets into
+   `.waves/<run>/targets.csv` (path, symbol, line hints). Verify the count —
+   the list *is* the coverage gate.
+2. **Wave the edits in batches** of 3–8 workers, each owning a disjoint file
+   subset from the list; prompts point at the list rows, not pasted code.
+3. **Verify by oracle, not prose:** after each batch, re-run the grep (old
+   pattern count must fall to the expected residue), then tests/type checks.
+   A row-shaped run with a cheap oracle is the one place going wider than
+   usual is safe.
+
+### CI-failure triage (→ diagnosis, then one fix wave)
+
+For a red CI run with several failing jobs: one read-only worker per failing
+job/log bundle (disjoint), each returning root-cause hypothesis + evidence
+(log lines, commit range) + confidence. Prefer the specialized CI subagents
+(`ci-investigator`, `ci-watcher`) where available. The orchestrator dedupes
+root causes across jobs (one bad commit often explains several failures),
+sends contested diagnoses to a verifier, then runs a single fix wave with
+disjoint ownership — and re-runs CI as the deliverable check.
+
 ### Multi-model panel (the Fusion pattern)
 
 When a slice is **high-stakes** — a design call, a risky correctness/security
@@ -202,11 +248,45 @@ the seam a loop doesn't give you.
 
 ## Grounding (why entropy-first works)
 
-Framing decomposition as uncertainty reduction is well-supported. Value a probe
-or clarification by its **expected information gain** / expected value of perfect
-information, and act once uncertainty is low enough — not before, not forever
-(Uncertainty of Thoughts, NeurIPS 2024; EVPI-based clarification, arXiv
-2511.08798). Separate **specification** uncertainty (assume, or ask when it
-pays) from **environment/model** uncertainty (gather via tools) (arXiv
-2606.19559). Then solve the low-entropy plan **least-to-most**, each step feeding
-the next (Least-to-Most, arXiv 2205.10625; Plan-and-Solve, arXiv 2305.04091).
+Framing decomposition as uncertainty reduction is well-supported, and each
+source contributes a usable mechanism — not just a citation:
+
+- **Prefer the probe that halves the surviving interpretations.** Uncertainty
+  of Thoughts (UoT, arXiv 2402.03271, NeurIPS 2024) scores candidate questions
+  by expected information gain and shows the best probe is the one that splits
+  the remaining hypotheses ~50/50 (binary-answer entropy peaks at an even
+  split). Swapping that entropy reward into a tree search — not the search
+  itself — carried most of its +38% average success gain. Orchestrator use:
+  aim scouts at the unknown whose answer eliminates the most plans, not the
+  one easiest to look up.
+- **Ask only when the value of asking clears a threshold.** SAGE-Agent (arXiv
+  2511.08798) prices each candidate question by expected value of perfect
+  information minus a redundancy cost, asks only when that beats a fraction of
+  its confidence in the best current interpretation, and *acts* once that
+  confidence passes an execute threshold. Penalizing redundant questions cut
+  questions asked ~18–27% with under 3% quality loss — over-asking is
+  measurably wasteful. This paper is also the explicit source of the
+  specification-vs-model uncertainty split.
+- **Judge "is the goal fully specified?" before acting, and err toward
+  asking.** arXiv 2606.19559 gates clarification on a specification-uncertainty
+  score emitted *before* choosing an action; a conservative ask-threshold
+  silently failed (recall collapsed), while a generous one cost little. Two
+  honest caveats it adds: every extra self-assessment channel taxed task
+  success slightly, and verbalized confidence ran overconfident — treat
+  self-reported scores as rankings, not probabilities. ("Resolve environment
+  unknowns by gathering via tools" is this skill's operational extension, not
+  that paper's mechanism.)
+- **Order the plan least-to-most; invest in the decomposition itself.**
+  Least-to-Most (arXiv 2205.10625, ICLR 2023) solves subproblems in sequence,
+  each answer feeding the next; its gains concentrate on deep problems (5+
+  dependent steps — shallow tasks gain nothing), and its own error analysis
+  shows the decomposition step, not the solving, is the bottleneck — and that
+  decompositions don't transfer across domains. Plan-and-Solve (arXiv
+  2305.04091, ACL 2023) shows plan-then-execute cuts missing-step errors but
+  leaves misread-goal errors untouched — which is exactly why the
+  specification check above comes *before* planning.
+
+These are single-model prompting results. The parallel fan-out, the
+verification gates between waves, and "each **verified** result lowers
+uncertainty for the next" are this skill's multi-agent adaptation — the
+verification half is grounded separately in `verification.md`.

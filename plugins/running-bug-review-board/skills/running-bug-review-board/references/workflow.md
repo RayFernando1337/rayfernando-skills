@@ -78,6 +78,7 @@ Spot-check the dev environment:
 | Signal | Mode |
 |--------|------|
 | Full pass, time available, multi-agent OK | **Parallel coordinator** — [parallel-coordinator.md](parallel-coordinator.md) |
+| Full pass and the `waves` / `waves-codex` skill is installed | **Parallel coordinator run as a bounded wave** — [parallel-coordinator.md § Run the pass as a wave](parallel-coordinator.md) |
 | Prior parallel run partial; <½ shards remain | **Sequential wrap-up** — [sequential-wrapup.md](sequential-wrapup.md) |
 | Re-testing 1–3 fixed bugs | Sequential, scoped to those Test IDs |
 | Phase code clearly not implemented yet | Stop. Tell user the phase needs engineering first |

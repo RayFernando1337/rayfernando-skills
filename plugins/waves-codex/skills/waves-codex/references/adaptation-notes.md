@@ -41,6 +41,24 @@ official docs describe it as experimental.
 - Entropy-first decomposition: reduce uncertainty (dig locally, then attached
   resources, then ask the user only if it pays) before slicing; cascade a
   decomposition wave into an execution wave; order the plan least-to-most.
+- Paper-grounded technique detail, mirrored with the Cursor skill: probe
+  selection that halves the surviving interpretations; ask-vs-act thresholds;
+  factored self-verification with open check questions; sample-and-vote with
+  agreement as a confidence flag; judge blinding (no authorship labels, both
+  orderings); disjoint-family judge panels; atomic-fact checks with
+  self-contained rewrites; citation URL-health passes. Sources listed in
+  `references/verification.md` ("Grounding") and `references/examples.md`.
+- Skill evals: both variants ship `evals/evals.json` + fixtures following the
+  Anthropic skill-creator format (prompt + expected_output + expectations,
+  graded PASS/FAIL with evidence against with-skill vs baseline transcripts).
+- Run mechanics, mirrored with the Cursor skill: the wave manifest (slice /
+  role / effort / verification tier) doubling as the completion gate; the
+  worker failure ladder (re-spawn narrower once -> do it in the manager thread
+  -> carry as `not-covered`); the `.waves/<run>/` scratch-dir convention with
+  `synthesis-wave-N.md` compression at the barrier; handoff digest caps; and
+  the SWE recipes (implement-a-reviewed-plan, row-shaped codemod, CI-failure
+  triage) in `references/examples.md`. Codex keeps worker prompt endings in
+  `references/handoff-format.md` § "Prompt endings per worker type".
 
 ## Cursor-to-Codex Swaps
 
