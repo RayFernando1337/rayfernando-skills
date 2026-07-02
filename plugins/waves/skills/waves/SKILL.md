@@ -147,6 +147,10 @@ wrapped in noise, the orchestrator must stage clean inputs **before** fanning ou
   re-derive it (and keeps noise out of their context).
 - **Pre-chunk for the workers.** Split into the exact per-worker files/ranges so
   each prompt can point at one path.
+- **One scratch dir per run.** Keep staged inputs, worker artifacts, and
+  between-wave syntheses in one place (e.g. `.waves/<run>/` with `staging/`,
+  `handoffs/`, `synthesis-wave-N.md`) so prompts cite paths instead of pasting
+  content and later waves re-read files, not chat history.
 - **Verify before you spawn.** Print counts and per-slice bounds; confirm the
   partition sums to the total (e.g. 8 chunks × ~388 = 3,097) so no slice is a
   silent blind spot. Fix anomalies (bad sort, dups) centrally, then re-check.
@@ -167,6 +171,18 @@ classify-and-act pattern, routing the right work to the right handler:
   `auto-accept` (low-stakes, corroborated) → `single verifier` (medium) →
   `multi-model panel` (high-stakes) → `debate` (contested, no ground truth).
   Spend the verification budget where a wrong claim is expensive, not uniformly.
+
+Record the triage as a **wave manifest** — one row per slice, written before
+you spawn (in `TodoWrite` or `.waves/<run>/manifest.md`):
+
+| slice | scope | worker type | model | verification tier |
+|---|---|---|---|---|
+| 1 | msgs 1–500 | explore | (default fast) | auto-accept |
+| 2 | voice-stack research | generalPurpose | (default) | single verifier |
+
+The manifest is also your **completion gate**: N rows spawned means N handoffs
+collected and checked off before synthesis — a wave with a missing handoff has
+a silent hole in it (Step 3).
 
 ### Step 1 — Decompose into independent slices
 
@@ -197,15 +213,36 @@ itself confirms the launch.
 
 ### Step 3 — Collect and synthesize
 
+**Completion gate first:** check off every handoff against the wave manifest —
+N spawned means N accounted for. A worker that never returns, errors out, or
+comes back `partial`/`blocked` is a hole in the wave, and synthesizing around
+it silently drops a slice. **Worker failure ladder:** (1) re-spawn once with a
+narrower scope and a note about what came back; (2) if it fails again, do that
+slice yourself in the main session; (3) if it stays blocked, carry the slice
+into the synthesis explicitly as `not-covered` — never average over a missing
+slice as if coverage were complete.
+
 As handoffs arrive, read each one: note `Status`, extract `Key findings`, and
 mine `Open questions` / `Suggested follow-ups` — each bullet may become a
-second-wave task. Reconcile conflicts across workers.
+second-wave task. Reconcile conflicts across workers. Then **compress at the
+barrier**: once a wave's handoffs are verified, write the distilled synthesis
+to `.waves/<run>/synthesis-wave-N.md` and work from that file — next-wave
+prompts cite paths into the scratch dir, never re-paste raw handoffs.
 
 **Don't trust a handoff because it says `success`.** Verify each finding's
 evidence (cited file:line / URL / metric resolves and says what's claimed),
 recount headline numbers from the source, and route low-confidence, conflicting,
 or citation-heavy claims to a verifier before they enter the draft. See
 "Verification" below.
+
+### Step 3.5 — Verifier pass (when the tier demands it)
+
+Before synthesis, spawn dedicated verifier workers for every claim whose
+manifest tier is `single verifier` or higher — and for anything that arrived
+contested, surprising, single-sourced, or low-confidence. Give each verifier
+the claim + its cited sources, no generator reasoning, no authorship labels
+(see "Verification"). Verifiers can run while you draft the synthesis; their
+verdicts gate what enters the final deliverable.
 
 ### Step 4 — Second waves (continuous motion)
 
@@ -395,9 +432,11 @@ Write each as if you get one shot. Every worker prompt includes:
    sources, not training data."
 6. **Scope boundaries** — what's explicitly OUT of scope (so it doesn't overlap a
    sibling worker).
-7. **Return only the handoff.** The worker's entire final message becomes your
-   context — tell it to return *only* the structured handoff and to write any
-   large artifact to a file and cite the path instead of pasting it inline.
+7. **Return only the handoff, and keep it a digest.** The worker's entire final
+   message becomes your context — tell it to return *only* the structured
+   handoff, capped at roughly 15 findings with one-line evidence each, and to
+   write any large artifact (tables, logs, full lists) to a file and cite the
+   path instead of pasting it inline.
 8. **Edit workers: you are not alone.** For implementation slices, warn the
    worker that siblings may be active: own only the listed paths, don't revert
    others' changes, and **never spawn its own subagents** (only the orchestrator
@@ -442,11 +481,15 @@ is invoked explicitly (e.g. `/orchestrate <goal>`).
 - [ ] Routed scouting / read-heavy waves to the cheap fast model (Composer 2.5);
       reserved frontier / panel models for high-stakes slices.
 - [ ] Slices are independent (disjoint data/areas/paths).
+- [ ] Wrote the wave manifest (slice / worker type / model / verification tier)
+      before spawning.
 - [ ] Each worker prompt is fully self-contained (no reliance on chat history).
 - [ ] All `Task` calls sent in one message, `run_in_background: true`.
 - [ ] Ended turn to await completions — no polling loop.
 - [ ] No two parallel workers write the same paths.
 - [ ] Verified coverage before spawning (counts/bounds/partition-sum).
+- [ ] Checked every manifest row off at collection (completion gate); ran the
+      failure ladder on missing/blocked slices — no slice silently dropped.
 - [ ] Read every handoff; spawned follow-ups for open questions.
 - [ ] Wave bounded (width ≈3–8, ≤2–3 waves); carried only distilled handoffs forward.
 - [ ] Verified each handoff's evidence (not just its `Status`); escalated

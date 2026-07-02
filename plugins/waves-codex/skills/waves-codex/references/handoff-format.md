@@ -62,7 +62,7 @@ success | partial | blocked
 ## Confidence & risk
 - Verified: <what was directly checked>
 - Unverified: <what still needs testing/review>
-- Risk: low | medium | high -- <why>
+- Risk: low | med | high -- <why>
 
 ## Notes & deviations
 - <assumptions, surprises, broken invariants, merge concerns, anything the parent must know>
@@ -137,6 +137,43 @@ Verifier CSV rows should return JSON with:
   "confidence": "high | med | low",
   "gaps": ["<missing source/check>"]
 }
+```
+
+## Prompt Endings per Worker Type
+
+End every worker prompt with the generic block, plus the add-on for its type:
+
+Generic (all workers):
+
+```text
+Return only the structured handoff from references/handoff-format.md. Use
+exactly the headings. Include concrete evidence and confidence for every
+important claim. Flag anything you could not verify.
+```
+
+Research workers, add:
+
+```text
+Use live/current sources when the fact may have changed. Do not rely on training
+data for versioned APIs, pricing, schedules, product behavior, or current docs.
+Flag anything you could not verify.
+```
+
+Implementation workers, add:
+
+```text
+You are not alone in the codebase. Other workers may be active. Own only the
+files/modules listed above, do not revert changes you did not make, and adjust
+to nearby changes if you encounter them.
+```
+
+Verifier workers, add:
+
+```text
+Your job is verification, not generation. Check only the assigned claim(s)
+against the provided source(s) or oracle(s). Do not use the original worker's
+reasoning. Return supported, partly-supported, unsupported, or source-not-found
+with exact evidence.
 ```
 
 ## How the Manager Reads a Handoff

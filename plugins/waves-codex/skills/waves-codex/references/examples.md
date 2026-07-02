@@ -226,6 +226,52 @@ Risky patterns:
 - Multiple workers changing shared contracts without a manager-owned design.
 - Workers editing before discovery converges.
 
+## Recipe: Implement a Reviewed Plan (Plan -> Edit Wave -> Verify Wave)
+
+The end-to-end SWE shape -- three waves with different jobs:
+
+1. Wave A -- spec. A small wave (or the manager alone) turns the goal into a
+   written plan: ordered subtasks, explicit file ownership per subtask,
+   `Done when:` criteria. Verify it (the artifact-then-bigger-wave shape); the
+   verified plan is the contract every edit worker anchors to.
+2. Wave B -- disjoint edits. One `worker` per plan subtask with strictly
+   disjoint path sets (or one worktree per competing design). Each prompt
+   carries the plan excerpt for its subtask, its exact paths, the "you are not
+   alone" warning, and the code/edit handoff format. Use `high` effort.
+3. Wave C -- verify. Read-only workers run the oracles: tests, type checks,
+   lint, a reviewer pass over the combined diff, regression checks on sibling
+   routes. Route failures back as narrow fix tasks (bounded -- don't loop).
+   The manager merges, re-reads critical files, and delivers.
+
+Interleave cheaply: Wave C slices that only touch Wave B's finished subtasks
+can start while slower edits finish. Keep the plan in `update_plan` and the
+per-subtask status in the wave manifest.
+
+## Recipe: Codemod / Migration Across Many Files (Row-Shaped)
+
+When the same mechanical change applies to N files/callsites (rename an API,
+swap a client, migrate a schema field):
+
+1. Stage the target list. Grep/list the exact targets into
+   `.waves/<run>/targets.csv` (path, symbol, line hints). Verify the count --
+   the list is the coverage gate.
+2. Fan out the edits: `spawn_agents_on_csv` with one row per target (or
+   batches of 3-8 `worker`s each owning a disjoint file subset when the CSV
+   tool is unavailable); prompts point at list rows, not pasted code.
+3. Verify by oracle, not prose: after each batch, re-run the grep (old
+   pattern count must fall to the expected residue), then tests/type checks.
+   A row-shaped run with a cheap oracle is the one place going wider than
+   usual is safe.
+
+## Recipe: CI-Failure Triage (Diagnosis, Then One Fix Wave)
+
+For a red CI run with several failing jobs: one read-only `explorer` per
+failing job/log bundle (disjoint), each returning root-cause hypothesis +
+evidence (log lines, commit range) + confidence. The manager dedupes root
+causes across jobs (one bad commit often explains several failures), sends
+contested diagnoses to a verifier, then runs a single fix wave with disjoint
+ownership -- and re-runs CI as the deliverable check.
+
 ## Wave Shapes
 
 A wave is not one move - pick the shape from how much you know about the problem.

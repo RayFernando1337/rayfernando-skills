@@ -123,6 +123,52 @@ report. Pairs well with specialized review subagents when available.
 Only with **disjoint** file sets per worker, or `best-of-n-runner` (one git
 worktree each). Otherwise do research in parallel and edits serially.
 
+### Implement a reviewed plan (plan → edit wave → verify wave)
+
+The end-to-end SWE shape — three waves with different jobs:
+
+1. **Wave A — spec.** A small wave (or the orchestrator alone) turns the goal
+   into a written plan: ordered subtasks, explicit file ownership per subtask,
+   `Done when:` criteria. Verify it (the artifact-then-bigger-wave shape); the
+   verified plan is the contract every edit worker anchors to.
+2. **Wave B — disjoint edits.** One `worker` per plan subtask with strictly
+   disjoint path sets (or `best-of-n-runner` worktrees for contested designs).
+   Each prompt carries the plan excerpt for its subtask, its exact paths, the
+   "you are not alone" warning, and the code/edit handoff format.
+3. **Wave C — verify.** Read-only workers run the oracles: tests, type checks,
+   lint, a reviewer pass over the combined diff, regression checks on sibling
+   routes. Route failures back as narrow fix tasks (bounded — don't loop).
+   The orchestrator merges, re-reads critical files, and delivers.
+
+Interleave cheaply: Wave C slices that only touch Wave B's finished subtasks
+can start while slower edits finish. Keep the plan in `TodoWrite` and the
+per-subtask status in the wave manifest.
+
+### Codemod / migration across many files (row-shaped)
+
+When the same mechanical change applies to N files/callsites (rename an API,
+swap a client, migrate a schema field):
+
+1. **Stage the target list.** Grep/list the exact targets into
+   `.waves/<run>/targets.csv` (path, symbol, line hints). Verify the count —
+   the list *is* the coverage gate.
+2. **Wave the edits in batches** of 3–8 workers, each owning a disjoint file
+   subset from the list; prompts point at the list rows, not pasted code.
+3. **Verify by oracle, not prose:** after each batch, re-run the grep (old
+   pattern count must fall to the expected residue), then tests/type checks.
+   A row-shaped run with a cheap oracle is the one place going wider than
+   usual is safe.
+
+### CI-failure triage (→ diagnosis, then one fix wave)
+
+For a red CI run with several failing jobs: one read-only worker per failing
+job/log bundle (disjoint), each returning root-cause hypothesis + evidence
+(log lines, commit range) + confidence. Prefer the specialized CI subagents
+(`ci-investigator`, `ci-watcher`) where available. The orchestrator dedupes
+root causes across jobs (one bad commit often explains several failures),
+sends contested diagnoses to a verifier, then runs a single fix wave with
+disjoint ownership — and re-runs CI as the deliverable check.
+
 ### Multi-model panel (the Fusion pattern)
 
 When a slice is **high-stakes** — a design call, a risky correctness/security

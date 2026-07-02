@@ -178,6 +178,9 @@ data when it reduces risk or repeated work:
 - Normalize noisy inputs once: strip wrappers, binary blobs, boilerplate, and
   irrelevant logs.
 - Pre-chunk huge corpora into exact per-worker files or ranges.
+- Keep one scratch dir per run (e.g. `.waves/<run>/` with `staging/`,
+  `handoffs/`, `synthesis-wave-N.md`) so prompts cite paths instead of
+  pasting content and later waves re-read files, not chat history.
 
 Then run a pre-fan-out gate:
 
@@ -215,6 +218,12 @@ Step 2) and a **verification tier** - `auto-accept` (low-stakes, corroborated) -
 `single verifier` -> `multi-model/multi-pass panel` (high-stakes) -> `debate`
 (contested, no ground truth). Spend verification where a wrong claim is expensive,
 not uniformly.
+
+Record the triage as a **wave manifest** - one row per slice (`slice | scope |
+role | effort | verification tier`), written to the plan or
+`.waves/<run>/manifest.md` before spawning. The manifest doubles as the
+**completion gate**: N rows spawned means N handoffs collected and checked off
+before synthesis (Step 3).
 
 ### Step 2 - Fan Out with Codex Subagents
 
@@ -254,6 +263,14 @@ Codex handles spawning, routing follow-ups, waiting, and closing in the manager
 workflow. Current docs say when many agents are running, Codex waits until all
 requested results are available and returns a consolidated response.
 
+**Completion gate first:** check every handoff off against the wave manifest -
+N spawned means N accounted for. A worker that never returns, errors out, or
+comes back `partial`/`blocked` is a hole in the wave. **Worker failure
+ladder:** (1) re-spawn once with a narrower scope and a note about what came
+back; (2) if it fails again, do that slice in the manager thread; (3) if it
+stays blocked, carry the slice into the synthesis explicitly as `not-covered`
+- never average over a missing slice as if coverage were complete.
+
 Avoid manual polling loops. Continue non-overlapping local work while workers
 run; wait only when synthesis is blocked on their results. For each handoff:
 
@@ -276,7 +293,9 @@ Run cheap checks on every important finding:
 - Confidence labels are preserved.
 
 Accept only evidence-backed, scope-correct, non-contradicted findings. Demote,
-re-task, or verify the rest.
+re-task, or verify the rest. Then **compress at the barrier**: write the
+distilled synthesis to `.waves/<run>/synthesis-wave-N.md` and work from that
+file - next-wave prompts cite paths, never re-paste raw handoffs.
 
 ### Step 3.5 - Spawn Verifier Passes When Needed
 
@@ -359,40 +378,13 @@ Every worker prompt includes:
    (`high|med|low`), and say what would change the conclusion.
 6. What not to do: avoid owning the whole task, avoid sibling scopes, avoid
    editing unless explicitly assigned.
-7. The required handoff format from `references/handoff-format.md`.
+7. The required handoff format from `references/handoff-format.md` - and keep
+   it a digest: roughly 15 findings max with one-line evidence each; large
+   artifacts (tables, logs, full lists) go to a file, cite the path.
 
-Useful ending:
-
-```text
-Return only the structured handoff from references/handoff-format.md. Use
-exactly the headings. Include concrete evidence and confidence for every
-important claim. Flag anything you could not verify.
-```
-
-For research workers, add:
-
-```text
-Use live/current sources when the fact may have changed. Do not rely on training
-data for versioned APIs, pricing, schedules, product behavior, or current docs.
-Flag anything you could not verify.
-```
-
-For implementation workers, add:
-
-```text
-You are not alone in the codebase. Other workers may be active. Own only the
-files/modules listed above, do not revert changes you did not make, and adjust
-to nearby changes if you encounter them.
-```
-
-For verifier workers, add:
-
-```text
-Your job is verification, not generation. Check only the assigned claim(s)
-against the provided source(s) or oracle(s). Do not use the original worker's
-reasoning. Return supported, partly-supported, unsupported, or source-not-found
-with exact evidence.
-```
+End every worker prompt with the copy-paste ending for its worker type
+(generic, research, implementation, or verifier) from
+`references/handoff-format.md` § "Prompt endings per worker type".
 
 ## CSV Fan-Out
 
@@ -491,6 +483,9 @@ reference/spec pattern, not a drop-in replacement for this interactive skill.
 - [ ] Verified coverage before spawning: counts, bounds, partition-sum,
       gaps/duplicates.
 - [ ] Slices are independent and sized to `agents.max_threads`.
+- [ ] Wrote the wave manifest (slice / role / effort / verification tier)
+      before spawning; checked every row off at collection (completion gate);
+      ran the failure ladder on missing/blocked slices.
 - [ ] Each worker prompt is self-contained and ends with the handoff contract.
 - [ ] Picked `explorer`, `worker`, `default`, custom agents, verifier agents, or
       `spawn_agents_on_csv` deliberately.
@@ -499,8 +494,11 @@ reference/spec pattern, not a drop-in replacement for this interactive skill.
 - [ ] Avoided manual polling loops; waited only when synthesis was blocked.
 - [ ] Read every handoff and resolved conflicts.
 - [ ] Preserved per-finding confidence labels.
-- [ ] Spawned second-wave tasks only for real gaps, conflicts, narrowed scope, or
-      verification needs.
+- [ ] Carried only distilled, verified syntheses between waves (no raw
+      transcripts or losing candidates).
+- [ ] Treated each open question / follow-up bullet as a candidate second-wave
+      task; spawned waves for the ones that change the deliverable, coverage,
+      or confidence.
 - [ ] Verified high-stakes, conflicting, low-confidence, or uncited findings
       before synthesizing.
 - [ ] Verified the final deliverable: re-ran/validated and re-read critical
