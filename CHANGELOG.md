@@ -28,6 +28,40 @@ All notable changes to this collection are documented here. The format follows [
   `skill_name` matches the skill directory, requires unique integer ids,
   non-empty prompts/expectations, and verifies referenced fixture files exist
   inside the skill directory.
+- **Run mechanics in both `waves` variants (from a comprehensive review).**
+  A **wave manifest** (one row per slice: scope / worker type / model or
+  effort / verification tier, written before spawning) that doubles as the
+  **completion gate** — N rows spawned means N handoffs checked off before
+  synthesis, so a worker that never returns can no longer silently drop a
+  slice; a **worker failure ladder** (re-spawn once narrower → do the slice
+  in the main session → carry it explicitly as `not-covered`); a
+  **`.waves/<run>/` scratch-dir convention** (staging, handoffs,
+  `synthesis-wave-N.md`) with a compress-at-the-barrier step so next-wave
+  prompts cite paths instead of re-pasting handoffs; **handoff digest caps**
+  (~15 findings, one-line evidence, large artifacts to disk); an explicit
+  **Step 3.5 verifier pass** in the Cursor variant (parity with Codex); and
+  three **SWE-workflow recipes** in both `examples.md` — implement a reviewed
+  plan (spec wave → disjoint edit wave → verify wave), row-shaped
+  codemod/migration with an oracle-gated coverage list, and CI-failure
+  triage (one worker per failing job → dedupe root causes → one fix wave).
+- **`running-bug-review-board` runs its parallel pass as a wave.** New
+  "Run the pass as a wave" section in `references/parallel-coordinator.md`
+  mapping the shard map to a wave manifest, write-path-first to Wave 1
+  (serial) → Wave 2 (parallel), and run reports to file-based handoffs —
+  while keeping the QA-specific constraints (one browser tab per shard,
+  auth rate-limit stagger, no browser fan-out inside a shard, PASS requires
+  real-app evidence). Adds a **Test-ID coverage gate** (every scenario in
+  exactly one shard, counts sum to the plan) before launching, pre-assigned
+  BUG-NNN ranges per shard, tiered verification for the coordinator
+  (auto-accept low-stakes PASS rows; personally re-run write-path and
+  highest-risk IDs; verify every FAIL/BLOCKED and backend-write claim),
+  cheap-model routing for low-risk shards, a narrowed single-shard retry
+  before the sequential fallback, and token discipline: evidence to disk
+  only, coordinators read run-report files instead of tailing transcripts,
+  and shards return a fixed six-line structured handoff
+  (`Status / Coverage / Results / Bugs filed / Report / Flags`) in chat.
+  Mode-picker rows in `SKILL.md` and `workflow.md` point at it when
+  `waves`/`waves-codex` is installed. The plugin bumps to **0.5.0**.
 
 ### Changed
 
