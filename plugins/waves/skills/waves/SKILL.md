@@ -524,7 +524,7 @@ is invoked explicitly (e.g. `/orchestrate <goal>`).
       verification tier) before spawning; launched only slices whose
       dependencies were met (verified findings fed into dependent prompts).
 - [ ] Each worker prompt is fully self-contained (no reliance on chat history).
-- [ ] All `Task` calls sent in one message, `run_in_background: true`.
+- [ ] Each wave's `Task` calls sent in one message, `run_in_background: true`.
 - [ ] Ended turn to await completions — no polling loop.
 - [ ] No two parallel workers write the same paths.
 - [ ] Verified coverage before spawning (counts/bounds/partition-sum).
