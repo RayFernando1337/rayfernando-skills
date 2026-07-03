@@ -24,6 +24,25 @@ The active tool registry in this session exposed `spawn_agent`, `wait_agent`,
 `send_input`, and `close_agent`, but not `spawn_agents_on_csv`, even though
 official docs describe it as experimental.
 
+Re-checked on 2026-07-03 against the Codex Config Reference
+(`https://developers.openai.com/codex/config-reference`) and changelog
+(`https://developers.openai.com/codex/changelog`):
+
+- `features.multi_agent` now documents five collaboration tools:
+  `spawn_agent`, `send_input`, `resume_agent`, `wait_agent`, `close_agent`
+  (stable, on by default). `resume_agent` reopens a closed agent so it can
+  receive `send_input` / `wait_agent` again.
+- Custom agents are standalone TOML files (one per file) under
+  `~/.codex/agents/` or `.codex/agents/`; project agents load in **trusted
+  projects only**. Spawning an unknown `agent_type` fails with an error — there
+  is no silent fallback (the `default` role is used only when `agent_type` is
+  omitted). The skill's "spawn `default`/`worker`/`explorer` with the role's
+  instructions inlined" fallback is our recommendation, not documented
+  behavior.
+- `agents.max_threads` still defaults to `6`, `agents.max_depth` to `1`;
+  `spawn_agents_on_csv` is still experimental (now also documents a
+  per-call `max_runtime_seconds` override of `agents.job_max_runtime_seconds`).
+
 ## What Stayed Portable
 
 - Mental model: discover -> stage -> verify coverage -> decompose -> fan out ->
@@ -52,13 +71,22 @@ official docs describe it as experimental.
   Anthropic skill-creator format (prompt + expected_output + expectations,
   graded PASS/FAIL with evidence against with-skill vs baseline transcripts).
 - Run mechanics, mirrored with the Cursor skill: the wave manifest (slice /
-  role / effort / verification tier) doubling as the completion gate; the
-  worker failure ladder (re-spawn narrower once -> do it in the manager thread
-  -> carry as `not-covered`); the `.waves/<run>/` scratch-dir convention with
-  `synthesis-wave-N.md` compression at the barrier; handoff digest caps; and
-  the SWE recipes (implement-a-reviewed-plan, row-shaped codemod, CI-failure
-  triage) in `references/examples.md`. Codex keeps worker prompt endings in
+  role / effort / depends_on / verification tier) doubling as the completion
+  gate; the worker failure ladder (steer/resume or re-spawn narrower once ->
+  do it in the manager thread -> carry as `not-covered`); the `.waves/<run>/`
+  scratch-dir convention with `synthesis-wave-N.md` compression at the
+  barrier; handoff digest caps; and the SWE recipes
+  (implement-a-reviewed-plan, row-shaped codemod, CI-failure triage) in
+  `references/examples.md`. Codex keeps worker prompt endings in
   `references/handoff-format.md` § "Prompt endings per worker type".
+- Run-shape triage (state the shape in one line before spawning; on the fence
+  pick the smaller; never present inline work as wave coverage) and
+  dependency-aware dispatch (`depends_on` in the manifest; a wave is every
+  slice whose dependencies are met; dependents launch after their dependency's
+  handoff is verified, with distilled findings folded into their prompts).
+  Both portable as-is; adapted from reviewing Phillip Chaffee's public
+  `deep-research` Cursor skill (github.com/PhillipChaffee/.cursor), then
+  re-verified against current Cursor and Codex docs.
 
 ## Cursor-to-Codex Swaps
 
@@ -79,6 +107,8 @@ official docs describe it as experimental.
 | `/orchestrate` cloud plugin via Cursor SDK | `codex exec` fleets for scripts/CI, Codex app worktrees for local parallel code, and the Symphony pattern for always-on issue-tracker orchestration. |
 | Data-chunk fan-out by many background `Task` calls | `spawn_agents_on_csv` when each row maps to one worker and the experimental tool is available; otherwise normal `explorer` waves. |
 | Dedicated verifier worker | Custom Codex verifier agent, normal `explorer`/`default` verifier prompts, or `spawn_agents_on_csv` verifier-per-row batch when available. |
+| Missing `subagent_type` fallback: custom `.cursor/agents/` files register only after a Cursor restart, so an unregistered role runs as `generalPurpose` with its instructions inlined | Unknown `agent_type` fails the spawn (no silent fallback) and `.codex/agents/` loads in trusted projects only, so an unavailable role runs as `default`/`worker`/`explorer` with its instructions inlined. Either way, a missing role is not permission to skip it. |
+| Re-task a failed/partial worker by resuming its agent ID (context preserved) before re-spawning | `send_input` to steer a running worker; `resume_agent` to reopen a closed one; re-spawn fresh only when the context itself is the problem. |
 | "Verify before you trust" | Codex manager runs pre-fan-out gates, cheap handoff checks, separate verifier waves, and final deliverable validation. |
 | Recursive subplanner idea | Dropped from the default. Current docs say `agents.max_depth` defaults to `1`; raise it only for explicit recursive delegation. |
 | Entropy-first decomposition (dig locally then attached resources then ask only if it pays; scouting wave then execution wave; least-to-most) | Portable as-is; `update_plan` replaces `TodoWrite` for the living plan. |

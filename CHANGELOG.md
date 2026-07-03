@@ -4,8 +4,50 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+### Added
+
+- **`waves` + `waves-codex`: run-shape triage, dependency-aware dispatch, and
+  a missing-role fallback** — techniques adapted from reviewing Phillip
+  Chaffee's public `deep-research` Cursor skill
+  (github.com/PhillipChaffee/.cursor), each re-verified against current
+  Cursor/Codex docs and bug trackers before adoption, and kept
+  model-agnostic (no pinned researcher rosters or model slugs — routing
+  stays a per-slice cost/stakes decision). Both variants now: **state the
+  run shape in one line before spawning** (weigh breadth / depth / ambiguity
+  / stakes; on the fence pick the smaller shape; if no wave is needed say so
+  — never present inline work as wave coverage); record **`depends_on`** as
+  a per-slice triage axis and manifest column, with dependency-aware
+  dispatch (a wave is every not-yet-run slice whose dependencies are met;
+  dependents launch only after the dependency's handoff is *verified*, with
+  distilled findings folded into their self-contained prompts; unrelated
+  slices stay parallel); and treat **a missing worker role as not permission
+  to skip it** — on Cursor, custom `.cursor/agents/` subagents register as
+  `subagent_type` values only after a restart, so an unregistered role runs
+  as `generalPurpose` with the role's instructions inlined (and the intended
+  `model` passed on the call); on Codex, an unknown `agent_type` fails the
+  spawn and `.codex/agents/` loads in trusted projects only, so an
+  unavailable role runs as `default`/`worker`/`explorer` with the
+  instructions inlined. The worker failure ladder gains a cheaper first
+  rung: **steer or resume the same worker** (Cursor resumes by agent ID with
+  context preserved; Codex uses `send_input` / `resume_agent`) before
+  re-spawning fresh.
+
 ### Changed
 
+- **`waves` + `waves-codex`: subagent mechanics re-verified 2026-07-03.**
+  `waves`: the custom-agent registration-after-restart behavior, resume by
+  agent ID, and the model-fallback conditions (Max Mode / plan / admin
+  restrictions, plus confirmed can-be-ignored bug reports) checked against
+  Cursor docs and forum reports; model routing now recommends pinning a
+  custom agent's `model` in its frontmatter **and** passing the matching
+  `model` on the `Task` call, and treating off-looking worker output as a
+  hint the intended model may not have run. `waves-codex`: the documented
+  collaboration tool set updated to five tools (adds `resume_agent`);
+  unknown-`agent_type` spawn failure and trusted-project loading of
+  `.codex/agents/` recorded; `references/adaptation-notes.md` gains the
+  2026-07-03 re-check block and the new Cursor-to-Codex swap rows
+  (missing-role fallback, steer/resume, run-shape triage + `depends_on`
+  portability).
 - **Release workflow actions bumped off the deprecated Node 20 runtime.**
   `actions/checkout` v4 → v7 and `softprops/action-gh-release` v2 → v3 (both
   now target Node 24, which GitHub-hosted runners already provide). Checkout

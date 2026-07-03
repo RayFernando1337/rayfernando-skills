@@ -159,14 +159,25 @@ wrapped in noise, the orchestrator must stage clean inputs **before** fanning ou
 In practice this serial prep is often the *largest* phase; the parallel fan-out is
 fast once inputs are clean.
 
-### Step 0.7 — Triage: classify each slice (worker type + verification tier)
+### Step 0.7 — Triage: size the run, then classify each slice
 
-Before fanning out, classify each slice on **two axes** — this is the
-classify-and-act pattern, routing the right work to the right handler:
+**Size the run first, out loud.** Weigh breadth (how many independent slices),
+depth (how much reasoning each needs), ambiguity (how well-formed the goal is —
+see "Entropy-first decomposition"), and stakes (how costly a wrong answer is —
+this sets verification tiers), then state the chosen shape in one line before
+spawning — e.g. `Run shape: one wave, 4 workers (3 research + 1 data chunk);
+second wave only if handoffs expose gaps.` On the fence between two shapes,
+pick the smaller and say so. And if triage says no wave is needed, do the task
+inline and say that — never present inline work as wave coverage.
+
+Then classify each slice on **three axes** — this is the classify-and-act
+pattern, routing the right work to the right handler:
 
 - **Worker type** — read-only (`explore`) / web-research (`generalPurpose`) /
   shell / competing-attempt (`best-of-n-runner`) / specialized review (`bugbot`,
   `security-review`). (See the table under "Choosing `subagent_type`".)
+- **Dependencies** — which slices (if any) this one needs finished output from.
+  Most slices should have none; a real dependency edge is what separates waves.
 - **Verification tier** — how much checking the slice's stakes justify:
   `auto-accept` (low-stakes, corroborated) → `single verifier` (medium) →
   `multi-model panel` (high-stakes) → `debate` (contested, no ground truth).
@@ -175,14 +186,20 @@ classify-and-act pattern, routing the right work to the right handler:
 Record the triage as a **wave manifest** — one row per slice, written before
 you spawn (in `TodoWrite` or `.waves/<run>/manifest.md`):
 
-| slice | scope | worker type | model | verification tier |
-|---|---|---|---|---|
-| 1 | msgs 1–500 | explore | (default fast) | auto-accept |
-| 2 | voice-stack research | generalPurpose | (default) | single verifier |
+| slice | scope | worker type | model | depends_on | verification tier |
+|---|---|---|---|---|---|
+| 1 | msgs 1–500 | explore | (default fast) | — | auto-accept |
+| 2 | voice-stack research | generalPurpose | (default) | — | single verifier |
+| 3 | voice build spike | generalPurpose | (default) | 2 | single verifier |
 
-The manifest is also your **completion gate**: N rows spawned means N handoffs
-collected and checked off before synthesis — a wave with a missing handoff has
-a silent hole in it (Step 3).
+`depends_on` defines the wave boundaries: a wave is every not-yet-run slice
+whose dependencies are all met. Launch wave 1 (no dependencies) in parallel; a
+dependent slice launches only after its dependency's handoff is **verified**,
+with the distilled findings (or their `.waves/<run>/` path) folded into its
+self-contained prompt — and unrelated slices stay parallel. The manifest is
+also your **completion gate**: N rows spawned means N handoffs collected and
+checked off before synthesis — a wave with a missing handoff has a silent
+hole in it (Step 3).
 
 ### Step 1 — Decompose into independent slices
 
@@ -202,8 +219,9 @@ once, so you stay within practical concurrency limits.
 
 ### Step 2 — Fan out in parallel
 
-Send **one message with multiple `Task` tool calls** — that is what makes them
-run concurrently. Set `run_in_background: true` on each (Multitask Mode). Pick
+Send **one message with multiple `Task` tool calls** — one per slice whose
+dependencies are met — that is what makes them run concurrently. Set
+`run_in_background: true` on each (Multitask Mode). Pick
 `subagent_type` per slice (table below). Give each a 3-5 word `description` and a
 self-contained `prompt` ending with the required handoff format.
 
@@ -216,11 +234,13 @@ itself confirms the launch.
 **Completion gate first:** check off every handoff against the wave manifest —
 N spawned means N accounted for. A worker that never returns, errors out, or
 comes back `partial`/`blocked` is a hole in the wave, and synthesizing around
-it silently drops a slice. **Worker failure ladder:** (1) re-spawn once with a
-narrower scope and a note about what came back; (2) if it fails again, do that
-slice yourself in the main session; (3) if it stays blocked, carry the slice
-into the synthesis explicitly as `not-covered` — never average over a missing
-slice as if coverage were complete.
+it silently drops a slice. **Worker failure ladder:** (1) re-task once,
+narrower — resume the same worker (each `Task` returns an agent ID that
+resumes with context preserved) when the slice just needs continuation, or
+re-spawn fresh with a narrower scope and a note about what came back; (2) if
+it fails again, do that slice yourself in the main session; (3) if it stays
+blocked, carry the slice into the synthesis explicitly as `not-covered` —
+never average over a missing slice as if coverage were complete.
 
 As handoffs arrive, read each one: note `Status`, extract `Key findings`, and
 mine `Open questions` / `Suggested follow-ups` — each bullet may become a
@@ -246,8 +266,9 @@ verdicts gate what enters the final deliverable.
 
 ### Step 4 — Second waves (continuous motion)
 
-If handoffs exposed gaps, dependencies, or follow-ups, spawn another parallel
-wave the same way. Repeat until no slice is `pending` and nothing new surfaced.
+If handoffs exposed gaps or follow-ups — or verified handoffs just unblocked
+dependent manifest slices — spawn another parallel wave the same way. Repeat
+until no slice is `pending` and nothing new surfaced.
 
 ### Step 5 — Deliver
 
@@ -334,6 +355,15 @@ playbook: `references/verification.md`.
 | Browser testing / UI verification | `browser-use` | Navigates and screenshots. **Stateful: auto-resumes one shared instance, so don't fan out `browser-use` in parallel** — use a single serial UI slice. Needs agent mode (not `readonly`). |
 | Competing attempts at the same task | `best-of-n-runner` | Each runs in an **isolated git worktree/branch** — safe from shared-checkout clobbering; you then compare attempts and merge the winner. |
 
+**Custom subagents and the missing-type fallback.** Custom subagents (project
+`.cursor/agents/`, user `~/.cursor/agents/`, or plugin-provided) show up as
+their own `subagent_type` values — worth defining when a role repeats across
+runs (a verifier, a docs researcher) so its prompt and pinned `model` live in
+one file. Two verified gotchas: new agent files register only after a Cursor
+restart, and a type missing from the enum is **not** permission to skip the
+role — run it as `generalPurpose` with the role's instructions inlined in the
+worker prompt (passing the intended `model` on the call) instead.
+
 ### Picking the model per slice (cost / speed routing)
 
 Model choice is a cost/speed lever — route it, don't put every slice on a
@@ -357,7 +387,11 @@ frontier model:
 Caveats: availability varies (Max Mode, plan, or admin restrictions can force a
 fallback to a compatible model); slugs drift, so read them off Cursor's model
 picker rather than hardcoding volatile ones; `inherit` can be unreliable in some
-surfaces (omit `model` to inherit). Respect the user's cost and model
+surfaces (omit `model` to inherit). When a custom agent's model matters, pin it
+in the frontmatter **and** pass the matching `model` on the `Task` call — the
+field has been ignored under some conditions (documented fallbacks plus
+confirmed bug reports), so if a worker's output quality looks off, consider
+that the intended model may not have run. Respect the user's cost and model
 preferences over any default here.
 
 For review/audit slices, Cursor also exposes specialized subagents when available
@@ -467,22 +501,28 @@ each on its own branch, and reconciles handoffs from disk/git. It requires its
 own setup (credentials and a runtime, plus optional Slack) — check its docs — and
 is invoked explicitly (e.g. `/orchestrate <goal>`).
 
-> Cursor subagent mechanics here were checked on 2026-06-15. The details most
-> likely to drift: the cloud `orchestrate` plugin's setup, and whether Cursor
-> caps concurrent background subagents (not officially documented). Re-verify
-> those if they matter to your run.
+> Cursor subagent mechanics here were checked on 2026-07-03 (custom-agent
+> registration-after-restart, resume-by-agent-ID, and the model-fallback
+> conditions re-verified against current docs and bug reports). The details
+> most likely to drift: the cloud `orchestrate` plugin's setup, and whether
+> Cursor caps concurrent background subagents (not officially documented).
+> Re-verify those if they matter to your run.
 
 ## Checklist
 
 - [ ] Discovered the problem shape before decomposing.
 - [ ] Reduced entropy before slicing (dug locally → pulled from attached
       resources → asked the user only if it paid); sliced the low-entropy goal.
-- [ ] Triaged each slice (worker type + verification tier).
+- [ ] Stated the run shape in one line before spawning (on the fence → the
+      smaller shape); never presented inline work as wave coverage.
+- [ ] Triaged each slice (worker type + dependencies + verification tier).
 - [ ] Routed scouting / read-heavy waves to the cheap fast model (Composer 2.5);
       reserved frontier / panel models for high-stakes slices.
-- [ ] Slices are independent (disjoint data/areas/paths).
-- [ ] Wrote the wave manifest (slice / worker type / model / verification tier)
-      before spawning.
+- [ ] Slices are independent (disjoint data/areas/paths), or their `depends_on`
+      edges are recorded in the manifest.
+- [ ] Wrote the wave manifest (slice / worker type / model / depends_on /
+      verification tier) before spawning; launched only slices whose
+      dependencies were met (verified findings fed into dependent prompts).
 - [ ] Each worker prompt is fully self-contained (no reliance on chat history).
 - [ ] All `Task` calls sent in one message, `run_in_background: true`.
 - [ ] Ended turn to await completions — no polling loop.
