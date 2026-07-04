@@ -1,6 +1,6 @@
 # rayfernando-skills
 
-A collection of installable **Skill files** for AI coding agents — built to play together, not as a grab bag. The centerpiece is **`waves`**, wave engineering for agent teams (**WAVE = Workers · Aggregate · Verify · Extend**): one big task fans out to a bounded, *verified* team of parallel subagents instead of grinding through an open-ended loop. Around it: `running-bug-review-board`, the real-user QA skill the collection started with — its parallel QA pass now runs as a wave — and `bootstrap-ios`, a single entry point for loading Ray's iOS/macOS agent skill stack.
+A collection of installable **Skill files** for AI coding agents, built to play together instead of sitting in a grab bag. The centerpiece is **`waves`**, wave engineering for agent teams (**WAVE = Workers · Aggregate · Verify · Extend**): one big task fans out to a bounded, *verified* team of parallel subagents instead of grinding through an open-ended loop. Around it: `running-bug-review-board`, the real-user QA skill the collection started with (its parallel QA pass now runs as a wave), and `bootstrap-ios`, a single entry point for loading Ray's iOS/macOS agent skill stack.
 
 [![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
@@ -8,37 +8,37 @@ A collection of installable **Skill files** for AI coding agents — built to pl
 
 | Skill | What it does | Primary install (Claude Code) |
 |---|---|---|
-| **[waves](#waves--wave-engineering-for-agent-teams)** · Cursor + Codex | Turn one big task into a team of parallel subagents — a bounded, verified **wave** (Workers · Aggregate · Verify · Extend) instead of an open-ended loop. For big research, audits, data analysis, and codebase exploration. | `/plugin install waves@rayfernando-skills` |
-| **[running-bug-review-board](#running-bug-review-board--real-user-qa)** · QA | Point an AI agent at your *live* app; it QAs like a real user, files P0/P1/P2 bug reports, and returns a **YES/NO** ship verdict plus a shareable HTML report. Runs its parallel pass as a wave when `waves` is installed. | `/plugin install running-bug-review-board@rayfernando-skills` |
-| **[bootstrap-ios](#bootstrap-ios--load-the-ios-agent-stack)** · iOS/macOS | One entry point for Swift, SwiftUI, SwiftData/Core Data, Swift Testing, Xcode build/test/simulator, XcodeBuildMCP, and curated community iOS skills. | `/plugin install bootstrap-ios@rayfernando-skills` |
+| **[waves](#waves-wave-engineering-for-agent-teams)** · Cursor + Codex | Turn one big task into a team of parallel subagents: a bounded, verified **wave** (Workers · Aggregate · Verify · Extend) instead of an open-ended loop. For big research, audits, data analysis, and codebase exploration. | `/plugin install waves@rayfernando-skills` |
+| **[running-bug-review-board](#running-bug-review-board-real-user-qa)** · QA | Point an AI agent at your *live* app; it QAs like a real user, files P0/P1/P2 bug reports, and returns a **YES/NO** ship verdict plus a shareable HTML report. Runs its parallel pass as a wave when `waves` is installed. | `/plugin install running-bug-review-board@rayfernando-skills` |
+| **[bootstrap-ios](#bootstrap-ios-load-the-ios-agent-stack)** · iOS/macOS | One entry point for Swift, SwiftUI, SwiftData/Core Data, Swift Testing, Xcode build/test/simulator, XcodeBuildMCP, and curated community iOS skills. | `/plugin install bootstrap-ios@rayfernando-skills` |
 
-Each skill installs into Claude Code, Cursor, Codex, and ~50 other agents — full per-agent steps are in the sections below.
+Each skill installs into Claude Code, Cursor, Codex, and ~50 other agents; full per-agent steps are in the sections below.
 
-**Jump to:** [waves](#waves--wave-engineering-for-agent-teams) · [running-bug-review-board (QA)](#running-bug-review-board--real-user-qa) · [bootstrap-ios](#bootstrap-ios--load-the-ios-agent-stack) · [Repo structure](#repo-structure) · [Contributing](#contributing)
+**Jump to:** [waves](#waves-wave-engineering-for-agent-teams) · [running-bug-review-board (QA)](#running-bug-review-board-real-user-qa) · [bootstrap-ios](#bootstrap-ios-load-the-ios-agent-stack) · [Repo structure](#repo-structure) · [Contributing](#contributing)
 
 ## How the skills play together
 
-This collection is becoming an ecosystem rather than a list — the skills reference and strengthen each other:
+This collection is becoming an ecosystem rather than a list. The skills reference and strengthen each other:
 
-- **`waves` is the orchestration layer.** Any job too big for one clean linear pass — research, audits, data analysis, a QA sweep — can run as a bounded wave of parallel, verified workers.
+- **`waves` is the orchestration layer.** Any job too big for one clean linear pass (research, audits, data analysis, a QA sweep) can run as a bounded wave of parallel, verified workers.
 - **`running-bug-review-board` is its first consumer.** When `waves` is installed, the QA skill's parallel mode runs as a wave: coverage-gated shards, structured handoffs, tiered verification of PASS/FAIL claims, and cheap-model routing for low-risk shards.
 - **One discipline, two agent platforms.** The same wave playbook ships tuned for Cursor (`waves`) and Codex (`waves-codex`), with every Cursor→Codex translation recorded in [`adaptation-notes.md`](plugins/waves-codex/skills/waves-codex/references/adaptation-notes.md) so the variants can't drift apart silently.
-- **`bootstrap-ios` is the router.** Rather than pasting every community Swift rule into context, it loads the right focused skill for the task — the same progressive-disclosure principle the other skills are built on.
+- **`bootstrap-ios` is the router.** Rather than pasting every community Swift rule into context, it loads the right focused skill for the task, the same progressive-disclosure principle the other skills are built on.
 
 ---
 
-## waves — wave engineering for agent teams
+## waves: wave engineering for agent teams
 
-> **`waves`** — turn one big task into a team of agents. The lead agent splits the goal into independent slices, fans them out to isolated parallel **W**orkers, **A**ggregates their structured handoffs, **V**erifies the evidence behind each one (the moat), and **E**xtends into another wave only when the verified results earn it. A wave is a bounded round with verification as the stop condition — not an open-ended loop.
+> **`waves`** turns one big task into a team of agents. The lead agent splits the goal into independent slices, fans them out to isolated parallel **W**orkers, **A**ggregates their structured handoffs, **V**erifies the evidence behind each one (the moat), and **E**xtends into another wave only when the verified results earn it. A wave is a bounded round with verification as the stop condition, not an open-ended loop.
 
 Reach for it when a single linear pass would be slow and the work splits into independent slices: big research jobs, whole-repo audits, large data analysis, multi-stream comparisons, codebase exploration. It ships as two tool-tuned variants with the same discipline and different mechanics:
 
-- **[`waves`](plugins/waves/skills/waves/SKILL.md)** — for **Cursor**, built on the `Task` tool and Multitask Mode: parallel background subagents, custom `.cursor/agents/` roles (with a fallback when a role isn't registered), per-slice model routing, and worktree-isolated competing attempts. It's the local, zero-setup adaptation of the principles behind the Cursor team's cloud `orchestrate` plugin — planners plan, workers hand off up, no cross-talk — and it knows when to escalate to the cloud version.
-- **[`waves-codex`](plugins/waves-codex/skills/waves-codex/SKILL.md)** — for **Codex**, built on Codex subagents: built-in and custom TOML roles, `spawn_agents_on_csv` for row-shaped fleets, `config.toml` thread/depth limits, reasoning-effort routing, and `codex exec` fleets for scripted runs.
+- **[`waves`](plugins/waves/skills/waves/SKILL.md)** is for **Cursor**, built on the `Task` tool and Multitask Mode: parallel background subagents, custom `.cursor/agents/` roles (with a fallback when a role isn't registered), per-slice model routing, and worktree-isolated competing attempts. It's the local, zero-setup adaptation of the principles behind the Cursor team's cloud `orchestrate` plugin (planners plan, workers hand off up, no cross-talk), and it knows when to escalate to the cloud version.
+- **[`waves-codex`](plugins/waves-codex/skills/waves-codex/SKILL.md)** is for **Codex**, built on Codex subagents: built-in and custom TOML roles, `spawn_agents_on_csv` for row-shaped fleets, `config.toml` thread/depth limits, reasoning-effort routing, and `codex exec` fleets for scripted runs.
 
 ### Why a wave and not a loop
 
-The default way to push an agent through a big job is a loop: one context, one agent, iterate until it looks done. Loops fail quietly, in two ways. First, a loop doesn't know when to stop — its stop condition is "seems done," or a spent budget. Second, iteration is non-monotonic: past a point, more rounds make the output *worse*, not just more expensive, because one long context accumulates every dead end — and models told to "double-check yourself" with no external signal flip correct answers to wrong more often than the reverse (sources for these claims are cited in [`verification.md`](plugins/waves/skills/waves/references/verification.md)).
+The default way to push an agent through a big job is a loop: one context, one agent, iterate until it looks done. Loops fail quietly, in two ways. First, a loop doesn't know when to stop; its stop condition is "seems done," or a spent budget. Second, iteration is non-monotonic: past a point, more rounds make the output *worse*, not just more expensive, because one long context accumulates every dead end, and models told to "double-check yourself" with no external signal flip correct answers to wrong more often than the reverse (sources for these claims are cited in [`verification.md`](plugins/waves/skills/waves/references/verification.md)).
 
 A wave restructures the work so neither failure can happen silently:
 
@@ -46,38 +46,38 @@ A wave restructures the work so neither failure can happen silently:
 |---|---|---|
 | Stop condition | "Looks done," or the budget runs out | A verification barrier: evidence checked, then a deliberate extend-or-stop decision |
 | Context | One thread carries every dead end forward | Isolated workers; only distilled, verified handoffs move between waves |
-| More effort buys | More rounds over the same context — quality can drop as cost rises | More *independent* attempts in parallel, then selection — budgeted ~60% generation / 40% verification |
+| More effort buys | More rounds over the same context; quality can drop as cost rises | More *independent* attempts in parallel, then selection, budgeted ~60% generation / 40% verification |
 | Coverage | Whatever the loop happened to touch | A manifest written before spawning: N slices out = N handoffs checked back in |
 | Bounds | Emergent | Explicit: 3–8 workers per wave, ≤2–3 waves, capped up front |
 
-Loops aren't banned — they're right exactly when a cheap, reliable, near-ground-truth verifier exists and gives a crisp signal: a failing test, an exec error, a schema check. That's code-with-tests territory, and the skill says to keep loop-until-done there (still hard-capped). Everything open-ended — research, analysis, audits, writing, exploration — is where waves win: at equal cost, independent attempts plus verification usually beat critique/debate loops, and the verify round is what turns parallel exploration into one answer you can trust.
+Loops aren't banned. They're right exactly when a cheap, reliable, near-ground-truth verifier exists and gives a crisp signal: a failing test, an exec error, a schema check. That's code-with-tests territory, and the skill says to keep loop-until-done there (still hard-capped). Everything open-ended (research, analysis, audits, writing, exploration) is where waves win: at equal cost, independent attempts plus verification usually beat critique/debate loops, and the verify round is what turns parallel exploration into one answer you can trust.
 
 ### What a run actually looks like
 
-1. **Discover before decomposing.** A few cheap tool calls to learn the shape of the problem — and if the goal is vague, treat it as *entropy reduction* first: dig locally, send a small scouting wave at the unknowns, ask the user only when a question genuinely pays. Slicing a vague goal yields overlapping, mis-sized slices.
-2. **Stage the data and prove coverage.** Remote or messy inputs get pulled, cleaned, and pre-chunked once, centrally — then checked (counts, bounds, partition sums) *before* anything spawns. A missing chunk is a silent blind spot.
-3. **Triage into a wave manifest.** State the run shape out loud in one line, then give every slice a row — scope, worker type, model, `depends_on`, verification tier — written *before* spawning. The manifest doubles as the completion gate: a worker that never returns can no longer silently drop its slice.
+1. **Discover before decomposing.** A few cheap tool calls to learn the shape of the problem. If the goal is vague, treat it as *entropy reduction* first: dig locally, send a small scouting wave at the unknowns, ask the user only when a question genuinely pays. Slicing a vague goal yields overlapping, mis-sized slices.
+2. **Stage the data and prove coverage.** Remote or messy inputs get pulled, cleaned, and pre-chunked once, centrally, then checked (counts, bounds, partition sums) *before* anything spawns. A missing chunk is a silent blind spot.
+3. **Triage into a wave manifest.** State the run shape out loud in one line, then give every slice a row (scope, worker type, model, `depends_on`, verification tier) written *before* spawning. The manifest doubles as the completion gate: a worker that never returns can no longer silently drop its slice.
 4. **Fan out in parallel.** Every slice whose dependencies are met launches at once, as isolated workers. Each prompt is fully self-contained (workers can't see the chat) and ends with a required structured handoff format.
-5. **Verify before trusting.** A worker's `Status: success` is a claim, not evidence. Every handoff gets cheap checks — citations resolve, scope matches, headline counts recount — and contested or high-stakes claims go to dedicated *blinded* verifiers that see the claim and its sources but never the generator's reasoning or authorship.
+5. **Verify before trusting.** A worker's `Status: success` is a claim, not evidence. Every handoff gets cheap checks (citations resolve, scope matches, headline counts recount), and contested or high-stakes claims go to dedicated *blinded* verifiers that see the claim and its sources but never the generator's reasoning or authorship.
 6. **Extend deliberately, or stop.** Open questions become candidate second-wave tasks; each barrier compresses the verified findings to disk so the next wave reads distilled synthesis, never raw transcripts. When a wave surfaces nothing new, the run is over.
-7. **Deliver one artifact** — with each claim's confidence carried through (`verified` / `single-sourced` / `unverified`). A low-confidence finding never gets laundered into a confident sentence.
+7. **Deliver one artifact**, with each claim's confidence carried through (`verified` / `single-sourced` / `unverified`). A low-confidence finding never gets laundered into a confident sentence.
 
-The run that shaped the skill: one "analyze all my messages and build a roadmap" request became **16 workers across 3 waves** — and the staging gate caught a timestamp-sort bug *before* fan-out, when it could still be fixed once centrally instead of corrupting the partition every data worker depended on. The full worked example and reusable recipes (repo audit, row-shaped codemod, CI-failure triage, implement-a-reviewed-plan) are in [`examples.md`](plugins/waves/skills/waves/references/examples.md).
+The run that shaped the skill: one "analyze all my messages and build a roadmap" request became **16 workers across 3 waves**, and the staging gate caught a timestamp-sort bug *before* fan-out, when it could still be fixed once centrally instead of corrupting the partition every data worker depended on. The full worked example and reusable recipes (repo audit, row-shaped codemod, CI-failure triage, implement-a-reviewed-plan) are in [`examples.md`](plugins/waves/skills/waves/references/examples.md).
 
 ### The discipline that makes it converge
 
 - **Verification is the stop function.** The single load-bearing idea: a wave ends at a barrier where evidence is checked before anything extends the run. Everything else exists to make that check cheap and honest.
-- **Entropy-first decomposition.** Reduce uncertainty (dig locally → scouting wave → ask last) before slicing, aiming each probe at the unknown that eliminates the most plans — grounded in the information-gain literature, with the mechanisms (not just the citations) written into the skill.
-- **Tiered, blinded verification.** Spend the checking budget by stakes: auto-accept → single verifier → multi-model panel → debate. Verifiers reason against the cited sources with authorship hidden — LLM judges favor output labeled as their own, so the skill blinds them.
-- **Per-slice model routing.** Scouting and read-heavy slices run on cheap fast models (Composer on Cursor, low reasoning effort on Codex); frontier models are reserved for verification, synthesis, and high-stakes calls — and model slugs are read from the environment, never guessed.
-- **Multi-model panels for the highest stakes.** Fan the same contested slice to several different models and synthesize one verdict — most of the gain is in the synthesis step, not the model diversity (OpenRouter's Fusion result), and judge panels drawn from disjoint model families beat a single frontier judge (PoLL).
-- **Context hygiene between waves.** One scratch dir per run (`.waves/<run>/`), handoff digests capped, synthesis compressed at every barrier — long, irrelevant context measurably degrades reasoning, so it never travels.
-- **Measured, not vibed.** Both variants ship `evals/`: with-skill vs baseline A/B runs in fresh sessions, graded PASS/FAIL against fixtures with seeded ground truth — including a deliberately wrong count and a phantom citation the orchestrator must catch before synthesis.
-- **Re-verified mechanics.** The Cursor/Codex plumbing carries a "checked on" date and gets re-verified against live docs and bug trackers — and when good ideas show up elsewhere (a public deep-research skill, the Cursor team's `orchestrate` plugin), they're verified first, then folded in.
+- **Entropy-first decomposition.** Reduce uncertainty (dig locally → scouting wave → ask last) before slicing, aiming each probe at the unknown that eliminates the most plans. Grounded in the information-gain literature, with the mechanisms (not just the citations) written into the skill.
+- **Tiered, blinded verification.** Spend the checking budget by stakes: auto-accept → single verifier → multi-model panel → debate. Verifiers reason against the cited sources with authorship hidden, because LLM judges favor output labeled as their own.
+- **Per-slice model routing.** Scouting and read-heavy slices run on cheap fast models (Composer on Cursor, low reasoning effort on Codex); frontier models are reserved for verification, synthesis, and high-stakes calls. Model slugs are read from the environment, never guessed.
+- **Multi-model panels for the highest stakes.** Fan the same contested slice to several different models and synthesize one verdict. Most of the gain is in the synthesis step, not the model diversity (OpenRouter's Fusion result), and judge panels drawn from disjoint model families beat a single frontier judge (PoLL).
+- **Context hygiene between waves.** One scratch dir per run (`.waves/<run>/`), handoff digests capped, synthesis compressed at every barrier. Long, irrelevant context measurably degrades reasoning, so it never travels.
+- **Measured, not vibed.** Both variants ship `evals/`: with-skill vs baseline A/B runs in fresh sessions, graded PASS/FAIL against fixtures with seeded ground truth, including a deliberately wrong count and a phantom citation the orchestrator must catch before synthesis.
+- **Re-verified mechanics.** The Cursor/Codex plumbing carries a "checked on" date and gets re-verified against live docs and bug trackers. When good ideas show up elsewhere (a public deep-research skill, the Cursor team's `orchestrate` plugin), they're verified first, then folded in.
 
 ### How it enriches the other skills
 
-Waves is the orchestration layer of this collection, and the QA skill is its first consumer: with `waves` installed, `running-bug-review-board` runs its parallel pass as a bounded wave — a Test-ID coverage gate before launch (every scenario in exactly one shard, counts sum to the plan), structured shard handoffs instead of transcript-tailing, tiered verification of PASS/FAIL claims (the coordinator personally re-runs write-path and highest-risk IDs), and cheap-model routing for low-risk shards ([details](plugins/running-bug-review-board/skills/running-bug-review-board/references/parallel-coordinator.md)). Same pattern, different domain: QA shards are just slices, and run reports are just handoffs.
+Waves is the orchestration layer of this collection, and the QA skill is its first consumer. With `waves` installed, `running-bug-review-board` runs its parallel pass as a bounded wave: a Test-ID coverage gate before launch (every scenario in exactly one shard, counts sum to the plan), structured shard handoffs instead of transcript-tailing, tiered verification of PASS/FAIL claims (the coordinator personally re-runs write-path and highest-risk IDs), and cheap-model routing for low-risk shards ([details](plugins/running-bug-review-board/skills/running-bug-review-board/references/parallel-coordinator.md)). Same pattern, different domain: QA shards are just slices, and run reports are just handoffs.
 
 ### Example prompts
 
@@ -86,13 +86,13 @@ Because a run spawns more agents than usual, it's **opt-in**: invoke it explicit
 ```text
 /waves analyze all 3,000 tickets in support-tickets.csv and rank the top themes with counts
 
-/waves research OpenAI Realtime, LiveKit, and Pipecat for a voice agent — comparison and recommendation
+/waves research OpenAI Realtime, LiveKit, and Pipecat for a voice agent, then give me a comparison and recommendation
 
-/waves audit this repo across security, performance, dead code, and test coverage — one severity-ordered report
+/waves audit this repo across security, performance, dead code, and test coverage in one severity-ordered report
 
 /waves read my whole chat export, find the recurring goals and frustrations, and turn them into an app roadmap
 
-/waves implement the reviewed plan in docs/plan.md — research wave, then disjoint edit workers, then a verify wave
+/waves implement the reviewed plan in docs/plan.md: research wave, then disjoint edit workers, then a verify wave
 ```
 
 ### Install waves
@@ -116,38 +116,38 @@ codex plugin add waves-codex@rayfernando-skills
 
 ### What's inside
 
-- [`SKILL.md`](plugins/waves/skills/waves/SKILL.md) (per variant) — the orchestration playbook: the loop, bounded-wave caps, the worker prompt contract, verification tiers, model routing.
-- `references/` — [`handoff-format.md`](plugins/waves/skills/waves/references/handoff-format.md) (the structured worker handoff contract), [`verification.md`](plugins/waves/skills/waves/references/verification.md) (the verification playbook, with sources), and [`examples.md`](plugins/waves/skills/waves/references/examples.md) (the worked run + decomposition recipes). The Codex variant adds [`recommended-config.md`](plugins/waves-codex/skills/waves-codex/references/recommended-config.md) and [`adaptation-notes.md`](plugins/waves-codex/skills/waves-codex/references/adaptation-notes.md), the Cursor→Codex translation record.
-- `evals/` — scenarios, fixtures with known ground truth, and the A/B grading protocol ([`evals/README.md`](plugins/waves/skills/waves/evals/README.md)).
+- [`SKILL.md`](plugins/waves/skills/waves/SKILL.md) (per variant): the orchestration playbook, covering the loop, bounded-wave caps, the worker prompt contract, verification tiers, and model routing.
+- `references/`: [`handoff-format.md`](plugins/waves/skills/waves/references/handoff-format.md) (the structured worker handoff contract), [`verification.md`](plugins/waves/skills/waves/references/verification.md) (the verification playbook, with sources), and [`examples.md`](plugins/waves/skills/waves/references/examples.md) (the worked run + decomposition recipes). The Codex variant adds [`recommended-config.md`](plugins/waves-codex/skills/waves-codex/references/recommended-config.md) and [`adaptation-notes.md`](plugins/waves-codex/skills/waves-codex/references/adaptation-notes.md), the Cursor→Codex translation record.
+- `evals/`: scenarios, fixtures with known ground truth, and the A/B grading protocol ([`evals/README.md`](plugins/waves/skills/waves/evals/README.md)).
 
 ---
 
-## running-bug-review-board — real-user QA
+## running-bug-review-board: real-user QA
 
-> **`running-bug-review-board`** — point an AI agent at your *live* app and it QAs it like a real, slightly unforgiving customer: drives the UI, files structured P0/P1/P2 bug reports with reproduction steps, and gives you a **YES/NO** "is this ready to ship?" verdict — plus a self-contained HTML report you can hand to the team.
+> **`running-bug-review-board`** points an AI agent at your *live* app to QA it like a real, slightly unforgiving customer: it drives the UI, files structured P0/P1/P2 bug reports with reproduction steps, and gives you a **YES/NO** "is this ready to ship?" verdict, plus a self-contained HTML report you can hand to the team.
 
 ### What you get
 
 Most AI workflows point at *code review* and miss where users actually hit bugs: the live app, on a real phone, with stale storage from yesterday and a flaky auth provider the unit tests never see. This Skill file encodes a battle-tested QA cadence so an agent can find those bugs for you.
 
-- **A real-user QA pass, not a code review.** The agent drives the app from URLs and clicks — it is *forbidden* from marking anything "pass" by reading source. It hunts the failures users hit first: stale state across flows, mobile overflow, auth↔routing races, copy that lies, paths that 404 mid-onboarding.
+- **A real-user QA pass, not a code review.** The agent drives the app from URLs and clicks; it is *forbidden* from marking anything "pass" by reading source. It hunts the failures users hit first: stale state across flows, mobile overflow, auth↔routing races, copy that lies, paths that 404 mid-onboarding.
 - **Structured bug reports.** Every defect lands as `BUG-NNN-*.md` with severity (P0/P1/P2), impact, what-happened-vs-expected, reproduction steps, and evidence (screenshots, console, network).
 - **A ship/defer decision.** Each pass ends with a **YES/NO** sign-off for the phase, listing open P0/P1 blockers and a paste-ready handoff prompt for the next agent.
-- **An editorial HTML dashboard** stakeholders can open and share — the bug list and each bug report, regenerated every pass. ([see it below](#see-the-output))
+- **An editorial HTML dashboard** stakeholders can open and share: the bug list and each bug report, regenerated every pass. ([see it below](#see-the-output))
 - **Works with what you have.** Repo-agnostic and browser-tool-agnostic; web and iOS/iPadOS apps; optional two-way sync with Linear, GitHub Issues, Jira, or Notion. Runs fine in a cloud VM (e.g. Cursor cloud) with just a browser driver.
 
 ---
 
 ### See the output
 
-The agent regenerates a self-contained HTML report at the end of every pass — designed to read like a magazine, not a Kanban board (editorial typography, ink-on-paper palette, no chips or pills). Here is what you instantly get:
+The agent regenerates a self-contained HTML report at the end of every pass, designed to read like a magazine, not a Kanban board (editorial typography, ink-on-paper palette, no chips or pills). Here is what you instantly get:
 
 | The QA dashboard | A single bug report |
 |---|---|
-| [![QA dashboard — verdict, then the prioritized bug list](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/dashboard-desktop.png)](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/dashboard-desktop.png) | [![Bug detail — impact, what's happening vs expected, steps, evidence](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/bug-detail-desktop.png)](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/bug-detail-desktop.png) |
+| [![QA dashboard: verdict, then the prioritized bug list](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/dashboard-desktop.png)](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/dashboard-desktop.png) | [![Bug detail: impact, what's happening vs expected, steps, evidence](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/bug-detail-desktop.png)](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/bug-detail-desktop.png) |
 | **Verdict first, then the prioritized bug list** and recent runs. | **One bug, told for an engineer:** impact → what's happening vs. what should → steps → evidence. |
 
-It is responsive, too — on a phone the dashboard collapses to a single column with a sticky primary action. ([mobile sample](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/dashboard-mobile.png) · [design notes](plugins/running-bug-review-board/skills/running-bug-review-board/references/html-report-style-guide.md))
+It is responsive, too: on a phone the dashboard collapses to a single column with a sticky primary action. ([mobile sample](plugins/running-bug-review-board/skills/running-bug-review-board/references/templates/html-report/samples/dashboard-mobile.png) · [design notes](plugins/running-bug-review-board/skills/running-bug-review-board/references/html-report-style-guide.md))
 
 ---
 
@@ -167,7 +167,7 @@ Re-test the fixed bugs BUG-007 and BUG-012 on the latest build and update the re
 Run the Interactive Bug Review Board with me on the open backlog.
 ```
 
-The skill activates on phrases like *"QA this"*, *"is this ready to ship?"*, *"find the bugs"*, or *"run a test plan"* — you don't have to name it.
+The skill activates on phrases like *"QA this"*, *"is this ready to ship?"*, *"find the bugs"*, or *"run a test plan"*, so you don't have to name it.
 
 ---
 
@@ -175,12 +175,12 @@ The skill activates on phrases like *"QA this"*, *"is this ready to ship?"*, *"f
 
 After [installing](#install), the agent walks itself through:
 
-1. **Discover the app** — read the product spec / README / phase doc, open bugs, and public routes.
-2. **Plan** — derive real-user scenarios from the spec and the gates.
-3. **Prepare** — environment, test accounts, primary viewport.
-4. **Execute** — drive the app like a customer, capturing evidence.
-5. **File bugs** — `BUG-NNN-*.md` with priority + reproduction steps.
-6. **Sign off** — YES/NO verdict, open P0/P1 list, and a paste-ready handoff.
+1. **Discover the app**: read the product spec / README / phase doc, open bugs, and public routes.
+2. **Plan**: derive real-user scenarios from the spec and the gates.
+3. **Prepare**: environment, test accounts, primary viewport.
+4. **Execute**: drive the app like a customer, capturing evidence.
+5. **File bugs**: `BUG-NNN-*.md` with priority + reproduction steps.
+6. **Sign off**: YES/NO verdict, open P0/P1 list, and a paste-ready handoff.
 
 **No QA folder yet?** The skill ships a scaffolder. After installing it lives in the Skill folder (e.g. `~/.claude/skills/running-bug-review-board/scripts/scaffold-qa.sh`). To run it without installing, clone and call it directly:
 
@@ -235,7 +235,7 @@ You are likely running a cached `running-bug-review-board` 0.3.0 install. Update
 
 #### Cursor
 
-Cursor's `/add-plugin` is reserved for the [cursor.com/marketplace](https://cursor.com/marketplace) listings, so for this repo use the cross-vendor installer — it writes the Skill folder into `~/.cursor/skills/`, which Cursor reads on startup:
+Cursor's `/add-plugin` is reserved for the [cursor.com/marketplace](https://cursor.com/marketplace) listings, so for this repo use the cross-vendor installer. It writes the Skill folder into `~/.cursor/skills/`, which Cursor reads on startup:
 
 ```bash
 npx skills add https://github.com/RayFernando1337/rayfernando-skills/tree/main/plugins/running-bug-review-board/skills/running-bug-review-board -a cursor
@@ -281,19 +281,19 @@ Replace `~/.<agent>/skills/` with your agent's path (`~/.cursor/skills/`, `~/.co
 - **Drives the live app.** The agent works through URLs and clicks; marking PASS from code inspection alone is forbidden.
 - **Three hats, one pass.** Every pass wears PM (does it still deliver the promise?), QA (run the user scenarios with evidence), and Engineer (catch invalidated assumptions). Finding gaps is the point.
 - **BRB cadence.** Bugs live in a versioned folder with status transitions (`open → in-progress → fixed → verified`). P0/P1/P2 tells the team what to ship and what to defer. Triage happens in a separate **Interactive Bug Review Board** session so triage bias never contaminates discovery.
-- **Tool- and repo-agnostic.** Adopts whatever conventions exist and scaffolds folders when there are none. Parallel or sequential QA modes — and when the [`waves`](#waves--wave-engineering-for-agent-teams) skill is installed, the parallel pass runs as a bounded wave: Test-ID coverage gate, structured shard handoffs, tiered verification, cheap-model routing for low-risk shards, and evidence kept on disk instead of in context.
+- **Tool- and repo-agnostic.** Adopts whatever conventions exist and scaffolds folders when there are none. Parallel or sequential QA modes, and when the [`waves`](#waves-wave-engineering-for-agent-teams) skill is installed, the parallel pass runs as a bounded wave: Test-ID coverage gate, structured shard handoffs, tiered verification, cheap-model routing for low-risk shards, and evidence kept on disk instead of in context.
 
 #### Browser & Computer Use
 
-The agent drives the UI with the best driver your environment has, falling back gracefully — so a pass succeeds whether you're in Cursor, another IDE, or a headless cloud VM:
+The agent drives the UI with the best driver your environment has, falling back gracefully, so a pass succeeds whether you're in Cursor, another IDE, or a headless cloud VM:
 
 1. **cursor-ide-browser** MCP (default inside Cursor)
-2. **[Chrome DevTools for agents](https://github.com/ChromeDevTools/chrome-devtools-mcp)** (`chrome-devtools-mcp`) — auto-waits for results (fewer flaky races) and adds network / console / Lighthouse / accessibility introspection; can attach to your *real signed-in Chrome* so auth flows don't get bot-flagged
+2. **[Chrome DevTools for agents](https://github.com/ChromeDevTools/chrome-devtools-mcp)** (`chrome-devtools-mcp`): auto-waits for results (fewer flaky races) and adds network / console / Lighthouse / accessibility introspection; can attach to your *real signed-in Chrome* so auth flows don't get bot-flagged
 3. **browser-use** MCP / **Playwright**
-4. **Codex Computer Use** (macOS) — a human-fidelity pass that sees, clicks, and types in the *real* app, and the only way to reach a native macOS app
+4. **Codex Computer Use** (macOS): a human-fidelity pass that sees, clicks, and types in the *real* app, and the only way to reach a native macOS app
 5. Manual driving with screenshot/console relay
 
-Details and "drive like a human (don't trip the tests)" recipes live in the [browser playbook](plugins/running-bug-review-board/skills/running-bug-review-board/references/browser-playbook.md) and the [Computer Use playbook](plugins/running-bug-review-board/skills/running-bug-review-board/references/computer-use-playbook.md). For iOS/iPadOS apps the skill **orchestrates** and defers simulator driving to the [iOS community's purpose-built skills](plugins/running-bug-review-board/skills/running-bug-review-board/references/ios-simulator-playbook.md) — and never spins up an iOS simulator for a web-only app.
+Details and "drive like a human (don't trip the tests)" recipes live in the [browser playbook](plugins/running-bug-review-board/skills/running-bug-review-board/references/browser-playbook.md) and the [Computer Use playbook](plugins/running-bug-review-board/skills/running-bug-review-board/references/computer-use-playbook.md). For iOS/iPadOS apps the skill **orchestrates** and defers simulator driving to the [iOS community's purpose-built skills](plugins/running-bug-review-board/skills/running-bug-review-board/references/ios-simulator-playbook.md), and it never spins up an iOS simulator for a web-only app.
 
 ---
 
@@ -301,13 +301,13 @@ Details and "drive like a human (don't trip the tests)" recipes live in the [bro
 
 Each Skill file uses **progressive disclosure**: a lean `SKILL.md` entry point, with references loaded only when needed. Auditing the skill (or asking your own agent to security-check it) starts at:
 
-- [`SKILL.md`](plugins/running-bug-review-board/skills/running-bug-review-board/SKILL.md) — the entry point: workflow, surfaces, modes, deliverables.
-- [`references/`](plugins/running-bug-review-board/skills/running-bug-review-board/references/) — the detailed playbooks (discovery, test plan, browser, Computer Use, iOS, trackers, triage, HTML report, extending).
-- [`scripts/`](plugins/running-bug-review-board/skills/running-bug-review-board/scripts/) — tiny shell helpers (scaffold a QA folder, list bugs needing tracker sync/pull). No magic; the agent does the work.
+- [`SKILL.md`](plugins/running-bug-review-board/skills/running-bug-review-board/SKILL.md): the entry point, covering workflow, surfaces, modes, and deliverables.
+- [`references/`](plugins/running-bug-review-board/skills/running-bug-review-board/references/): the detailed playbooks (discovery, test plan, browser, Computer Use, iOS, trackers, triage, HTML report, extending).
+- [`scripts/`](plugins/running-bug-review-board/skills/running-bug-review-board/scripts/): tiny shell helpers (scaffold a QA folder, list bugs needing tracker sync/pull). No magic; the agent does the work.
 
 ---
 
-## bootstrap-ios — load the iOS agent stack
+## bootstrap-ios: load the iOS agent stack
 
 `bootstrap-ios` is a meta-skill for Apple-platform app work. It gives agents one
 place to start before touching iOS, iPadOS, macOS, Swift, SwiftUI, SwiftData,
@@ -425,7 +425,7 @@ rayfernando-skills/
 
 ## Contributing
 
-Issues and PRs welcome. If you've used the Skill file on a real project, a short writeup of a lesson learned is the most valuable contribution — a session-hygiene rule that saved you, a bug that reveals a new real-user pattern, or a playbook for an auth provider this skill doesn't cover yet. See [`extending-the-skill.md`](plugins/running-bug-review-board/skills/running-bug-review-board/references/extending-the-skill.md) for how the skill grows without rewrites. For the `waves` variants, changes to orchestration guidance should be checked against the skill evals (`evals/README.md` in each variant): run the with-skill vs baseline A/B and report the delta.
+Issues and PRs welcome. If you've used the Skill file on a real project, a short writeup of a lesson learned is the most valuable contribution: a session-hygiene rule that saved you, a bug that reveals a new real-user pattern, or a playbook for an auth provider this skill doesn't cover yet. See [`extending-the-skill.md`](plugins/running-bug-review-board/skills/running-bug-review-board/references/extending-the-skill.md) for how the skill grows without rewrites. For the `waves` variants, changes to orchestration guidance should be checked against the skill evals (`evals/README.md` in each variant): run the with-skill vs baseline A/B and report the delta.
 
 Style guide: SKILL.md body under ~500 lines with references one level deep; imperative voice; third-person frontmatter description; examples from real projects; no time-sensitive copy (use "old patterns" sections instead).
 
@@ -433,7 +433,7 @@ Style guide: SKILL.md body under ~500 lines with references one level deep; impe
 
 ## Background
 
-Ray spent 12 years at Apple working across many parts of the system. The lesson he carried away: finding the bugs your users would hit first comes from a repeatable workflow, and he has been refining that cadence on his own projects ever since. The Skill files in this collection are his encoding of that work — and `waves` generalizes the same instinct, *verify before you trust*, from QA passes to whole teams of agents.
+Ray spent 12 years at Apple working across many parts of the system. The lesson he carried away: finding the bugs your users would hit first comes from a repeatable workflow, and he has been refining that cadence on his own projects ever since. The Skill files in this collection are his encoding of that work, and `waves` generalizes the same instinct, *verify before you trust*, from QA passes to whole teams of agents.
 
 ---
 
@@ -445,4 +445,4 @@ This project follows [Semantic Versioning](https://semver.org/) and [Keep a Chan
 
 ## License
 
-[Apache License 2.0](LICENSE) — copyright 2026 Ray Fernando. The Skill files here can be used, modified, and redistributed in any project, including commercial and internal use. Attribution is appreciated but not required.
+[Apache License 2.0](LICENSE), copyright 2026 Ray Fernando. The Skill files here can be used, modified, and redistributed in any project, including commercial and internal use. Attribution is appreciated but not required.
