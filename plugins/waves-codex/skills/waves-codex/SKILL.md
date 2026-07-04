@@ -21,15 +21,18 @@ wave only when warranted. A loop doesn't know when to stop; a wave does, because
 verification is the stop function. (Invoke deliberately - a run spawns more agents
 than usual.)
 
-Current Codex docs checked on 2026-06-14: Codex subagents are enabled by default
+Current Codex docs checked on 2026-07-03: Codex subagents are enabled by default
 in current releases, built-in roles include `default`, `worker`, and `explorer`,
-custom agents live in `~/.codex/agents/` or `.codex/agents/`, and subagent
-limits live under `[agents]` in `config.toml`. `spawn_agents_on_csv` is
-documented as experimental; use it when it is exposed in the active Codex
-surface, and fall back to normal subagent waves when it is not. No current Codex
-doc confirms a general-purpose claim-verifier or critic hook; use a verifier
-subagent, CSV verification pass, tests, validators, or `codex exec
---output-schema` instead.
+custom agents live in `~/.codex/agents/` or `.codex/agents/` (TOML; project
+agents load in trusted projects only), and subagent limits live under `[agents]`
+in `config.toml`. The documented collaboration tools are `spawn_agent`,
+`send_input`, `resume_agent`, `wait_agent`, and `close_agent`; spawning an
+unknown `agent_type` fails with an error rather than silently falling back
+(fallback in Step 2). `spawn_agents_on_csv` is documented as experimental; use
+it when it is exposed in the active Codex surface, and fall back to normal
+subagent waves when it is not. No current Codex doc confirms a general-purpose
+claim-verifier or critic hook; use a verifier subagent, CSV verification pass,
+tests, validators, or `codex exec --output-schema` instead.
 
 Read these references when using the skill:
 
@@ -196,6 +199,14 @@ inputs are clean and coverage is proven.
 
 ### Step 1 - Decompose into Independent Slices
 
+Size the run itself first, out loud: weigh breadth (how many independent
+slices), depth (reasoning per slice), ambiguity (see "Entropy-First
+Decomposition"), and stakes (this sets verification tiers), then state the
+chosen shape in one line before spawning -- e.g. `Run shape: one wave, 4
+workers; second wave only if handoffs expose gaps.` On the fence between two
+shapes, pick the smaller and say so. If no wave is needed, do the task in the
+manager thread and say that -- never present inline work as wave coverage.
+
 Choose the split axis that gives each worker clear ownership:
 
 - Data chunks: disjoint ID ranges, date ranges, files, or CSV rows.
@@ -213,25 +224,35 @@ cheaply.
 Respect `agents.max_threads`. Current Codex docs say it defaults to `6` when
 unset. If you need more slices than available threads, batch them into waves.
 
-Triage each slice on two axes (classify-and-act): the **Codex role** (table in
-Step 2) and a **verification tier** - `auto-accept` (low-stakes, corroborated) ->
+Then triage each slice on three axes (classify-and-act): the **Codex role**
+(table in Step 2), its **dependencies** (which slices it needs verified output
+from -- most have none; a real dependency edge is what separates waves), and a
+**verification tier** - `auto-accept` (low-stakes, corroborated) ->
 `single verifier` -> `multi-model/multi-pass panel` (high-stakes) -> `debate`
 (contested, no ground truth). Spend verification where a wrong claim is expensive,
 not uniformly.
 
 Record the triage as a **wave manifest** - one row per slice (`slice | scope |
-role | effort | verification tier`), written to the plan or
-`.waves/<run>/manifest.md` before spawning. The manifest doubles as the
-**completion gate**: N rows spawned means N handoffs collected and checked off
-before synthesis (Step 3).
+role | effort | depends_on | verification tier`), written to the plan or
+`.waves/<run>/manifest.md` before spawning. `depends_on` defines the wave
+boundaries: a wave is every not-yet-run slice whose dependencies are all met,
+and a dependency is met only when its handoff has been **verified** (Step 3),
+not merely returned. Launch wave 1 (no dependencies) in parallel; launch each
+dependent slice with the distilled, verified findings (or their
+`.waves/<run>/` path) folded into its self-contained prompt, and keep
+unrelated slices parallel. The manifest doubles as the **completion gate**: N
+rows spawned means N handoffs collected and checked off before synthesis
+(Step 3).
 
 ### Step 2 - Fan Out with Codex Subagents
 
-Spawn all independent workers in the same manager turn when possible. In Codex,
-the stable interaction is explicit: "spawn one agent per slice, wait for all of
-them, then summarize/synthesize." When the active tool surface exposes direct
-subagent tools, use those. If the surface names are visible, they may include
-`spawn_agent`, `wait_agent`, `send_input`, and `close_agent`.
+Spawn all workers whose dependencies are met (handoffs verified, not just
+returned) in the same manager turn when possible. In Codex, the stable
+interaction is explicit: "spawn one agent per
+slice, wait for all of them, then summarize/synthesize." When the active tool
+surface exposes direct subagent tools, use those. If the surface names are
+visible, they may include `spawn_agent`, `wait_agent`, `send_input`,
+`resume_agent`, and `close_agent`.
 
 Pick the smallest capable role:
 
@@ -244,6 +265,12 @@ Pick the smallest capable role:
 | Browser/UI investigation | custom browser debugger | Give browser tooling and ask for evidence, not broad edits. |
 | Verification of important claims | custom verifier | Give claim + cited sources, not the generator's reasoning. |
 | Many row-shaped tasks | `spawn_agents_on_csv` | Experimental; use one CSV row per work item and require `report_agent_job_result`. |
+
+A missing role is not permission to skip it. Spawning an unknown `agent_type`
+fails with an error rather than falling back, and `.codex/agents/` roles load
+only in trusted projects -- so when a custom role you want is unavailable in
+the active surface, spawn `default` (or `worker`/`explorer`) with that role's
+instructions inlined in the worker prompt instead of dropping the role.
 
 Use `gpt-5.5` for manager and worker roles by default, and route
 cost/speed/capability with reasoning effort rather than older model families:
@@ -266,10 +293,12 @@ requested results are available and returns a consolidated response.
 **Completion gate first:** check every handoff off against the wave manifest -
 N spawned means N accounted for. A worker that never returns, errors out, or
 comes back `partial`/`blocked` is a hole in the wave. **Worker failure
-ladder:** (1) re-spawn once with a narrower scope and a note about what came
-back; (2) if it fails again, do that slice in the manager thread; (3) if it
-stays blocked, carry the slice into the synthesis explicitly as `not-covered`
-- never average over a missing slice as if coverage were complete.
+ladder:** (1) re-task once, narrower -- steer or resume the same worker
+(`send_input`, `resume_agent`) when the slice just needs continuation, or
+re-spawn fresh with a narrower scope and a note about what came back; (2) if
+it fails again, do that slice in the manager thread; (3) if it stays blocked,
+carry the slice into the synthesis explicitly as `not-covered` - never average
+over a missing slice as if coverage were complete.
 
 Avoid manual polling loops. Continue non-overlapping local work while workers
 run; wait only when synthesis is blocked on their results. For each handoff:
@@ -327,6 +356,7 @@ another wave whenever first-wave handoffs expose:
 - Conflicting findings.
 - A specialized follow-up that was out of scope.
 - A verification task that can run while you synthesize.
+- A dependent manifest slice whose `depends_on` handoffs just verified.
 - A bounded implementation task after research converged.
 - A new user request that narrows or redirects the scope.
 
@@ -479,13 +509,18 @@ reference/spec pattern, not a drop-in replacement for this interactive skill.
 - [ ] Discovered the shape of the problem before decomposing.
 - [ ] Reduced entropy before slicing (dug locally -> pulled from attached
       resources -> asked the user only if it paid); sliced the low-entropy goal.
+- [ ] Stated the run shape in one line before spawning (on the fence -> the
+      smaller shape); never presented inline work as wave coverage.
 - [ ] Staged or normalized inputs when it materially helps.
 - [ ] Verified coverage before spawning: counts, bounds, partition-sum,
       gaps/duplicates.
-- [ ] Slices are independent and sized to `agents.max_threads`.
-- [ ] Wrote the wave manifest (slice / role / effort / verification tier)
-      before spawning; checked every row off at collection (completion gate);
-      ran the failure ladder on missing/blocked slices.
+- [ ] Slices are independent (or their `depends_on` edges recorded) and sized
+      to `agents.max_threads`.
+- [ ] Wrote the wave manifest (slice / role / effort / depends_on /
+      verification tier) before spawning; launched dependent slices only after
+      their dependencies' handoffs were verified; checked every row off at
+      collection (completion gate); ran the failure ladder on missing/blocked
+      slices.
 - [ ] Each worker prompt is self-contained and ends with the handoff contract.
 - [ ] Picked `explorer`, `worker`, `default`, custom agents, verifier agents, or
       `spawn_agents_on_csv` deliberately.
