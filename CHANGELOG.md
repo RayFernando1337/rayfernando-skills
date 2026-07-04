@@ -4,6 +4,8 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-07-04
+
 ### Added
 
 - **`waves` + `waves-codex`: run-shape triage, dependency-aware dispatch, and
@@ -54,6 +56,10 @@ All notable changes to this collection are documented here. The format follows [
   now target Node 24, which GitHub-hosted runners already provide). Checkout
   v7's breaking change only affects `pull_request_target` / `workflow_run`
   triggers; this workflow runs on tag push, so it is unaffected.
+- Both `waves` plugins bump to **0.5.0**; marketplace `metadata.version` to
+  **0.10.0**.
+
+[0.10.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.10.0
 
 ## [0.9.0] — 2026-07-01
 
