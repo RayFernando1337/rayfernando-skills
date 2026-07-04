@@ -199,6 +199,14 @@ inputs are clean and coverage is proven.
 
 ### Step 1 - Decompose into Independent Slices
 
+Size the run itself first, out loud: weigh breadth (how many independent
+slices), depth (reasoning per slice), ambiguity (see "Entropy-First
+Decomposition"), and stakes (this sets verification tiers), then state the
+chosen shape in one line before spawning -- e.g. `Run shape: one wave, 4
+workers; second wave only if handoffs expose gaps.` On the fence between two
+shapes, pick the smaller and say so. If no wave is needed, do the task in the
+manager thread and say that -- never present inline work as wave coverage.
+
 Choose the split axis that gives each worker clear ownership:
 
 - Data chunks: disjoint ID ranges, date ranges, files, or CSV rows.
@@ -215,14 +223,6 @@ cheaply.
 
 Respect `agents.max_threads`. Current Codex docs say it defaults to `6` when
 unset. If you need more slices than available threads, batch them into waves.
-
-Size the run itself first, out loud: weigh breadth (how many independent
-slices), depth (reasoning per slice), ambiguity (see "Entropy-First
-Decomposition"), and stakes (this sets verification tiers), then state the
-chosen shape in one line before spawning -- e.g. `Run shape: one wave, 4
-workers; second wave only if handoffs expose gaps.` On the fence between two
-shapes, pick the smaller and say so. If no wave is needed, do the task in the
-manager thread and say that -- never present inline work as wave coverage.
 
 Then triage each slice on three axes (classify-and-act): the **Codex role**
 (table in Step 2), its **dependencies** (which slices it needs finished output
