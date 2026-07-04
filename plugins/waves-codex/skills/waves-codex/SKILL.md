@@ -225,7 +225,7 @@ Respect `agents.max_threads`. Current Codex docs say it defaults to `6` when
 unset. If you need more slices than available threads, batch them into waves.
 
 Then triage each slice on three axes (classify-and-act): the **Codex role**
-(table in Step 2), its **dependencies** (which slices it needs finished output
+(table in Step 2), its **dependencies** (which slices it needs verified output
 from -- most have none; a real dependency edge is what separates waves), and a
 **verification tier** - `auto-accept` (low-stakes, corroborated) ->
 `single verifier` -> `multi-model/multi-pass panel` (high-stakes) -> `debate`
@@ -235,17 +235,20 @@ not uniformly.
 Record the triage as a **wave manifest** - one row per slice (`slice | scope |
 role | effort | depends_on | verification tier`), written to the plan or
 `.waves/<run>/manifest.md` before spawning. `depends_on` defines the wave
-boundaries: a wave is every not-yet-run slice whose dependencies are all met.
-Launch wave 1 (no dependencies) in parallel; launch a dependent slice only
-after its dependency's handoff is verified, folding the distilled findings (or
-their `.waves/<run>/` path) into its self-contained prompt, and keep unrelated
-slices parallel. The manifest doubles as the **completion gate**: N rows
-spawned means N handoffs collected and checked off before synthesis (Step 3).
+boundaries: a wave is every not-yet-run slice whose dependencies are all met,
+and a dependency is met only when its handoff has been **verified** (Step 3),
+not merely returned. Launch wave 1 (no dependencies) in parallel; launch each
+dependent slice with the distilled, verified findings (or their
+`.waves/<run>/` path) folded into its self-contained prompt, and keep
+unrelated slices parallel. The manifest doubles as the **completion gate**: N
+rows spawned means N handoffs collected and checked off before synthesis
+(Step 3).
 
 ### Step 2 - Fan Out with Codex Subagents
 
-Spawn all workers whose dependencies are met in the same manager turn when
-possible. In Codex, the stable interaction is explicit: "spawn one agent per
+Spawn all workers whose dependencies are met (handoffs verified, not just
+returned) in the same manager turn when possible. In Codex, the stable
+interaction is explicit: "spawn one agent per
 slice, wait for all of them, then summarize/synthesize." When the active tool
 surface exposes direct subagent tools, use those. If the surface names are
 visible, they may include `spawn_agent`, `wait_agent`, `send_input`,
@@ -514,9 +517,10 @@ reference/spec pattern, not a drop-in replacement for this interactive skill.
 - [ ] Slices are independent (or their `depends_on` edges recorded) and sized
       to `agents.max_threads`.
 - [ ] Wrote the wave manifest (slice / role / effort / depends_on /
-      verification tier) before spawning; launched only slices whose
-      dependencies were met; checked every row off at collection (completion
-      gate); ran the failure ladder on missing/blocked slices.
+      verification tier) before spawning; launched dependent slices only after
+      their dependencies' handoffs were verified; checked every row off at
+      collection (completion gate); ran the failure ladder on missing/blocked
+      slices.
 - [ ] Each worker prompt is self-contained and ends with the handoff contract.
 - [ ] Picked `explorer`, `worker`, `default`, custom agents, verifier agents, or
       `spawn_agents_on_csv` deliberately.

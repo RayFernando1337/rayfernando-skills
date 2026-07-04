@@ -82,8 +82,9 @@ Re-checked on 2026-07-03 against the Codex Config Reference
 - Run-shape triage (state the shape in one line before spawning; on the fence
   pick the smaller; never present inline work as wave coverage) and
   dependency-aware dispatch (`depends_on` in the manifest; a wave is every
-  slice whose dependencies are met; dependents launch after their dependency's
-  handoff is verified, with distilled findings folded into their prompts).
+  slice whose dependencies are met, where met means the dependency's handoff
+  has been verified, not merely returned; dependents launch with distilled
+  findings folded into their prompts).
   Both portable as-is; adapted from reviewing Phillip Chaffee's public
   `deep-research` Cursor skill (github.com/PhillipChaffee/.cursor), then
   re-verified against current Cursor and Codex docs.

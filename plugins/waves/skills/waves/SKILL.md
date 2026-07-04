@@ -176,7 +176,7 @@ pattern, routing the right work to the right handler:
 - **Worker type** — read-only (`explore`) / web-research (`generalPurpose`) /
   shell / competing-attempt (`best-of-n-runner`) / specialized review (`bugbot`,
   `security-review`). (See the table under "Choosing `subagent_type`".)
-- **Dependencies** — which slices (if any) this one needs finished output from.
+- **Dependencies** — which slices (if any) this one needs verified output from.
   Most slices should have none; a real dependency edge is what separates waves.
 - **Verification tier** — how much checking the slice's stakes justify:
   `auto-accept` (low-stakes, corroborated) → `single verifier` (medium) →
@@ -193,9 +193,10 @@ you spawn (in `TodoWrite` or `.waves/<run>/manifest.md`):
 | 3 | voice build spike | generalPurpose | (default) | 2 | single verifier |
 
 `depends_on` defines the wave boundaries: a wave is every not-yet-run slice
-whose dependencies are all met. Launch wave 1 (no dependencies) in parallel; a
-dependent slice launches only after its dependency's handoff is **verified**,
-with the distilled findings (or their `.waves/<run>/` path) folded into its
+whose dependencies are all met — and a dependency is **met only when its
+handoff has been verified** (Step 3), not merely returned. Launch wave 1 (no
+dependencies) in parallel; launch each dependent slice with the distilled,
+verified findings (or their `.waves/<run>/` path) folded into its
 self-contained prompt — and unrelated slices stay parallel. The manifest is
 also your **completion gate**: N rows spawned means N handoffs collected and
 checked off before synthesis — a wave with a missing handoff has a silent
@@ -220,7 +221,8 @@ once, so you stay within practical concurrency limits.
 ### Step 2 — Fan out in parallel
 
 Send **one message with multiple `Task` tool calls** — one per slice whose
-dependencies are met — that is what makes them run concurrently. Set
+dependencies are met (handoffs verified, not just returned) — that is what
+makes them run concurrently. Set
 `run_in_background: true` on each (Multitask Mode). Pick
 `subagent_type` per slice (table below). Give each a 3-5 word `description` and a
 self-contained `prompt` ending with the required handoff format.
@@ -521,8 +523,9 @@ is invoked explicitly (e.g. `/orchestrate <goal>`).
 - [ ] Slices are independent (disjoint data/areas/paths), or their `depends_on`
       edges are recorded in the manifest.
 - [ ] Wrote the wave manifest (slice / worker type / model / depends_on /
-      verification tier) before spawning; launched only slices whose
-      dependencies were met (verified findings fed into dependent prompts).
+      verification tier) before spawning; launched dependent slices only after
+      their dependencies' handoffs were verified (distilled findings fed into
+      their prompts).
 - [ ] Each worker prompt is fully self-contained (no reliance on chat history).
 - [ ] Each wave's `Task` calls sent in one message, `run_in_background: true`.
 - [ ] Ended turn to await completions — no polling loop.

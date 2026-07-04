@@ -17,10 +17,11 @@ All notable changes to this collection are documented here. The format follows [
   / stakes; on the fence pick the smaller shape; if no wave is needed say so
   — never present inline work as wave coverage); record **`depends_on`** as
   a per-slice triage axis and manifest column, with dependency-aware
-  dispatch (a wave is every not-yet-run slice whose dependencies are met;
-  dependents launch only after the dependency's handoff is *verified*, with
-  distilled findings folded into their self-contained prompts; unrelated
-  slices stay parallel); and treat **a missing worker role as not permission
+  dispatch (a wave is every not-yet-run slice whose dependencies are met,
+  where met means the dependency's handoff has been *verified*, not merely
+  returned; dependents launch with distilled findings folded into their
+  self-contained prompts; unrelated slices stay parallel); and treat **a
+  missing worker role as not permission
   to skip it** — on Cursor, custom `.cursor/agents/` subagents register as
   `subagent_type` values only after a restart, so an unregistered role runs
   as `generalPurpose` with the role's instructions inlined (and the intended
