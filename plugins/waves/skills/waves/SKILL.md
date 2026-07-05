@@ -246,25 +246,36 @@ never average over a missing slice as if coverage were complete.
 
 As handoffs arrive, read each one: note `Status`, extract `Key findings`, and
 mine `Open questions` / `Suggested follow-ups` — each bullet may become a
-second-wave task. Reconcile conflicts across workers. Then **compress at the
-barrier**: once a wave's handoffs are verified, write the distilled synthesis
-to `.waves/<run>/synthesis-wave-N.md` and work from that file — next-wave
-prompts cite paths into the scratch dir, never re-paste raw handoffs.
+second-wave task. Reconcile conflicts across workers.
 
 **Don't trust a handoff because it says `success`.** Verify each finding's
 evidence (cited file:line / URL / metric resolves and says what's claimed),
-recount headline numbers from the source, and route low-confidence, conflicting,
-or citation-heavy claims to a verifier before they enter the draft. See
-"Verification" below.
+recount headline numbers from the source, and route low-confidence,
+conflicting, or citation-heavy claims to a verifier (Step 3.5). See
+"Verification" below. A wave's handoffs count as **verified** only when these
+checks pass *and* every claim whose manifest tier demands a verifier has its
+verdict back — cheap checks alone don't clear a `single verifier` or higher
+tier.
+
+Only then **compress at the barrier**: write the distilled synthesis to
+`.waves/<run>/synthesis-wave-N.md` and work from that file — next-wave prompts
+cite paths into the scratch dir, never re-paste raw handoffs. This file is
+what dependent slices and later waves consume, so nothing unverified enters it
+as a finding: a claim still awaiting its verdict is carried only as an
+explicit `pending-verification` line.
 
 ### Step 3.5 — Verifier pass (when the tier demands it)
 
-Before synthesis, spawn dedicated verifier workers for every claim whose
-manifest tier is `single verifier` or higher — and for anything that arrived
-contested, surprising, single-sourced, or low-confidence. Give each verifier
-the claim + its cited sources, no generator reasoning, no authorship labels
-(see "Verification"). Verifiers can run while you draft the synthesis; their
-verdicts gate what enters the final deliverable.
+Before writing the wave synthesis, spawn dedicated verifier workers for every
+claim whose manifest tier is `single verifier` or higher — and for anything
+that arrived contested, surprising, single-sourced, or low-confidence. Give
+each verifier the claim + its cited sources, no generator reasoning, no
+authorship labels (see "Verification"). Verifiers can run while you draft
+around them, but their verdicts gate the wave synthesis itself, not just the
+final deliverable: until its verdict returns, a claim may sit in
+`synthesis-wave-N.md` only as an explicit `pending-verification` line — never
+as a settled finding, and never in a dependent slice's prompt (Step 0.7's
+met-only-when-verified rule).
 
 ### Step 4 — Second waves (continuous motion)
 
@@ -536,6 +547,8 @@ is invoked explicitly (e.g. `/orchestrate <goal>`).
 - [ ] Read every handoff; spawned follow-ups for open questions.
 - [ ] Wave bounded (width ≈3–8, ≤2–3 waves); carried only distilled handoffs forward.
 - [ ] Verified each handoff's evidence (not just its `Status`); escalated
-      low-confidence / conflicting / uncited findings before synthesizing.
+      low-confidence / conflicting / uncited findings; wrote
+      `synthesis-wave-N.md` only from verdict-cleared findings (pending claims
+      tagged `pending-verification`, never fed to dependent slices).
 - [ ] Verified the final deliverable (re-ran/validated; re-read critical writes).
 - [ ] Synthesized one deliverable from the handoffs.
