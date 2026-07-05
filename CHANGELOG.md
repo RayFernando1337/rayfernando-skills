@@ -4,6 +4,32 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.10.1] — 2026-07-05
+
+### Fixed
+
+- **`waves`: wave synthesis no longer races the verifier pass** (Bugbot
+  finding, medium severity). Step 3 told the orchestrator to write
+  `.waves/<run>/synthesis-wave-N.md` "once a wave's handoffs are verified"
+  before the section had defined *verified*, and Step 3.5 gated verifier
+  verdicts on "the final deliverable" only — so, followed top-to-bottom, a
+  `single verifier`-tier claim could land in the wave synthesis file (and in
+  dependent slices' prompts via the manifest's `depends_on` dispatch) while
+  its verifier was still running. Step 3 now runs the evidence checks before
+  the compress-at-the-barrier write and defines **verified** as cheap checks
+  passed *and* tier-mandated verdicts returned; Step 3.5 now gates the wave
+  synthesis itself, with still-pending claims carried only as explicit
+  `pending-verification` lines and never fed to dependent slices. The
+  checklist item was tightened to match. (The `waves-codex` variant already
+  ordered accept-then-compress correctly and is unchanged.)
+
+### Changed
+
+- `waves` plugin bumps to **0.5.1**; marketplace `metadata.version` to
+  **0.10.1**.
+
+[0.10.1]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.10.1
+
 ## [0.10.0] — 2026-07-04
 
 ### Added
