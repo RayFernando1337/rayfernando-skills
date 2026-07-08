@@ -345,12 +345,13 @@ bash plugins/bootstrap-ios/skills/bootstrap-ios/scripts/bootstrap-ios-skills.sh 
 
 Run without `--dry-run` only when you really want to install the public
 community skill packs into that agent environment. After a real install the
-helper **verifies every skill landed complete**: each installed `SKILL.md` is
-checked so every `references/`, `scripts/`, and `assets/` file it cites exists
-on disk, and the script fails loudly with reinstall instructions
-(`npx skills add <url> --full-depth`) if any skill installed shallow — a
-shallow skill makes agents follow a `references/` pointer into nothing and
-silently degrade. Pass `--skip-verify` to opt out.
+helper **verifies every expected skill landed and is complete**: each skill
+must have a `SKILL.md` under a known skill root, and every `references/`,
+`scripts/`, and `assets/` file it cites must exist on disk. The script fails
+loudly with reinstall instructions (`npx skills add <url> --full-depth`) if
+any skill is missing entirely or installed shallow — either way agents would
+follow a `references/` pointer into nothing and silently degrade. Pass
+`--skip-verify` to opt out.
 
 ---
 

@@ -21,6 +21,22 @@ SCRIPT = (
 BASH = "/bin/bash"
 
 
+def expected_skills() -> list:
+    """Parse the expected_skills=( ... ) array out of the script so the tests
+    never drift from the list the script actually verifies."""
+    text = SCRIPT.read_text()
+    start = text.index("expected_skills=(")
+    end = text.index(")", start)
+    body = text[start + len("expected_skills=(") : end]
+    names = [
+        line.strip()
+        for line in body.splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+    assert names, "expected_skills array parsed empty"
+    return names
+
+
 def run_script(*args, env=None):
     return subprocess.run(
         [BASH, str(SCRIPT), *args],
@@ -80,10 +96,19 @@ class VerifyInstallTest(unittest.TestCase):
         if complete:
             (skill_dir / "references" / "core.md").write_text("# core\n")
 
+    def write_all_skills(self, home: Path, **overrides) -> None:
+        """Write every expected skill complete, except per-name overrides:
+        complete=False for shallow, or None to omit the skill entirely."""
+        for name in expected_skills():
+            mode = overrides.get(name, True)
+            if mode is None:
+                continue
+            self.write_skill(home, name, complete=mode)
+
     def test_complete_install_passes_verification(self):
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
-            self.write_skill(home, "swiftui-pro", complete=True)
+            self.write_all_skills(home)
             env = self.make_env(home)
 
             result = run_script("--agent", "cursor", env=env)
@@ -94,7 +119,7 @@ class VerifyInstallTest(unittest.TestCase):
     def test_shallow_install_fails_verification(self):
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
-            self.write_skill(home, "swiftui-pro", complete=False)
+            self.write_all_skills(home, **{"swiftui-pro": False})
             env = self.make_env(home)
 
             result = run_script("--agent", "cursor", env=env)
@@ -103,10 +128,24 @@ class VerifyInstallTest(unittest.TestCase):
             self.assertIn("SHALLOW INSTALL", result.stderr)
             self.assertIn("references/core.md", result.stderr)
 
+    def test_missing_skill_fails_verification(self):
+        """Regression (cursor[bot] review): a pack the installer never laid
+        down must fail verification, not just warn."""
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            self.write_all_skills(home, **{"swiftui-pro": None})
+            env = self.make_env(home)
+
+            result = run_script("--agent", "cursor", env=env)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("NOT INSTALLED: swiftui-pro", result.stderr)
+            self.assertNotIn("Verified:", result.stdout)
+
     def test_skip_verify_opts_out(self):
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
-            self.write_skill(home, "swiftui-pro", complete=False)
+            self.write_all_skills(home, **{"swiftui-pro": False})
             env = self.make_env(home)
 
             result = run_script("--agent", "cursor", "--skip-verify", env=env)

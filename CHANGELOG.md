@@ -20,16 +20,19 @@ All notable changes to this collection are documented here. The format follows [
 
 ### Added
 
-- **`bootstrap-ios`: post-install verification of every installed skill.**
-  Installers have been observed writing only `SKILL.md` and skipping the
-  `references/` files the skill routes to at runtime — agents then follow a
-  `references/` pointer into nothing and silently degrade. After a real
-  (non-dry-run) run, the helper now checks each expected skill across the
-  global skill roots (`~/.agents/skills`, `~/.claude/skills`,
+- **`bootstrap-ios`: post-install verification of every expected skill.**
+  Two observed failure modes: installers exiting zero without laying a skill
+  down at all, and installers writing only `SKILL.md` while skipping the
+  `references/` files the skill routes to at runtime — either way agents
+  follow a `references/` pointer into nothing and silently degrade. After a
+  real (non-dry-run) run, the helper now checks each expected skill across
+  the global skill roots (`~/.agents/skills`, `~/.claude/skills`,
   `~/.cursor/skills`, `~/.cursor/skills-cursor`, `~/.codex/skills`,
-  `~/.factory/skills`): `SKILL.md` must exist and every `references/`,
-  `scripts/`, and `assets/` file it cites must be on disk. Any shallow
-  install fails the run with `MISSING:` paths and the reinstall fix
+  `~/.factory/skills`): `SKILL.md` must exist under at least one root
+  (`NOT INSTALLED:` failure otherwise — thanks cursor[bot] for catching that
+  the first cut only warned), and every `references/`, `scripts/`, and
+  `assets/` file it cites must be on disk (`MISSING:` failure per file).
+  Either failure exits non-zero with the reinstall fix
   (`npx skills add <url> --global --yes --full-depth`). Opt out with
   `--skip-verify`. Documented in `SKILL.md`,
   `references/install-and-bootstrap.md`, and the README.

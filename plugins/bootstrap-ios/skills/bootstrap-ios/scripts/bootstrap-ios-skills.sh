@@ -14,9 +14,10 @@ Installs the public GitHub-hosted iOS agent skill packs referenced by bootstrap-
 Dry-run first before modifying an agent environment. Installs globally and skips
 interactive prompts after you choose to run without --dry-run.
 
-After a real install, the script verifies every installed skill is complete
-(SKILL.md present and every references/, scripts/, and assets/ file it cites
-actually on disk) and exits non-zero if any skill installed shallow.
+After a real install, the script verifies every expected skill actually
+landed (SKILL.md present under a known skill root) and is complete (every
+references/, scripts/, and assets/ file it cites actually on disk). It exits
+non-zero if any skill is missing entirely or installed shallow.
 Pass --skip-verify to opt out.
 EOF
 }
@@ -140,15 +141,17 @@ verify_installs() {
       fi
     done
     if [[ "$found" -eq 0 ]]; then
-      echo "WARNING: $name not found under any known skill root; skipping verification for it." >&2
+      echo "NOT INSTALLED: $name has no SKILL.md under any known skill root." >&2
+      failed=1
     fi
   done
   if [[ "$failed" -ne 0 ]]; then
     cat >&2 <<'EOF'
 
-One or more skills installed without their reference files. Agents will load
-SKILL.md, follow a references/ pointer, and silently degrade. Re-install the
-affected skill with:
+One or more skills are missing entirely or installed without their reference
+files. A missing skill means the installer exited zero without laying it down;
+a shallow one makes agents load SKILL.md, follow a references/ pointer, and
+silently degrade. Re-install the affected skill with:
 
   npx skills add <skill-url> --global --yes --full-depth
 

@@ -59,10 +59,10 @@ bash scripts/bootstrap-ios-skills.sh --dry-run --agent cursor
 
 After the user confirms, run without `--dry-run`. The helper is idempotent and
 keeps optional/non-GitHub sources as instructions instead of pretending it can
-install them. After a real install it verifies every skill landed complete
-(every `references/`, `scripts/`, and `assets/` file cited by each `SKILL.md`
-exists on disk) and fails loudly with reinstall instructions if any skill
-installed shallow. See
+install them. After a real install it verifies every expected skill actually
+landed and is complete (every `references/`, `scripts/`, and `assets/` file
+cited by each `SKILL.md` exists on disk) and fails loudly with reinstall
+instructions if any skill is missing entirely or installed shallow. See
 [references/install-and-bootstrap.md](references/install-and-bootstrap.md).
 
 ## Verification
