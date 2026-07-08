@@ -38,6 +38,31 @@ The helper passes `--global --yes` to `npx skills add` once you remove
 `--dry-run`, so the install is actually one command after the user chooses to
 modify the machine.
 
+## Verification (missing and shallow installs fail loudly)
+
+After a real (non-dry-run) install, the helper verifies every expected skill
+actually landed and is complete: `SKILL.md` present under a known skill root,
+and every `references/`, `scripts/`, and `assets/` file cited in it actually
+on disk. Two observed failure modes make this necessary: installers exiting
+zero without laying a skill down at all (reported as `NOT INSTALLED:`), and
+installers writing only `SKILL.md` without the reference files ("shallow
+installs", reported per-file as `MISSING:`). Either way an agent would load
+the skill, follow a `references/` pointer, and silently degrade.
+
+If verification fails, the script exits non-zero, prints each `NOT INSTALLED:`
+skill or `MISSING:` path, and tells you the fix:
+
+```bash
+npx skills add <skill-url> --global --yes --full-depth
+```
+
+or clone the upstream repo and copy the full skill folder (SKILL.md +
+references/ + scripts/) into the agent's skills directory yourself.
+
+Pass `--skip-verify` to opt out. Verification checks these global skill roots:
+`~/.agents/skills`, `~/.claude/skills`, `~/.cursor/skills`,
+`~/.cursor/skills-cursor`, `~/.codex/skills`, `~/.factory/skills`.
+
 Include optional setup:
 
 ```bash

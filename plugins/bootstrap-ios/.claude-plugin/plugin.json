@@ -1,6 +1,6 @@
 {
   "name": "bootstrap-ios",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Meta-skill for iOS and macOS app agents: load the right Swift, SwiftUI, testing, data, build, simulator, and XcodeBuildMCP guidance before touching an Apple-platform repo.",
   "author": {
     "name": "Ray Fernando",
