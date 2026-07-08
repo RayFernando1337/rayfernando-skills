@@ -4,6 +4,52 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-07-07
+
+### Fixed
+
+- **`bootstrap-ios`: installer script crashed on macOS's default bash 3.2
+  before installing anything.** `scripts/bootstrap-ios-skills.sh` combined
+  `set -u` with an expansion of the possibly-empty `agent_args` array
+  (`"${agent_args[@]}"`), which bash 3.2 treats as an unbound variable —
+  every run without `--agent` (and on bash 3.2, every run at all) died with
+  `agent_args[@]: unbound variable` at the first install command. Both
+  expansions now use the bash-3.2-safe form
+  `${agent_args[@]+"${agent_args[@]}"}`. Found when a machine bootstrapped by
+  hand around the crash was left with shallow skill installs (see below).
+
+### Added
+
+- **`bootstrap-ios`: post-install verification of every installed skill.**
+  Installers have been observed writing only `SKILL.md` and skipping the
+  `references/` files the skill routes to at runtime — agents then follow a
+  `references/` pointer into nothing and silently degrade. After a real
+  (non-dry-run) run, the helper now checks each expected skill across the
+  global skill roots (`~/.agents/skills`, `~/.claude/skills`,
+  `~/.cursor/skills`, `~/.cursor/skills-cursor`, `~/.codex/skills`,
+  `~/.factory/skills`): `SKILL.md` must exist and every `references/`,
+  `scripts/`, and `assets/` file it cites must be on disk. Any shallow
+  install fails the run with `MISSING:` paths and the reinstall fix
+  (`npx skills add <url> --global --yes --full-depth`). Opt out with
+  `--skip-verify`. Documented in `SKILL.md`,
+  `references/install-and-bootstrap.md`, and the README.
+- **Regression tests for the installer** (`tests/test_bootstrap_ios_skills.py`):
+  dry-run with/without `--agent` on the system bash (bash 3.2 on macOS, the
+  regression that motivated the fix), plus complete/shallow/skip-verify
+  verification paths against a stubbed `npx` and fake `HOME`. The release
+  workflow now runs the whole `tests/` suite (`python3 -m unittest discover`)
+  before building zips, so installer and validator regressions block a
+  release.
+
+### Changed
+
+- `bootstrap-ios` plugin bumps to **0.2.0**; marketplace `metadata.version`
+  to **0.11.0**.
+- Release notes template now includes the `bootstrap-ios` install line
+  alongside the other plugins.
+
+[0.11.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.11.0
+
 ## [0.10.1] — 2026-07-05
 
 ### Fixed

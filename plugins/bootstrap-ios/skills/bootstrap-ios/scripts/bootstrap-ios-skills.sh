@@ -4,14 +4,20 @@ set -euo pipefail
 DRY_RUN=0
 AGENT=""
 INCLUDE_XCODEBUILDMCP_INIT=0
+SKIP_VERIFY=0
 
 usage() {
   cat <<'EOF'
-Usage: bootstrap-ios-skills.sh [--dry-run] [--agent cursor|codex|claude-code|droid] [--include-xcodebuildmcp-init]
+Usage: bootstrap-ios-skills.sh [--dry-run] [--agent cursor|codex|claude-code|droid] [--include-xcodebuildmcp-init] [--skip-verify]
 
 Installs the public GitHub-hosted iOS agent skill packs referenced by bootstrap-ios.
 Dry-run first before modifying an agent environment. Installs globally and skips
 interactive prompts after you choose to run without --dry-run.
+
+After a real install, the script verifies every installed skill is complete
+(SKILL.md present and every references/, scripts/, and assets/ file it cites
+actually on disk) and exits non-zero if any skill installed shallow.
+Pass --skip-verify to opt out.
 EOF
 }
 
@@ -31,6 +37,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --include-xcodebuildmcp-init)
       INCLUDE_XCODEBUILDMCP_INIT=1
+      shift
+      ;;
+    --skip-verify)
+      SKIP_VERIFY=1
       shift
       ;;
     -h|--help)
@@ -60,6 +70,35 @@ full_depth_skill_urls=(
   "https://github.com/AvdLee/Xcode-Build-Optimization-Agent-Skill"
 )
 
+# Skill folder basenames the URLs above install. The full-depth build
+# optimization pack expands to the six xcode-*/spm-* skills.
+expected_skills=(
+  swiftui-pro
+  swift-concurrency-pro
+  swift-testing-pro
+  swiftdata-pro
+  swiftui-expert-skill
+  swift-concurrency
+  swift-testing-expert
+  core-data-expert
+  xcode-build-orchestrator
+  xcode-build-fixer
+  xcode-build-benchmark
+  xcode-compilation-analyzer
+  xcode-project-analyzer
+  spm-build-analysis
+)
+
+# Global skill directories the supported agents read.
+skill_roots=(
+  "$HOME/.agents/skills"
+  "$HOME/.claude/skills"
+  "$HOME/.cursor/skills"
+  "$HOME/.cursor/skills-cursor"
+  "$HOME/.codex/skills"
+  "$HOME/.factory/skills"
+)
+
 run_cmd() {
   if [[ "$DRY_RUN" -eq 1 ]]; then
     printf 'DRY RUN:'
@@ -70,18 +109,73 @@ run_cmd() {
   fi
 }
 
+# Verify a single installed skill folder: every relative references/, scripts/,
+# or assets/ path cited in its SKILL.md must exist on disk. Returns non-zero
+# and prints MISSING lines if the install is shallow.
+verify_skill_dir() {
+  local dir="$1"
+  local ok=0
+  local rel
+  while IFS= read -r rel; do
+    if [[ ! -e "$dir/$rel" ]]; then
+      echo "MISSING: $dir/$rel" >&2
+      ok=1
+    fi
+  done < <(grep -oE '(references|scripts|assets)/[A-Za-z0-9._/-]+\.[A-Za-z0-9]+' "$dir/SKILL.md" | sort -u)
+  return "$ok"
+}
+
+verify_installs() {
+  local failed=0
+  local name root dir found
+  for name in "${expected_skills[@]}"; do
+    found=0
+    for root in "${skill_roots[@]}"; do
+      dir="$root/$name"
+      [[ -f "$dir/SKILL.md" ]] || continue
+      found=1
+      if ! verify_skill_dir "$dir"; then
+        echo "SHALLOW INSTALL: $dir cites files that were not installed." >&2
+        failed=1
+      fi
+    done
+    if [[ "$found" -eq 0 ]]; then
+      echo "WARNING: $name not found under any known skill root; skipping verification for it." >&2
+    fi
+  done
+  if [[ "$failed" -ne 0 ]]; then
+    cat >&2 <<'EOF'
+
+One or more skills installed without their reference files. Agents will load
+SKILL.md, follow a references/ pointer, and silently degrade. Re-install the
+affected skill with:
+
+  npx skills add <skill-url> --global --yes --full-depth
+
+or clone the upstream repo and copy the skill folder (SKILL.md + references/
++ scripts/) into your agent's skills directory manually.
+EOF
+    return 1
+  fi
+  echo "Verified: installed skills have all cited reference files."
+}
+
 agent_args=()
 if [[ -n "$AGENT" ]]; then
   agent_args=(-a "$AGENT")
 fi
 
 for url in "${skill_urls[@]}"; do
-  run_cmd npx skills add "$url" --global --yes "${agent_args[@]}"
+  run_cmd npx skills add "$url" --global --yes ${agent_args[@]+"${agent_args[@]}"}
 done
 
 for url in "${full_depth_skill_urls[@]}"; do
-  run_cmd npx skills add "$url" --full-depth --global --yes "${agent_args[@]}"
+  run_cmd npx skills add "$url" --full-depth --global --yes ${agent_args[@]+"${agent_args[@]}"}
 done
+
+if [[ "$DRY_RUN" -eq 0 && "$SKIP_VERIFY" -eq 0 ]]; then
+  verify_installs
+fi
 
 echo
 echo "XcodeBuildMCP is recommended for build/test/simulator work."
