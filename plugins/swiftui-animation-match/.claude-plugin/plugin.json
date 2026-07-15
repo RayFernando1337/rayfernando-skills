@@ -1,0 +1,26 @@
+{
+  "name": "swiftui-animation-match",
+  "version": "0.1.0",
+  "description": "Match UI/UX interaction needs to proven SwiftUI animation patterns from curated open-source catalogs, with system-first restraint. Ships an analyzed catalog of Shubham0812/SwiftUI-Animations (30 animations + 7 Metal shaders) and a repeatable recipe for cataloging more animation repos.",
+  "author": {
+    "name": "Ray Fernando",
+    "url": "https://github.com/RayFernando1337"
+  },
+  "homepage": "https://github.com/RayFernando1337/rayfernando-skills",
+  "repository": "https://github.com/RayFernando1337/rayfernando-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "swiftui",
+    "animation",
+    "ios",
+    "ux",
+    "interaction-design",
+    "motion",
+    "juice",
+    "metal-shaders",
+    "haptics",
+    "liquid-glass",
+    "pattern-matching",
+    "agent-skills"
+  ]
+}
