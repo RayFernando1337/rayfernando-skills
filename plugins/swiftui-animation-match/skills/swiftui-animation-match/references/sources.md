@@ -28,8 +28,12 @@ they do not replace the source.
   [adding-a-source.md](adding-a-source.md), which covers refreshes too)
   and update the pinned commit.
 - If a catalog path 404s against the live repo, the source moved or was
-  renamed: re-verify against the pinned commit
-  (`git checkout <sha>`) which is always valid, then refresh the catalog.
+  renamed: re-verify against the pinned commit, then refresh the catalog.
+  Checking out the pin requires history — clone without `--depth 1`, or
+  run `git fetch --unshallow` (or `git fetch origin <sha> --depth 1`) in an
+  existing shallow clone before `git checkout <sha>`. The pin can only be
+  missing if upstream rewrote history; in that case re-catalog from the
+  current tip.
 
 ## Candidate sources (not yet cataloged)
 

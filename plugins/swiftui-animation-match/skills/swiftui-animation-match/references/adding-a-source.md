@@ -16,6 +16,11 @@ git clone --depth 1 <repo-url> /tmp/<repo-name>
 cd /tmp/<repo-name> && git log -1 --format='%H %cs'   # pin the commit
 ```
 
+A depth-1 clone is enough for a first cataloging pass (you only read the
+tip you are pinning). It is NOT enough to check out or diff against an
+older pinned commit later — see the refresh section for how to fetch
+history first.
+
 Record the license (lifting code from an unlicensed or restrictively
 licensed repo is a real problem — surface it to the user before cataloging)
 and the deployment target if discoverable (project file, README).
@@ -109,7 +114,25 @@ Create `references/catalog-<owner>-<repo>.md` with:
 
 ## Refreshing an existing source
 
-Same flow, scoped: diff the repo between the pinned commit and HEAD
+Same flow, scoped — but a refresh needs the pinned commit in local
+history, which a depth-1 clone does not have. Stage with history first:
+
+```bash
+git clone <repo-url> /tmp/<repo-name>          # full clone, or:
+git -C /tmp/<repo-name> fetch --unshallow      # if a shallow clone already exists
+git -C /tmp/<repo-name> cat-file -e <pinned>^{commit}   # confirm the pin is present
+```
+
+(A targeted `git fetch origin <pinned> --depth 1` also works on hosts that
+allow fetching reachable commits by SHA — GitHub does — but it only makes
+the pin checkoutable; the range diff below still needs the connected
+history that a full clone or `--unshallow` provides.)
+
+Then diff the repo between the pinned commit and HEAD
 (`git log --stat <pinned>..HEAD`), analyze only added/changed animation
 folders, append or update entries, and bump the pinned commit + date in
 both the catalog header and `sources.md`.
+
+If the pinned commit is missing even after fetching history (force-pushed
+away or the repo was re-created), note that in `sources.md` and re-catalog
+from the current tip instead of diffing.
