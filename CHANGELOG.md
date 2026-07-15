@@ -4,6 +4,35 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+### Added
+
+- **New skill: `swiftui-animation-match` (0.1.0)** — match a UI/UX
+  interaction need ("saving should feel satisfying", "the empty screen is
+  boring while it loads") to a proven SwiftUI animation pattern from a
+  curated open-source catalog, or to the system affordance (springs,
+  `.symbolEffect`, `.contentTransition`, `.sensoryFeedback`, Liquid Glass)
+  that makes custom motion unnecessary. The skill is moment-first and
+  restraint-biased: name the interaction moment, check the system-first
+  checklist, and only then reach into the catalogs.
+  - Launch catalog: [Shubham0812/SwiftUI-Animations](https://github.com/Shubham0812/SwiftUI-Animations)
+    (Apache-2.0, iOS 17+), analyzed at source level with parallel readers —
+    30 animations + 7 Metal shaders, each cataloged with exact repo path,
+    load-bearing technique, the spring/duration values that create the
+    feel, lift notes (dependencies, difficulty, known bugs to fix on
+    lift), and search keywords, grouped by interaction moment.
+  - `references/matching-playbook.md`: moment taxonomy, system-vs-custom
+    decision rules, worked examples, anti-patterns.
+  - `references/adding-a-source.md`: the repeatable recipe for cataloging
+    the next animation repo (stage + pin commit, fan out parallel readers
+    over folder slices, fixed entry format, register in `sources.md`,
+    spot-check against the pinned commit) — so new repos keep landing in
+    the same shape.
+  - `references/sources.md`: source index with pinned commits, licenses,
+    and a staleness policy.
+- **`bootstrap-ios` routes animation work to the new skill:** the mode
+  picker now points "Animation, motion, make it feel alive" tasks at
+  `swiftui-animation-match`.
+
 ## [0.11.0] — 2026-07-07
 
 ### Fixed

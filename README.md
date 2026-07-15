@@ -11,10 +11,11 @@ A collection of installable **Skill files** for AI coding agents, built to play 
 | **[waves](#waves-wave-engineering-for-agent-teams)** · Cursor + Codex | Turn one big task into a team of parallel subagents: a bounded, verified **wave** (Workers · Aggregate · Verify · Extend) instead of an open-ended loop. For big research, audits, data analysis, and codebase exploration. | `/plugin install waves@rayfernando-skills` |
 | **[running-bug-review-board](#running-bug-review-board-real-user-qa)** · QA | Point an AI agent at your *live* app; it QAs like a real user, files P0/P1/P2 bug reports, and returns a **YES/NO** ship verdict plus a shareable HTML report. Runs its parallel pass as a wave when `waves` is installed. | `/plugin install running-bug-review-board@rayfernando-skills` |
 | **[bootstrap-ios](#bootstrap-ios-load-the-ios-agent-stack)** · iOS/macOS | One entry point for Swift, SwiftUI, SwiftData/Core Data, Swift Testing, Xcode build/test/simulator, XcodeBuildMCP, and curated community iOS skills. | `/plugin install bootstrap-ios@rayfernando-skills` |
+| **[swiftui-animation-match](#swiftui-animation-match-interaction-to-animation-matching)** · iOS UX | Match a UI/UX interaction need ("saving should feel satisfying") to a proven SwiftUI animation pattern from curated open-source catalogs — or to the system affordance that makes custom motion unnecessary. Extensible: each new animation repo becomes one more catalog. | `/plugin install swiftui-animation-match@rayfernando-skills` |
 
 Each skill installs into Claude Code, Cursor, Codex, and ~50 other agents; full per-agent steps are in the sections below.
 
-**Jump to:** [waves](#waves-wave-engineering-for-agent-teams) · [running-bug-review-board (QA)](#running-bug-review-board-real-user-qa) · [bootstrap-ios](#bootstrap-ios-load-the-ios-agent-stack) · [Repo structure](#repo-structure) · [Contributing](#contributing)
+**Jump to:** [waves](#waves-wave-engineering-for-agent-teams) · [running-bug-review-board (QA)](#running-bug-review-board-real-user-qa) · [bootstrap-ios](#bootstrap-ios-load-the-ios-agent-stack) · [swiftui-animation-match](#swiftui-animation-match-interaction-to-animation-matching) · [Repo structure](#repo-structure) · [Contributing](#contributing)
 
 ## How the skills play together
 
@@ -23,7 +24,8 @@ This collection is becoming an ecosystem rather than a list. The skills referenc
 - **`waves` is the orchestration layer.** Any job too big for one clean linear pass (research, audits, data analysis, a QA sweep) can run as a bounded wave of parallel, verified workers.
 - **`running-bug-review-board` is its first consumer.** When `waves` is installed, the QA skill's parallel mode runs as a wave: coverage-gated shards, structured handoffs, tiered verification of PASS/FAIL claims, and cheap-model routing for low-risk shards.
 - **One discipline, two agent platforms.** The same wave playbook ships tuned for Cursor (`waves`) and Codex (`waves-codex`), with every Cursor→Codex translation recorded in [`adaptation-notes.md`](plugins/waves-codex/skills/waves-codex/references/adaptation-notes.md) so the variants can't drift apart silently.
-- **`bootstrap-ios` is the router.** Rather than pasting every community Swift rule into context, it loads the right focused skill for the task, the same progressive-disclosure principle the other skills are built on.
+- **`bootstrap-ios` is the router.** Rather than pasting every community Swift rule into context, it loads the right focused skill for the task, the same progressive-disclosure principle the other skills are built on. When the task is animation or motion work, it routes to `swiftui-animation-match`.
+- **`swiftui-animation-match` is the first catalog skill.** Its catalogs were themselves built with a wave: parallel read-only workers each read a slice of the source repo and returned structured entries. The recipe for cataloging the next animation repo (documented in the skill) reuses that same fan-out.
 
 ---
 
@@ -355,6 +357,76 @@ follow a `references/` pointer into nothing and silently degrade. Pass
 
 ---
 
+## swiftui-animation-match: interaction-to-animation matching
+
+> **`swiftui-animation-match`** turns a vaguely felt interaction wish — "saving should feel more satisfying", "the empty screen is boring while it loads" — into either a specific, proven SwiftUI animation pattern from a curated catalog, or the deliberate decision that the system already covers it.
+
+Most of the time you know the *feeling* you want, not the animation's name.
+This skill encodes the judgment step: name the interaction moment (waiting,
+confirming, toggling, browsing, revealing…), check what modern SwiftUI gives
+you free (springs, `.symbolEffect`, `.contentTransition`, `.sensoryFeedback`,
+Liquid Glass chrome on iOS 26+), and only then match into cataloged custom
+motion that earns its place. The catalogs are a menu, not a quota — the skill
+is explicitly biased against forcing an animation where the platform already
+shines.
+
+### What's in the first catalog
+
+The launch catalog covers **[Shubham0812/SwiftUI-Animations](https://github.com/Shubham0812/SwiftUI-Animations)**
+(Apache-2.0, iOS 17+): 30 self-contained SwiftUI animations plus 7 Metal
+shader effects, every one read at source level and cataloged with its exact
+repo path, the load-bearing technique (`matchedGeometryEffect` scatter,
+`animatableData` shape morphs, traveling `.trim` windows, `layerEffect`
+shader wiring…), the spring/duration values that create the feel, lift notes
+(dependencies, difficulty, known bugs to fix on lift), and search keywords.
+Entries are grouped by interaction moment: wait states, determinate
+progress, action feedback, toggles with identity, card decks and carousels,
+text heroes, input chrome, reveals, and shader effects.
+
+### Built to grow
+
+Send it another animation repo and it becomes one more catalog file:
+[`adding-a-source.md`](plugins/swiftui-animation-match/skills/swiftui-animation-match/references/adding-a-source.md)
+documents the repeatable recipe — stage and pin the repo, fan out parallel
+read-only workers over folder slices (a wave, if `waves` is installed), each
+returning entries in the fixed block format, then assemble, register in
+[`sources.md`](plugins/swiftui-animation-match/skills/swiftui-animation-match/references/sources.md),
+and spot-check claims against the pinned commit.
+
+### Example prompts
+
+```text
+Plan the onboarding flow for my recipe app — where would animation actually help, and which patterns?
+
+The download button in my app feels dead. What's a proven pattern for inline download progress?
+
+I want deleting a note to feel consequential. What fits?
+
+Users don't notice the app is syncing — suggest something calm, not a spinner.
+
+Add https://github.com/<owner>/<another-animation-repo> to the animation-match skill.
+```
+
+### Install swiftui-animation-match
+
+**Claude Code:** `/plugin install swiftui-animation-match@rayfernando-skills`
+
+**Cursor / cross-vendor:**
+
+```bash
+npx skills add https://github.com/RayFernando1337/rayfernando-skills/tree/main/plugins/swiftui-animation-match/skills/swiftui-animation-match -a cursor
+```
+
+### What's inside
+
+- [`SKILL.md`](plugins/swiftui-animation-match/skills/swiftui-animation-match/SKILL.md): the matcher — moment-first workflow, system-vs-custom decision rules, restraint rules, adaptation posture.
+- [`references/matching-playbook.md`](plugins/swiftui-animation-match/skills/swiftui-animation-match/references/matching-playbook.md): the moment taxonomy, the system-first checklist, worked examples, anti-patterns.
+- [`references/catalog-shubham0812-swiftui-animations.md`](plugins/swiftui-animation-match/skills/swiftui-animation-match/references/catalog-shubham0812-swiftui-animations.md): the 37-entry catalog with shared-infrastructure notes and a lift checklist.
+- [`references/sources.md`](plugins/swiftui-animation-match/skills/swiftui-animation-match/references/sources.md): source index with pinned commits, licenses, and the staleness policy.
+- [`references/adding-a-source.md`](plugins/swiftui-animation-match/skills/swiftui-animation-match/references/adding-a-source.md): the recipe for cataloging the next repo.
+
+---
+
 ## Repo structure
 
 ```
@@ -410,15 +482,22 @@ rayfernando-skills/
 │   │               ├── scaffold-qa.sh           # create the QA folder layout
 │   │               ├── bugs-needing-sync.sh     # list bugs missing a tracker ID
 │   │               └── bugs-needing-pull.sh     # list bugs with stale tracker sync
-│   └── bootstrap-ios/                            # iOS/macOS router skill + optional installer helper
+│   ├── bootstrap-ios/                            # iOS/macOS router skill + optional installer helper
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   └── skills/
+│   │       └── bootstrap-ios/
+│   │           ├── SKILL.md
+│   │           ├── references/           # workflow, skill map, XcodeBuildMCP, sources
+│   │           └── scripts/
+│   │               └── bootstrap-ios-skills.sh
+│   └── swiftui-animation-match/                  # interaction-to-animation matcher
 │       ├── .claude-plugin/
 │       │   └── plugin.json
 │       └── skills/
-│           └── bootstrap-ios/
+│           └── swiftui-animation-match/
 │               ├── SKILL.md
-│               ├── references/           # workflow, skill map, XcodeBuildMCP, sources
-│               └── scripts/
-│                   └── bootstrap-ios-skills.sh
+│               └── references/           # matching playbook, catalogs, sources, adding-a-source
 ├── scripts/
 │   ├── validate-skill-metadata.py        # release-time Codex-metadata validator
 │   └── validate-skill-evals.py           # release-time skill-eval validator
