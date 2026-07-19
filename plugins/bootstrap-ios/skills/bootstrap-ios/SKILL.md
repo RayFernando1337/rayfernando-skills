@@ -38,6 +38,7 @@ The default posture is conservative:
 | "Bootstrap iOS", "install my iOS skills", "one command" | `install-and-bootstrap.md` |
 | Build, test, simulator, logs, debug, device install | `xcodebuildmcp.md` |
 | SwiftUI screen, navigation, sheets, app wiring | `skill-map.md` SwiftUI entries |
+| Animation, motion, "make it feel alive", loaders, delight | Also use `swiftui-animation-match` (interaction-to-animation matcher) |
 | Async/await, actors, Sendable, Swift 6 migration | `skill-map.md` concurrency entries |
 | Unit tests, Swift Testing, XCTest migration | `skill-map.md` testing entries |
 | SwiftData, models, queries, migrations, CloudKit | `skill-map.md` SwiftData entries |
