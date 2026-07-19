@@ -118,3 +118,9 @@ When one wave feeds another, pass forward only a **distilled, verified** handoff
 the accepted findings plus a one-line critique — never raw transcripts or rejected
 candidates. Long, irrelevant context measurably degrades the next wave's
 reasoning; the synthesize barrier is where you compress.
+
+One exception to compression: **constraints are pinned, never summarized.**
+The wave manifest, stop conditions/budget, and safety/scope rules travel
+verbatim through every synthesis file and compaction — measured compaction
+behavior silently drops in-context constraints (violations rising from 0% to
+30–59% post-compaction; pinning restores 0% — arXiv 2606.22528).

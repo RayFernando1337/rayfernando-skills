@@ -1,6 +1,6 @@
 ---
 name: waves
-description: WAVES — Workers · Aggregate · Verify · Extend — wave-based orchestration for Cursor. Decompose a big goal into independent slices, fan them out to isolated parallel subagents via the Task tool (Multitask Mode) as a bounded "wave", verify each structured handoff, then synthesize, and extend into another wave only when warranted. Invoke explicitly with /waves; bounded by design to avoid runaway token loops. For big research, analysis, audits, and codebase or data exploration where one linear pass is slow. Formerly parallel-orchestrate; also fan out, parallelize, orchestrate subagents, multi-agent.
+description: WAVES — Workers · Aggregate · Verify · Extend — wave-based orchestration for Cursor. Decompose a big goal into independent slices, fan them out to isolated parallel subagents via parallel Task tool calls as a bounded "wave", verify each structured handoff, then synthesize, and extend into another wave only when warranted. Invoke explicitly with /waves; bounded by design to avoid runaway token loops. For big research, analysis, audits, and codebase or data exploration where one linear pass is slow. Formerly parallel-orchestrate; also fan out, parallelize, orchestrate subagents, multi-agent.
 disable-model-invocation: true
 ---
 
@@ -10,10 +10,10 @@ Run **wave-based orchestration** inside one local Cursor session. A **wave** is 
 bounded round of isolated agents working in parallel, then a round that verifies
 what came back, then a deliberate decision to build on it — not an open-ended
 loop. You are the **orchestrator**: you discover, decompose the goal into
-independent slices, fan them out to parallel **workers** (the `Task` tool, run in
-the background = "Multitask Mode"), read each worker's structured **handoff**,
-verify it, and synthesize one deliverable. Workers are isolated and return
-exactly one handoff.
+independent slices, fan them out to parallel **workers** (multiple `Task` tool
+calls in one message, backgrounded where the surface supports it), read each
+worker's structured **handoff**, verify it, and synthesize one deliverable.
+Workers are isolated and return exactly one handoff.
 
 **The shape of every wave — WAVE:**
 
@@ -29,10 +29,11 @@ A loop doesn't know when to stop; a wave does, because verification is the stop
 function. (Invoked explicitly with `/waves`: a run spawns more agents than usual,
 so it's opt-in, not auto-triggered.)
 
-This is the local, zero-setup adaptation of the Cursor team's `orchestrate`
-plugin (which spawns *cloud* agents over the Cursor SDK). Same principles —
-planners plan, workers hand off up, no cross-talk — without any of that cloud
-setup. For heavyweight cloud fan-out, see "Escalating" below.
+Waves runs **in place of** cloud orchestration. It adopts the principles the
+Cursor team proved out in their cloud `orchestrate` plugin — planners plan,
+workers hand off up, no cross-talk — but runs them on local subagents with zero
+setup: no separate cloud agents, no API keys, no runtime. Local subagent runs
+are the whole story here.
 
 ## When to use
 
@@ -135,9 +136,10 @@ mis-sized slices.
 
 ### Step 0.5 — Stage the data (when it's remote or messy)
 
-`explore` workers are **read-only with no MCP or internet access**, so they can't
-reach remote hosts, databases, or networked sources. If the source is remote or
-wrapped in noise, the orchestrator must stage clean inputs **before** fanning out:
+`explore` workers are **read-only by design, and read-only mode blocks all MCP
+tools** (Cursor staff-confirmed), so they can't reach databases or MCP-backed
+sources. If the source is remote or wrapped in noise, the orchestrator must
+stage clean inputs **before** fanning out:
 
 - **Pull remote → local.** SSH/`rsync`/export the relevant data to a local
   scratch dir so read-only workers can read it (e.g. query a remote SQLite
@@ -222,14 +224,23 @@ once, so you stay within practical concurrency limits.
 
 Send **one message with multiple `Task` tool calls** — one per slice whose
 dependencies are met (handoffs verified, not just returned) — that is what
-makes them run concurrently. Set
-`run_in_background: true` on each (Multitask Mode). Pick
-`subagent_type` per slice (table below). Give each a 3-5 word `description` and a
-self-contained `prompt` ending with the required handoff format.
+makes them run concurrently (this is the officially documented parallelism
+mechanism). Pick `subagent_type` per slice (table below). Give each a 3-5 word
+`description` and a self-contained `prompt` ending with the required handoff
+format.
 
-Then **end your turn.** You are notified as each background worker completes —
-do **not** `AwaitShell`, poll, or read output files in a loop. The `Task` call
-itself confirms the launch.
+Backgrounding is surface-dependent: the documented switch is the
+`is_background: true` frontmatter field on custom subagents; a per-call
+`run_in_background: true` parameter exists on some surfaces but is
+**undocumented** (and absent on others, e.g. cloud agents) — pass it when the
+schema exposes it, and don't rely on it elsewhere. Background workers include
+their final message in the completion notification. (`/multitask` is a separate
+user-facing Agents Window command, not this skill's mechanism.)
+
+When workers run in the background, **end your turn.** You are notified as each
+completes — do **not** `AwaitShell`, poll, or read output files in a loop. The
+`Task` call itself confirms the launch. When the surface runs Task calls
+synchronously, the batch still executes concurrently and returns together.
 
 ### Step 3 — Collect and synthesize
 
@@ -238,8 +249,12 @@ N spawned means N accounted for. A worker that never returns, errors out, or
 comes back `partial`/`blocked` is a hole in the wave, and synthesizing around
 it silently drops a slice. **Worker failure ladder:** (1) re-task once,
 narrower — resume the same worker (each `Task` returns an agent ID that
-resumes with context preserved) when the slice just needs continuation, or
-re-spawn fresh with a narrower scope and a note about what came back; (2) if
+resumes with context preserved; completed subagents persist checkpoints, so a
+resume restores prior context even after the worker finished) when the slice
+just needs continuation, or re-spawn fresh with a narrower scope and a note
+about what came back. Resume only for *continuation of the same slice* — a
+resumed worker carries its old slice's context, which contaminates an
+unrelated assignment; (2) if
 it fails again, do that slice yourself in the main session; (3) if it stays
 blocked, carry the slice into the synthesis explicitly as `not-covered` —
 never average over a missing slice as if coverage were complete.
@@ -264,6 +279,14 @@ what dependent slices and later waves consume, so nothing unverified enters it
 as a finding: a claim still awaiting its verdict is carried only as an
 explicit `pending-verification` line.
 
+**Pin the constraints through the compression.** The wave manifest, the stop
+conditions/budget, and any safety or scope rules are carried *verbatim* into
+every synthesis file and every between-wave summary — never paraphrased or
+summarized away. Compaction silently drops in-context constraints (measured:
+violation rates rise from 0% to 30–59% after compaction; pinning restores 0% —
+arXiv 2606.22528), and a run whose stop conditions got compressed out is a run
+that loops or quits at random.
+
 ### Step 3.5 — Verifier pass (when the tier demands it)
 
 Before writing the wave synthesis, spawn dedicated verifier workers for every
@@ -281,7 +304,17 @@ met-only-when-verified rule).
 
 If handoffs exposed gaps or follow-ups — or verified handoffs just unblocked
 dependent manifest slices — spawn another parallel wave the same way. Repeat
-until no slice is `pending` and nothing new surfaced.
+until no slice is `pending` and nothing new surfaced. Stopping early while
+genuine follow-ups remain is the failure mode this skill guards against; the
+stop function is the manifest plus the stated budget (see "Bounded waves"),
+never "we've already done a wave or two."
+
+Skipping a follow-up wave is legitimate in exactly three cases — name which
+one applies when you decide: the remaining open items are
+**primary-source-verified** (a verifier can't improve on the evidence),
+**time-gated** (unresolvable until an external event, carry them as explicit
+open items), or **genuinely contested** (independent quality sources disagree;
+more sampling won't settle taste — record the disagreement instead).
 
 ### Step 5 — Deliver
 
@@ -295,20 +328,41 @@ Then write any code/files yourself, or spawn a dedicated implementation wave
 re-run/`curl`/validate served artifacts, regression-check sibling routes, and
 re-read the critical files you wrote (see `references/verification.md` §6).
 
-## Bounded waves — size, caps, and when to stop
+## Bounded waves — size, budget, and the stop function
 
-A wave is bounded on purpose. "Loop-until-done" (spawn until a stop condition) is
-a real pattern, but unbounded it burns tokens for little gain: candidate
-*generation* is cheap, but *selection* plateaus, and extra rounds are
-non-monotonic — more iterations can *lower* quality, not just cost. Bounded waves
-keep the exploration and drop the runaway.
+A wave is bounded on purpose — but bounded by **completion and budget, not by a
+wave count**. "Loop-until-done" unbounded burns tokens for little gain:
+candidate *generation* is cheap, *selection* plateaus, and extra rounds are
+non-monotonic — more iterations can *lower* quality, not just cost. Equally
+real is the opposite failure: **stopping while the manifest still has open
+slices.** Bounded waves keep the exploration, drop the runaway, and never
+abandon un-terminal work.
 
-- **Width: N = 3–8 workers per wave.** Size N so you can *fully verify all N*. Go
-  wider only when a cheap automatic check (tests, schema, exec) gates the results.
-- **Depth: ≤ 2–3 waves, capped up front.** Stop when a wave surfaces nothing new
-  *and* its outputs are near-duplicates of the last (stagnation), or when quality
-  dropped versus the prior wave.
-- **Budget: ~60% generation / 40% verification.** Selection is the scarce
+- **Width: N = 3–8 workers per wave.** Size N so you can *fully verify all N*.
+  Go wider only when a cheap automatic check (tests, schema, exec) gates the
+  results. (Grounding: homogeneous-agent teams plateau around N≈4–8 — added
+  workers contribute redundant evidence, and *diversity*, not head count, is
+  what escapes the ceiling — arXiv 2606.02646, 2602.03794. Practically, Cursor
+  staff confirm no fixed subagent cap but that ~40 concurrent workers can
+  overwhelm the extension host: batch into waves.)
+- **Depth: the manifest is the stop function.** Keep extending while any
+  manifest slice is non-terminal *and* the last wave added verified progress.
+  Stop only on one of three conditions: **completion** (every slice terminal
+  and the synthesis done), **stagnation** (a wave surfaces nothing new and its
+  outputs near-duplicate the last, or quality dropped), or **budget
+  exhaustion**. State the budget up front in the run-shape line — a worker or
+  token budget, not a wave count (e.g. `budget: ~20 workers`). Do not stop
+  because a round number of waves has passed; a realistic run is often
+  `12 + 3 + 1` workers across three waves, and a decomposition cascade on a
+  vague goal legitimately runs more. (Grounding: verification-driven replan
+  loops that stop on completeness thresholds, diminishing returns, and token
+  budgets — not fixed iteration caps — arXiv 2603.11445; convergence-based
+  stopping beats a fixed `max_iterations` at parity quality, arXiv 2606.27009.)
+- **Scouting is cheap — don't let it eat the budget.** Entropy-reduction waves
+  (scouting, decomposition) run on cheap models and count separately from the
+  execution budget. Never end a run "out of waves" when the caps were consumed
+  by discovery before execution started.
+- **Budget split: ~60% generation / 40% verification.** Selection is the scarce
   resource; spend there.
 - **Match width to difficulty:** easy → 1 + a light refine; medium → 3–5;
   hard/open-ended → 5–8 for approach diversity; hardest/novel → don't loop,
@@ -361,21 +415,34 @@ playbook: `references/verification.md`.
 
 | Slice is… | Use | Notes |
 |---|---|---|
-| Read-only code/data exploration | `explore` | Fast, **read-only**, **no MCP/internet**. Pass thoroughness: "quick" / "medium" / "very thorough". |
-| Research needing web / MCP (Exa, Ref, docs) | `generalPurpose` | Multi-step; can use available web/MCP tools. Do **not** set `readonly: true` (that disables MCP/internet). |
+| Read-only code/data exploration | `explore` | Fast, **read-only by design** — and read-only mode **blocks all MCP tools**. Pass thoroughness: "quick" / "medium" / "very thorough". |
+| Research needing web / MCP (Exa, Ref, docs) | `generalPurpose` | Multi-step; can use available web/MCP tools. Do **not** set `readonly: true` (read-only blocks all MCP). |
 | Multi-step work mixing read + light reasoning | `generalPurpose` | The general workhorse. |
 | Shell/git heavy investigation | `shell` | Command execution specialist. |
 | Browser testing / UI verification | `browser-use` | Navigates and screenshots. **Stateful: auto-resumes one shared instance, so don't fan out `browser-use` in parallel** — use a single serial UI slice. Needs agent mode (not `readonly`). |
 | Competing attempts at the same task | `best-of-n-runner` | Each runs in an **isolated git worktree/branch** — safe from shared-checkout clobbering; you then compare attempts and merge the winner. |
 
+**Naming drift across surfaces.** Cursor's docs describe the built-ins as
+`explore`, `bash`, and `browser`, while Task-tool schemas expose
+surface-dependent values (`generalPurpose`, `explore`, `shell`, `browser-use`,
+`best-of-n-runner`, review specialists…). Read the live `subagent_type` enum
+off the Task tool rather than assuming this table's names — the roles are
+stable, the labels drift.
+
 **Custom subagents and the missing-type fallback.** Custom subagents (project
 `.cursor/agents/`, user `~/.cursor/agents/`, or plugin-provided) show up as
 their own `subagent_type` values — worth defining when a role repeats across
-runs (a verifier, a docs researcher) so its prompt and pinned `model` live in
-one file. Two verified gotchas: new agent files register only after a Cursor
-restart, and a type missing from the enum is **not** permission to skip the
-role — run it as `generalPurpose` with the role's instructions inlined in the
-worker prompt (passing the intended `model` on the call) instead.
+runs (a verifier, a docs researcher) so its prompt, pinned `model`, `readonly`,
+and `is_background` defaults live in one file. Two verified gotchas
+(staff-confirmed on the forum, not in docs): new agent files register only
+after a Cursor restart, and a type missing from the enum is **not** permission
+to skip the role — run it as `generalPurpose` with the role's instructions
+inlined in the worker prompt (passing the intended `model` on the call)
+instead. Nesting note: the platform itself now allows the main agent *and its
+direct subagents* to launch subagents (one extra level, no deeper — the SDK
+docs state the same cap); this skill still keeps fan-out orchestrator-only as
+policy, because nested fan-out hides work from the manifest and the
+verification gate.
 
 ### Picking the model per slice (cost / speed routing)
 
@@ -387,25 +454,36 @@ frontier model:
   Composer fast family (e.g. `composer-2.5-fast`) for exactly this: fast, cheap,
   and tuned for codebase understanding and tool use — so read waves are cheap by
   default and you often need not set `model` at all. To pin it, pass
-  `model: "composer-2.5"` (or `composer-2.5-fast`) on the `Task` worker, or set
-  the `model` field (`inherit` | `fast` | a slug) on a custom `.cursor/agents/`
-  subagent. This is the entropy-reduction workhorse.
+  `model: "composer-2.5"` on the `Task` worker, or set the `model` field
+  (`inherit` | a model ID) on a custom `.cursor/agents/` subagent. For
+  lightweight short-context slices on the GPT side, `gpt-5.6-luna` at a higher
+  effort is the cost-per-unit-of-work champion — but never give Luna
+  long-context reads (its recall collapses on 256K+ contexts per OpenAI's own
+  MRCR tables; route big-file slices to a stronger tier or chunk smaller).
+  This is the entropy-reduction workhorse.
+- **Per-model options ride in brackets on the model ID** (documented syntax):
+  `gpt-5.6-sol`, `claude-opus-4-8[effort=high,context=300k]`,
+  `composer-2.5[fast=false]`, `composer-2.5[]` (empty brackets pin the
+  standard, non-fast variant). Use `[effort=…]` instead of guessing separate
+  "thinking" slugs.
 - **High-stakes verification, synthesis, or a multi-model panel → stronger
-  reasoning, chosen deliberately.** For a user-requested or high-stakes
-  multi-model panel, **ask which models to use; don't guess slugs** (see
-  "Multi-model fan-out").
+  reasoning, chosen deliberately** (e.g. a frontier tier at `effort=high`,
+  escalating effort only for a slice that stays unresolved). For a
+  user-requested or high-stakes multi-model panel, **ask which models to use;
+  don't guess slugs** (see "Multi-model fan-out").
 - Otherwise honor a model the user named; if a requested model is unavailable,
   say so rather than silently substituting.
 
 Caveats: availability varies (Max Mode, plan, or admin restrictions can force a
-fallback to a compatible model); slugs drift, so read them off Cursor's model
-picker rather than hardcoding volatile ones; `inherit` can be unreliable in some
-surfaces (omit `model` to inherit). When a custom agent's model matters, pin it
-in the frontmatter **and** pass the matching `model` on the `Task` call — the
-field has been ignored under some conditions (documented fallbacks plus
-confirmed bug reports), so if a worker's output quality looks off, consider
-that the intended model may not have run. Respect the user's cost and model
-preferences over any default here.
+fallback to a compatible model; legacy request-based plans without Max Mode run
+subagents on Composer regardless of `model` configuration); slugs drift, so
+read them off Cursor's model picker rather than hardcoding volatile ones;
+`inherit` can be unreliable in some surfaces (omit `model` to inherit). When a
+custom agent's model matters, pin it in the frontmatter **and** pass the
+matching `model` on the `Task` call — the field has been ignored under some
+conditions (documented fallbacks plus confirmed bug reports), so if a worker's
+output quality looks off, consider that the intended model may not have run.
+Respect the user's cost and model preferences over any default here.
 
 For review/audit slices, Cursor also exposes specialized subagents when available
 (e.g. `bugbot`, `security-review`, `ci-investigator`, `ci-watcher`) — prefer them
@@ -429,8 +507,8 @@ deep-research problems (OpenRouter, *Surpassing Frontier Performance with
 Fusion*, openrouter.ai/blog/announcements/fusion-beats-frontier/).
 
 Run it in Cursor: pass a **different `model`** to each sibling `Task` worker on
-the same slice, launch them in **one message** with `run_in_background: true`
-(parallel), then synthesize. This is the **high-stakes** end of model routing —
+the same slice, launch them in **one message** (parallel; backgrounded where
+the surface supports it), then synthesize. This is the **high-stakes** end of model routing —
 the orchestrator picks frontier models only when the user asks for a multi-model
 pass or the slice is explicitly high-stakes — so **ask which models to use;
 don't guess slugs.** (The cheap end — routing scouting and read-heavy waves to
@@ -505,21 +583,30 @@ files clobber each other.
   own git worktree/branch), then **inspect, test, and merge the chosen result
   yourself** — worktrees prevent clobbering, not the merge.
 
-## Escalating to cloud orchestration
+## Waves instead of cloud orchestration
 
-For genuinely large builds (many concurrent code-writing agents, runs that
-outlive this session, PRs per task), escalate to the Cursor team's `orchestrate`
-plugin **if it's installed**. It spawns cloud agents via the Cursor SDK, isolates
-each on its own branch, and reconciles handoffs from disk/git. It requires its
-own setup (credentials and a runtime, plus optional Slack) — check its docs — and
-is invoked explicitly (e.g. `/orchestrate <goal>`).
+Waves is deliberately the **replacement** for cloud fan-out, not a stepping
+stone to it. Local subagent runs cover the whole workload this skill targets —
+research, audits, data analysis, exploration, and bounded implementation — with
+isolation, parallelism, resume, and verification, and none of the cloud setup
+(separate VMs, API keys, runtimes). The lessons worth keeping from the Cursor
+team's cloud `orchestrate` plugin are already folded into this skill: planners
+plan, workers hand off up, no cross-talk, disk/git as the durable medium. Do
+not spawn cloud agents for a waves run; if a run truly outgrows one machine
+(days-long fleets, PR-per-task pipelines), that is a different tool choice for
+the user to make — say so and let them decide.
 
-> Cursor subagent mechanics here were checked on 2026-07-03 (custom-agent
-> registration-after-restart, resume-by-agent-ID, and the model-fallback
-> conditions re-verified against current docs and bug reports). The details
-> most likely to drift: the cloud `orchestrate` plugin's setup, and whether
-> Cursor caps concurrent background subagents (not officially documented).
-> Re-verify those if they matter to your run.
+> Cursor subagent mechanics here were checked on 2026-07-19 against current
+> docs, changelogs, and staff forum replies: parallel Task calls in one message
+> are the documented fan-out; `is_background` frontmatter is the documented
+> background switch while per-call `run_in_background` is live but undocumented
+> and absent on some surfaces; completed subagents persist resume checkpoints
+> (CLI release 2026-07-06); nesting is capped at one extra level; read-only
+> mode blocks all MCP; there is no documented concurrency cap, but staff report
+> ~40 concurrent workers can overwhelm the extension host — batch into waves.
+> The details most likely to drift: Task parameter names, the `subagent_type`
+> enum, and model-ID bracket options. Re-verify those if they matter to your
+> run.
 
 ## Checklist
 
@@ -529,8 +616,10 @@ is invoked explicitly (e.g. `/orchestrate <goal>`).
 - [ ] Stated the run shape in one line before spawning (on the fence → the
       smaller shape); never presented inline work as wave coverage.
 - [ ] Triaged each slice (worker type + dependencies + verification tier).
-- [ ] Routed scouting / read-heavy waves to the cheap fast model (Composer 2.5);
-      reserved frontier / panel models for high-stakes slices.
+- [ ] Routed scouting / read-heavy waves to the cheap fast model (Composer 2.5,
+      or `gpt-5.6-luna` for short-context slices only); reserved frontier /
+      panel models for high-stakes slices; never gave Luna-class models
+      long-context reads.
 - [ ] Slices are independent (disjoint data/areas/paths), or their `depends_on`
       edges are recorded in the manifest.
 - [ ] Wrote the wave manifest (slice / worker type / model / depends_on /
@@ -538,14 +627,21 @@ is invoked explicitly (e.g. `/orchestrate <goal>`).
       their dependencies' handoffs were verified (distilled findings fed into
       their prompts).
 - [ ] Each worker prompt is fully self-contained (no reliance on chat history).
-- [ ] Each wave's `Task` calls sent in one message, `run_in_background: true`.
-- [ ] Ended turn to await completions — no polling loop.
+- [ ] Each wave's `Task` calls sent in one message; backgrounded where the
+      surface supports it (`is_background` / `run_in_background`).
+- [ ] Ended turn to await background completions — no polling loop.
 - [ ] No two parallel workers write the same paths.
 - [ ] Verified coverage before spawning (counts/bounds/partition-sum).
 - [ ] Checked every manifest row off at collection (completion gate); ran the
       failure ladder on missing/blocked slices — no slice silently dropped.
 - [ ] Read every handoff; spawned follow-ups for open questions.
-- [ ] Wave bounded (width ≈3–8, ≤2–3 waves); carried only distilled handoffs forward.
+- [ ] Waves bounded by the manifest + stated budget (width ≈3–8; scouting
+      waves counted separately): continued while slices were non-terminal and
+      progress was verified; stopped only on completion, stagnation, or budget
+      — and named which of the three no-second-wave cases applied when
+      skipping a follow-up.
+- [ ] Carried only distilled handoffs forward; manifest, stop conditions, and
+      budget pinned verbatim through every synthesis/compaction.
 - [ ] Verified each handoff's evidence (not just its `Status`); escalated
       low-confidence / conflicting / uncited findings; wrote
       `synthesis-wave-N.md` only from verdict-cleared findings (pending claims

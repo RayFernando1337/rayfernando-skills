@@ -192,3 +192,24 @@ Before declaring done (Fable's habit on served artifacts):
   2305.14627 — both EMNLP 2023)
 - Reference hallucination rates in deep-research agents (3–13% of citation URLs
   fabricated; URL-health pass fixes most), arXiv 2604.03173 — https://arxiv.org/abs/2604.03173
+- Verification-driven replanning as the orchestration-level coordination signal
+  (Plan-Execute-Verify-Replan; stop on completeness / diminishing returns /
+  budget, not fixed iteration caps; most replans are retries of incomplete
+  slices), VMAO, arXiv 2603.11445 — https://arxiv.org/abs/2603.11445
+- Verification as a scaling axis (continuous verifier scores that improve along
+  score granularity, repeated evaluation, and criteria decomposition),
+  LLM-as-a-Verifier, arXiv 2607.05391 — https://arxiv.org/abs/2607.05391
+- Centralized verification contains error amplification (4.4× under a
+  coordinator bottleneck vs 17.2× for unchecked independent agents; multi-agent
+  *hurts* sequential-reasoning tasks), arXiv 2512.08296 — https://arxiv.org/abs/2512.08296
+- Compaction silently drops in-context constraints (0% → 30–59% violations
+  post-compaction; pin constraints verbatim through summaries), Governance
+  Decay, arXiv 2606.22528 — https://arxiv.org/abs/2606.22528
+- Team-size scaling: homogeneous agent teams plateau (hard ceiling for
+  instruct-class models on bounded tasks, correctness level; diversity is the
+  lever that escapes it; an N≤5 pilot identifies the regime), Ringelmann
+  effect, arXiv 2606.02646 — https://arxiv.org/abs/2606.02646; 2 diverse
+  agents can match 16 homogeneous, arXiv 2602.03794 — https://arxiv.org/abs/2602.03794
+- Convergence-based early stopping beats fixed `max_iterations` at parity
+  quality (and per-round judge gating is counterproductive), arXiv 2606.27009 —
+  https://arxiv.org/abs/2606.27009
