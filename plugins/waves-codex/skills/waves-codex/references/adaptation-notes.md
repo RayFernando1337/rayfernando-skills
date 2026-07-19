@@ -43,6 +43,51 @@ Re-checked on 2026-07-03 against the Codex Config Reference
   `spawn_agents_on_csv` is still experimental (now also documents a
   per-call `max_runtime_seconds` override of `agents.job_max_runtime_seconds`).
 
+Re-checked on 2026-07-19 against the subagents doc, config reference, Codex
+changelog, the Responses API multi-agent guide, and the openai/codex source
+tree (a parallel verification wave with per-claim evidence):
+
+- Official docs no longer enumerate the collaboration tool names. The current
+  multi-agent V2 surface (code + Responses API multi-agent guide) is
+  `spawn_agent`, `send_message`, `followup_task`, `wait_agent`,
+  `interrupt_agent`, `list_agents` -- note `interrupt_agent`, not
+  `close_agent`. The V1 set (`spawn_agent`, `send_input`, `resume_agent`,
+  `wait_agent`, `close_agent`) survives only on threads resumed from before
+  the V2 runtime metadata existed ("Threads created before runtime metadata
+  existed keep the legacy V1 tool surface" -- codex-rs session code).
+- The documented reasoning-effort ladder on the subagents page is now `none`,
+  `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, `ultra` (higher/lower
+  levels "when the selected model supports" them); the config-reference type
+  string is stale (`minimal..xhigh`). For the GPT-5.6 API the ladder is
+  `none..max`; `ultra` is a product setting that converts to `max` plus
+  proactive multi-agent.
+- GPT-5.6 family GA 2026-07-09 (`gpt-5.6` aliases `gpt-5.6-sol`; `-terra`,
+  `-luna` tiers). Official Codex subagent guidance: start with `gpt-5.6`, use
+  `gpt-5.6-terra` for lighter subagent work, `gpt-5.3-codex-spark` for
+  near-instant text-only (Pro). Luna is not recommended for subagents in
+  official docs and has a measured long-context cliff (MRCR 41.3% at 256-512K
+  vs Sol 91.5%). Codex CLI 0.144.4/5 corrected GPT-5.6 context to 272K in
+  clients.
+- V2 `spawn_agent` exposes per-spawn `model`/`reasoning_effort` overrides only
+  behind `multi_agent_v2.expose_spawn_agent_model_overrides`; custom-agent
+  TOML routing always works. V1 `fork_context` / V2 `fork_turns` (fork parent
+  history into a child) exist in code but are undocumented -- don't build on
+  them.
+- V2 delegation payloads (`spawn_agent`/`send_message`/`followup_task`
+  messages) are encrypted between model calls, so spawn prompts can no longer
+  be audited from local rollout history.
+- `thread/start.multiAgentMode` (app-server) shipped June 17 and is already
+  deprecated ("Use Ultra reasoning effort for proactive multi-agent
+  behavior").
+- Desktop threads can receive undocumented `codex_app.*` thread-management
+  tools (`create_thread`, `list_threads`, `read_thread`,
+  `send_message_to_thread`, `fork_thread`, `handoff_thread`,
+  `set_thread_title`, `set_thread_pinned`, `set_thread_archived`) --
+  Desktop-local + feature-flag gated; remote/mobile/CLI-started threads and
+  pre-feature resumed threads miss them (openai/codex #26907, #25990, #25818
+  all open). Basis for the SKILL's "Coordinator Thread Mode" and its
+  probe-then-fallback rule.
+
 ## What Stayed Portable
 
 - Mental model: discover -> stage -> verify coverage -> decompose -> fan out ->
@@ -93,7 +138,7 @@ Re-checked on 2026-07-03 against the Codex Config Reference
 
 | Cursor source idea | Codex-native replacement |
 | --- | --- |
-| `Task` tool with `subagent_type` and `run_in_background: true` | Explicit Codex subagent delegation: spawn one agent per slice, usually in one manager turn, then wait/synthesize. Direct tool names may appear as `spawn_agent`, `wait_agent`, `send_input`, and `close_agent`, but the stable user-facing contract is "spawn N agents, wait for all, consolidate." |
+| `Task` tool with `subagent_type` (backgrounded where the surface supports it) | Explicit Codex subagent delegation: spawn one agent per slice, usually in one manager turn, then wait/synthesize. Current V2 tool names: `spawn_agent`, `send_message`, `followup_task`, `wait_agent`, `interrupt_agent`, `list_agents` (legacy V1 on old resumed threads: `send_input`, `resume_agent`, `close_agent`). The stable user-facing contract is "spawn N agents, wait for all, consolidate." |
 | "Multitask Mode" | Codex subagent workflows in the app/CLI. Current docs say Codex waits for all requested subagent results and returns one consolidated response. |
 | `explore` | Built-in `explorer` for read-heavy exploration. Unlike Cursor's original note, do not assume this is offline/no-MCP; Codex subagents inherit sandbox/tooling, and custom agents can set `sandbox_mode = "read-only"`. |
 | `generalPurpose` | Built-in `default`, built-in `worker`, or a custom agent such as `docs_researcher` depending on the task. |
@@ -109,11 +154,11 @@ Re-checked on 2026-07-03 against the Codex Config Reference
 | Data-chunk fan-out by many background `Task` calls | `spawn_agents_on_csv` when each row maps to one worker and the experimental tool is available; otherwise normal `explorer` waves. |
 | Dedicated verifier worker | Custom Codex verifier agent, normal `explorer`/`default` verifier prompts, or `spawn_agents_on_csv` verifier-per-row batch when available. |
 | Missing `subagent_type` fallback: custom `.cursor/agents/` files register only after a Cursor restart, so an unregistered role runs as `generalPurpose` with its instructions inlined | Unknown `agent_type` fails the spawn (no silent fallback) and `.codex/agents/` loads in trusted projects only, so an unavailable role runs as `default`/`worker`/`explorer` with its instructions inlined. Either way, a missing role is not permission to skip it. |
-| Re-task a failed/partial worker by resuming its agent ID (context preserved) before re-spawning | `send_input` to steer a running worker; `resume_agent` to reopen a closed one; re-spawn fresh only when the context itself is the problem. |
+| Re-task a failed/partial worker by resuming its agent ID (context preserved) before re-spawning | V2: `send_message` to pass info without triggering a turn, `followup_task` to assign a new turn to the same worker (V1 threads: `send_input` / `resume_agent`); re-spawn fresh only when the context itself is the problem. Same-slice continuation only -- a re-tasked worker keeps its old context. |
 | "Verify before you trust" | Codex manager runs pre-fan-out gates, cheap handoff checks, separate verifier waves, and final deliverable validation. |
 | Recursive subplanner idea | Dropped from the default. Current docs say `agents.max_depth` defaults to `1`; raise it only for explicit recursive delegation. |
 | Entropy-first decomposition (dig locally then attached resources then ask only if it pays; scouting wave then execution wave; least-to-most) | Portable as-is; `update_plan` replaces `TodoWrite` for the living plan. |
-| "Route scouting/read waves to Composer 2.5 (fast) via the `model` field" | Route scouting/read waves to `gpt-5.5` at `low` effort (or `gpt-5.4-mini`) via the per-spawn `reasoning_effort` field. `model_reasoning_effort` is the config/TOML key. `service_tier` / `/fast` is a user-enabled speed tier, not a forced default. |
+| "Route scouting/read waves to Composer 2.5 (fast) via the `model` field" | Route scouting/read waves to `gpt-5.6-terra` at `low` effort (or short-context `gpt-5.6-luna`; `gpt-5.3-codex-spark` / `gpt-5.4-mini` as lighter fallbacks) via custom-agent TOML or the per-spawn `reasoning_effort` field. `model_reasoning_effort` is the config/TOML key. `service_tier` / `/fast` is a user-enabled speed tier, not a forced default. |
 
 ## Things That Do Not Translate Exactly
 
@@ -137,8 +182,10 @@ Re-checked on 2026-07-03 against the Codex Config Reference
   `reasoning_effort`, while the config / custom-agent TOML key is
   `model_reasoning_effort`. `service_tier` (`fast` / `flex`) and the `/fast`
   toggle are user-facing speed levers, not general model routing. Reasoning
-  levels are `minimal`, `low`, `medium`, `high`, `xhigh`; `gpt-5.4-mini` and
-  `gpt-5.3-codex-spark` are lighter/faster options for read-heavy subagent work.
+  levels are `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`
+  (model-dependent at both ends; `ultra` is a product setting layered on
+  `max`); `gpt-5.6-terra`, `gpt-5.3-codex-spark`, and `gpt-5.4-mini` are
+  lighter/faster options for read-heavy subagent work.
 
 ## Why the Final Skill Is Opinionated
 

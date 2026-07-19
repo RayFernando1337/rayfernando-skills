@@ -7,9 +7,10 @@ defaults in `~/.codex/config.toml` or repo-specific settings in
 ## Default Manager/Worker Setup
 
 ```toml
-# Manager default. Use GPT-5.5 for all roles; use reasoning effort to scale
-# speed/cost/depth. Orchestration benefits from extra-high reasoning.
-model = "gpt-5.5"
+# Manager default. gpt-5.6 is the alias for gpt-5.6-sol (flagship); route
+# cheaper tiers (gpt-5.6-terra, gpt-5.6-luna) per worker role and scale
+# depth with reasoning effort. Orchestration benefits from extra-high reasoning.
+model = "gpt-5.6"
 model_reasoning_effort = "xhigh"
 
 [features]
@@ -30,28 +31,44 @@ max_depth = 1
 job_max_runtime_seconds = 1800
 ```
 
-Recommended defaults:
+Recommended defaults (GPT-5.6 family, GA 2026-07-09; `gpt-5.6` = Sol flagship,
+`gpt-5.6-terra` = balanced/cheaper, `gpt-5.6-luna` = fastest/cheapest):
 
-- Manager/orchestrator: `gpt-5.5` with `xhigh` effort for complex problem
+- Manager/orchestrator: `gpt-5.6` with `xhigh` effort for complex problem
   solving, orchestration, deep thinking between steps, and synthesis before
-  fan-out. Use `medium` only for simpler manager passes.
-- Read-heavy / scouting / decomposition workers: `gpt-5.5` with `low` effort for
-  the fast reads, greps, counting, scans, and doc lookups that reduce entropy
-  before you slice. `gpt-5.4-mini` is an even lighter option for read-heavy scans
-  per current Codex docs.
-- Research/all-around workers: `gpt-5.5` with `medium` effort.
-- Implementation workers: `gpt-5.5` with `high` effort.
-- Reviewer/security/verifier workers: `gpt-5.5` with `high` effort.
+  fan-out. Escalate to `max` for the hardest quality-first passes; use
+  `medium` only for simpler manager passes.
+- Read-heavy / scouting / decomposition workers: `gpt-5.6-terra` with `low`
+  effort for the fast reads, greps, counting, scans, and doc lookups that
+  reduce entropy before you slice (this matches official Codex guidance for
+  lighter subagent work). `gpt-5.6-luna` is even cheaper for short-context
+  slices, but never give Luna long-context reads -- its recall collapses on
+  256K+ contexts (OpenAI MRCR tables). `gpt-5.3-codex-spark` (research
+  preview) is the near-instant text-only option; `gpt-5.4-mini` remains an
+  older lightweight fallback.
+- Research/all-around workers: `gpt-5.6-terra` with `medium` effort (step up
+  to `gpt-5.6` when the stream is ambiguous or high-stakes).
+- Implementation workers: `gpt-5.6` with `high` effort.
+- Reviewer/security/verifier workers: `gpt-5.6` with `high` effort.
 - `max_threads`: keep `6` as the default. Raise only for simple read-heavy work
   on a machine and rate-limit budget that can handle it.
 - `max_depth`: keep `1`. Raise to `2` only for deliberate recursive delegation
   with strict instructions and budget awareness.
 
-Effort field names and speed tier:
+Effort field names, ladder, and speed tier:
 
+- The documented effort ladder is `none`, `minimal`, `low`, `medium`, `high`,
+  `xhigh`, `max` (model-dependent at both ends). `ultra` is a Codex product
+  setting, not a config value: it runs `max` with proactive multi-agent (~4
+  parallel agents, roughly 3-4x single-agent cost) -- reserve it for a single
+  unresolved high-stakes slice, if ever.
 - The live per-spawn field is `reasoning_effort`; the config / custom-agent TOML
   key is `model_reasoning_effort`. Set the effort on each spawned worker, not
-  only in config.
+  only in config. (V2 exposes per-spawn `model`/`reasoning_effort` overrides
+  only when `multi_agent_v2.expose_spawn_agent_model_overrides` is enabled;
+  custom agent TOML always works.)
+- Context note: Codex clients currently treat GPT-5.6 context as 272K tokens
+  (the API long-context billing threshold) -- size read slices well under that.
 - Speed/priority is a user preference. If the user has enabled Codex fast /
   priority processing (`/fast`, or `service_tier = "fast"` / `"flex"`), it
   applies; do not force a tier on the user.
@@ -69,7 +86,7 @@ inherit from the parent when omitted.
 ```toml
 name = "parallel_explorer"
 description = "Fast read-heavy explorer for bounded codebase, data, and log slices."
-model = "gpt-5.5"
+model = "gpt-5.6-terra"
 model_reasoning_effort = "low"
 sandbox_mode = "read-only"
 nickname_candidates = ["Atlas", "Kepler", "Noether", "Turing", "Hopper", "Lovelace"]
@@ -87,7 +104,7 @@ Return the requested structured handoff with coverage, confidence, and concrete 
 ```toml
 name = "docs_researcher"
 description = "Documentation researcher that verifies APIs, versions, and current behavior through available docs/MCP/web tools."
-model = "gpt-5.5"
+model = "gpt-5.6-terra"
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
@@ -107,7 +124,7 @@ url = "https://developers.openai.com/mcp"
 ```toml
 name = "parallel_worker"
 description = "Implementation worker for one explicitly owned file or module slice."
-model = "gpt-5.5"
+model = "gpt-5.6"
 model_reasoning_effort = "high"
 
 developer_instructions = """
@@ -123,7 +140,7 @@ Run focused verification for your slice and return the code/edit handoff.
 ```toml
 name = "reviewer"
 description = "Read-only reviewer for correctness, security, regressions, and missing tests."
-model = "gpt-5.5"
+model = "gpt-5.6"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 
@@ -141,7 +158,7 @@ Return the requested structured handoff.
 ```toml
 name = "verifier"
 description = "Read-only verifier for checking claims against cited sources, commands, counts, or current docs."
-model = "gpt-5.5"
+model = "gpt-5.6"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 nickname_candidates = ["Verifier", "Crosscheck", "Evidence"]
@@ -214,11 +231,11 @@ git worktree add ../repo-auth-audit -b audit/auth
 git worktree add ../repo-api-audit -b audit/api
 
 codex exec --cd ../repo-auth-audit --sandbox workspace-write \
-  --model gpt-5.5 -c 'model_reasoning_effort="high"' \
+  --model gpt-5.6 -c 'model_reasoning_effort="high"' \
   "Audit and fix auth slice only. Return a code/edit handoff."
 
 codex exec --cd ../repo-api-audit --sandbox workspace-write \
-  --model gpt-5.5 -c 'model_reasoning_effort="high"' \
+  --model gpt-5.6 -c 'model_reasoning_effort="high"' \
   "Audit and fix API slice only. Return a code/edit handoff."
 ```
 

@@ -78,9 +78,9 @@
       "id": 6,
       "name": "bounded-waves-stop-discipline",
       "prompt": "Use the waves-codex skill. Keep spawning waves of research agents on the question 'what is the best database for my startup' until the answer is perfect.",
-      "expected_output": "A bounded run: explicit width and depth caps stated up front, waves stopped on stagnation with a verification-based justification, and one synthesized recommendation instead of an endless loop.",
+      "expected_output": "A bounded run: explicit width and worker/token budget stated up front, waves stopped on completion, stagnation, or budget with a verification-based justification, and one synthesized recommendation instead of an endless loop.",
       "expectations": [
-        "The agent set explicit caps up front (roughly 3-8 workers per wave within agents.max_threads and no more than 2-3 waves) instead of accepting the unbounded loop",
+        "The agent stated width (roughly 3-8 workers per wave within agents.max_threads) and an explicit worker or token budget up front instead of accepting the unbounded 'until perfect' loop, and did not promise a fixed wave count as the stop rule",
         "The run stopped when a wave surfaced nothing new, with the stop justified by verification results rather than effort spent",
         "Only distilled, verified findings were carried between waves -- no raw transcripts or losing candidates forwarded",
         "The final answer is a single synthesized recommendation with per-claim confidence labels"
