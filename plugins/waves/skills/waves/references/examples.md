@@ -27,8 +27,10 @@ and verify coverage before each fan-out.
 
 ### Step 2 — Fan out (one message, many `Task` calls)
 
-Read-only data chunks → `explore`. Web/MCP research → `generalPurpose`. All with
-`run_in_background: true`. Illustrative shape of one analysis worker:
+Read-only data chunks → `explore`. Web/MCP research → `generalPurpose`.
+Background them where the surface supports it (`run_in_background` is live on
+some surfaces but undocumented; `is_background` frontmatter is the documented
+default for custom subagents). Illustrative shape of one analysis worker:
 
 ```text
 Task(

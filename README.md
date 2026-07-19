@@ -35,7 +35,7 @@ This collection is becoming an ecosystem rather than a list. The skills referenc
 
 Reach for it when a single linear pass would be slow and the work splits into independent slices: big research jobs, whole-repo audits, large data analysis, multi-stream comparisons, codebase exploration. It ships as two tool-tuned variants with the same discipline and different mechanics:
 
-- **[`waves`](plugins/waves/skills/waves/SKILL.md)** is for **Cursor**, built on the `Task` tool and Multitask Mode: parallel background subagents, custom `.cursor/agents/` roles (with a fallback when a role isn't registered), per-slice model routing, and worktree-isolated competing attempts. It's the local, zero-setup adaptation of the principles behind the Cursor team's cloud `orchestrate` plugin (planners plan, workers hand off up, no cross-talk), and it knows when to escalate to the cloud version.
+- **[`waves`](plugins/waves/skills/waves/SKILL.md)** is for **Cursor**, built on parallel `Task` tool calls: isolated background subagents, custom `.cursor/agents/` roles (with a fallback when a role isn't registered), per-slice model routing, and worktree-isolated competing attempts. It adopts the principles the Cursor team proved out in their cloud `orchestrate` plugin (planners plan, workers hand off up, no cross-talk) and runs **in place of** cloud orchestration — local subagent runs cover the whole workload with zero setup.
 - **[`waves-codex`](plugins/waves-codex/skills/waves-codex/SKILL.md)** is for **Codex**, built on Codex subagents: built-in and custom TOML roles, `spawn_agents_on_csv` for row-shaped fleets, `config.toml` thread/depth limits, reasoning-effort routing, and `codex exec` fleets for scripted runs.
 
 ### Why a wave and not a loop
@@ -50,7 +50,7 @@ A wave restructures the work so neither failure can happen silently:
 | Context | One thread carries every dead end forward | Isolated workers; only distilled, verified handoffs move between waves |
 | More effort buys | More rounds over the same context; quality can drop as cost rises | More *independent* attempts in parallel, then selection, budgeted ~60% generation / 40% verification |
 | Coverage | Whatever the loop happened to touch | A manifest written before spawning: N slices out = N handoffs checked back in |
-| Bounds | Emergent | Explicit: 3–8 workers per wave, ≤2–3 waves, capped up front |
+| Bounds | Emergent | Explicit: 3–8 workers per wave, a stated worker/token budget, and a manifest-gated stop (completion, stagnation, or budget — never "we did two waves") |
 
 Loops aren't banned. They're right exactly when a cheap, reliable, near-ground-truth verifier exists and gives a crisp signal: a failing test, an exec error, a schema check. That's code-with-tests territory, and the skill says to keep loop-until-done there (still hard-capped). Everything open-ended (research, analysis, audits, writing, exploration) is where waves win: at equal cost, independent attempts plus verification usually beat critique/debate loops, and the verify round is what turns parallel exploration into one answer you can trust.
 
@@ -434,7 +434,7 @@ rayfernando-skills/
 ├── .claude-plugin/
 │   └── marketplace.json                 # marketplace catalog
 ├── plugins/
-│   ├── waves/                     # Cursor variant (Task tool + Multitask Mode)
+│   ├── waves/                     # Cursor variant (parallel Task tool subagents)
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json               # plugin manifest
 │   │   └── skills/

@@ -205,3 +205,9 @@ rejected candidates. Long, irrelevant context measurably degrades the next
 wave's reasoning; the synthesize barrier is where you compress. Multi-wave is
 the normal shape, not an exception: a realistic run is often `12 + 3 + 1`
 workers across waves, each wave spending the previous wave's verified findings.
+
+One exception to compression: constraints are pinned, never summarized. The
+wave manifest, stop conditions/budget, and safety/scope rules travel verbatim
+through every synthesis file and compaction -- measured compaction behavior
+silently drops in-context constraints (violations rising from 0% to 30-59%
+post-compaction; pinning restores 0% -- arXiv 2606.22528).

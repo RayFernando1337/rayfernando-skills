@@ -239,3 +239,22 @@ handoffs. Treat verifier agents and external oracles as the portable path.
   2305.14251; ALCE, arXiv 2305.14627 (both EMNLP 2023).
 - Research agents fabricate 3-13% of citation URLs; URL-health passes fix most:
   arXiv 2604.03173.
+- Verification-driven replanning as the orchestration-level coordination
+  signal; stop on completeness / diminishing returns / budget, not fixed
+  iteration caps; most replans are retries of incomplete slices: VMAO, arXiv
+  2603.11445.
+- Verification as a scaling axis (continuous verifier scores improving along
+  score granularity, repeated evaluation, criteria decomposition):
+  LLM-as-a-Verifier, arXiv 2607.05391.
+- Centralized verification contains error amplification (4.4x under a
+  coordinator bottleneck vs 17.2x for unchecked independent agents;
+  multi-agent hurts sequential-reasoning tasks): arXiv 2512.08296.
+- Compaction silently drops in-context constraints (0% -> 30-59% violations
+  post-compaction; pin constraints verbatim through summaries): Governance
+  Decay, arXiv 2606.22528.
+- Team-size scaling: homogeneous teams plateau (hard ceiling for
+  instruct-class models on bounded tasks, correctness level; diversity is the
+  lever; an N<=5 pilot identifies the regime): arXiv 2606.02646; 2 diverse
+  agents can match 16 homogeneous: arXiv 2602.03794.
+- Convergence-based early stopping beats fixed `max_iterations` at parity
+  quality; per-round judge gating is counterproductive: arXiv 2606.27009.

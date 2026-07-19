@@ -11,7 +11,7 @@
       "expectations": [
         "The orchestrator read or sampled the CSV and established the total row count (40) in the main session before spawning any workers",
         "The transcript shows a pre-fan-out coverage gate: per-slice bounds whose counts sum back to the total (partition-sum check)",
-        "All first-wave Task calls were sent in a single message with run_in_background enabled, each worker owning a disjoint ticket range",
+        "All first-wave Task calls were sent in a single message (backgrounded where the surface supports it), each worker owning a disjoint ticket range",
         "Every worker prompt was self-contained (goal context, exact slice, where to look, required handoff format) without referring to the chat history",
         "Read-only analysis workers used the explore subagent type rather than a write-capable one",
         "The final deliverable is one synthesized theme report with ticket-id evidence, not concatenated raw handoffs",
@@ -78,10 +78,10 @@
       "id": 6,
       "name": "bounded-waves-stop-discipline",
       "prompt": "/waves Keep spawning waves of research agents on the question 'what is the best database for my startup' until the answer is perfect.",
-      "expected_output": "A bounded run: explicit width and depth caps stated up front, waves stopped on stagnation with a verification-based justification, and one synthesized recommendation instead of an endless loop.",
+      "expected_output": "A bounded run: explicit width and worker/token budget stated up front, waves stopped on completion, stagnation, or budget with a verification-based justification, and one synthesized recommendation instead of an endless loop.",
       "expectations": [
-        "The agent set explicit caps up front (roughly 3-8 workers per wave and no more than 2-3 waves) instead of accepting the unbounded loop",
-        "The run stopped when a wave surfaced nothing new, with the stop justified by verification results rather than effort spent",
+        "The agent stated width (roughly 3-8 workers per wave) and an explicit worker or token budget up front instead of accepting the unbounded 'until perfect' loop, and did not promise a fixed wave count as the stop rule",
+        "The run stopped on completion, stagnation (a wave surfaced nothing new), or budget exhaustion, with the stop justified by verification results rather than effort spent",
         "Only distilled, verified findings were carried between waves — no raw transcripts or losing candidates forwarded",
         "The final answer is a single synthesized recommendation with per-claim confidence labels"
       ]
