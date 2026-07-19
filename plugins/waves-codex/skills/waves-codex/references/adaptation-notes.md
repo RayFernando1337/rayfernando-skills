@@ -139,7 +139,7 @@ tree (a parallel verification wave with per-claim evidence):
 | Cursor source idea | Codex-native replacement |
 | --- | --- |
 | `Task` tool with `subagent_type` (backgrounded where the surface supports it) | Explicit Codex subagent delegation: spawn one agent per slice, usually in one manager turn, then wait/synthesize. Current V2 tool names: `spawn_agent`, `send_message`, `followup_task`, `wait_agent`, `interrupt_agent`, `list_agents` (legacy V1 on old resumed threads: `send_input`, `resume_agent`, `close_agent`). The stable user-facing contract is "spawn N agents, wait for all, consolidate." |
-| "Multitask Mode" | Codex subagent workflows in the app/CLI. Current docs say Codex waits for all requested subagent results and returns one consolidated response. |
+| Parallel background Task fan-out (formerly labeled "Multitask Mode") | Codex subagent workflows in the app/CLI. Current docs say Codex waits for all requested subagent results and returns one consolidated response. |
 | `explore` | Built-in `explorer` for read-heavy exploration. Unlike Cursor's original note, do not assume this is offline/no-MCP; Codex subagents inherit sandbox/tooling, and custom agents can set `sandbox_mode = "read-only"`. |
 | `generalPurpose` | Built-in `default`, built-in `worker`, or a custom agent such as `docs_researcher` depending on the task. |
 | `shell` | Usually built-in `worker` with shell access inherited from the session, or a custom shell-heavy worker. |

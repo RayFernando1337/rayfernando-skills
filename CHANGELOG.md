@@ -4,6 +4,8 @@ All notable changes to this collection are documented here. The format follows [
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-07-19
+
 ### Added
 
 - **New skill: `swiftui-animation-match` (0.1.0)** — match a UI/UX
@@ -32,6 +34,114 @@ All notable changes to this collection are documented here. The format follows [
 - **`bootstrap-ios` routes animation work to the new skill:** the mode
   picker now points "Animation, motion, make it feel alive" tasks at
   `swiftui-animation-match`.
+
+### Changed
+
+- **`waves` + `waves-codex`: the stop function is now the manifest + budget,
+  not a wave count.** The "≤ 2–3 waves, capped up front" rule made runs stop
+  after a wave or two even when the manifest still had open slices — and the
+  entropy-first cascade (scouting wave → decomposition wave → execution wave)
+  consumed the cap before execution even started. "Bounded waves" is
+  rewritten: keep extending while any manifest slice is non-terminal *and*
+  the last wave added verified progress; stop only on **completion**,
+  **stagnation**, or **budget exhaustion**; state the budget (workers/tokens,
+  never a wave count) in the run-shape line; scouting/decomposition waves
+  count separately from the execution budget. Step 4 now names the only three
+  legitimate reasons to skip a follow-up wave (remaining items are
+  primary-source-verified, time-gated, or genuinely contested — and the run
+  must say which). Width caps (3–8) stay, now grounded in team-size scaling
+  results (homogeneous teams plateau at N≈4–8; diversity, not head count,
+  escapes the ceiling — arXiv 2606.02646, 2602.03794) and staff-confirmed
+  practicalities (no documented Cursor concurrency cap, but ~40 concurrent
+  workers can overwhelm the extension host — batch into waves). Stop-rule
+  grounding: verification-driven replan loops stopping on completeness /
+  diminishing-returns / token budgets (VMAO, arXiv 2603.11445) and
+  convergence-based early stopping beating fixed `max_iterations` (arXiv
+  2606.27009). Both bounded-wave evals updated to expect a stated budget
+  instead of a promised wave count.
+- **`waves` + `waves-codex`: constraints are pinned, never summarized.** The
+  wave manifest, stop conditions/budget, and safety/scope rules now travel
+  *verbatim* through every `synthesis-wave-N.md` and compaction — measured
+  compaction behavior silently drops in-context constraints (violations
+  rising from 0% to 30–59% post-compaction; pinning restores 0% — Governance
+  Decay, arXiv 2606.22528). Added to Step 3's compress-at-the-barrier, both
+  handoff-format references, and both checklists.
+- **`waves-codex`: platform facts re-verified 2026-07-19** (run as a parallel
+  verification wave with per-claim evidence; details in
+  `references/adaptation-notes.md`). Official docs no longer enumerate the
+  collaboration tools; the current multi-agent **V2** surface is
+  `spawn_agent, send_message, followup_task, wait_agent, interrupt_agent,
+  list_agents` — `interrupt_agent`, not `close_agent` — while threads resumed
+  from before the V2 runtime keep the legacy V1 set (`send_input`,
+  `resume_agent`, `close_agent`). The worker failure ladder now re-tasks with
+  `send_message`/`followup_task` (V1 names kept as a legacy note) and warns
+  that a re-tasked worker keeps its old slice's context — same-slice
+  continuation only. Reasoning-effort ladder updated to `none…max` plus
+  `ultra` as a Codex *product* setting (converts to `max` + proactive
+  multi-agent, ~4 parallel agents, roughly 3–4× single-agent cost). Also
+  recorded: V2 per-spawn `model`/`reasoning_effort` overrides are gated
+  behind `multi_agent_v2.expose_spawn_agent_model_overrides`; V2 delegation
+  payloads are now encrypted (no auditing spawn prompts from rollout
+  history); app-server `thread/start.multiAgentMode` shipped June 17 and is
+  already deprecated.
+- **`waves-codex`: model routing moves to the GPT-5.6 family** (GA
+  2026-07-09). Manager/verifiers/synthesis on `gpt-5.6` (Sol) at
+  `xhigh`/`max`; lighter subagent work on `gpt-5.6-terra` (official Codex
+  guidance); `gpt-5.6-luna` only for lightweight *short-context* slices — its
+  long-context recall collapses (OpenAI MRCR: 41.3% at 256–512K vs Sol's
+  91.5%), and Codex clients now treat GPT-5.6 context as 272K anyway (CLI
+  0.144.4/5). The Terra middle ground is recorded as contested across
+  independent evals (Artificial Analysis vs Vellum/Braintrust); the poles are
+  not. `recommended-config.md` TOML examples updated; `gpt-5.5` /
+  `gpt-5.4-mini` kept only as older fallbacks.
+- **`waves-codex`: new Coordinator Thread Mode** (Desktop only). When the
+  undocumented `codex_app.*` thread-management tools are present
+  (`create_thread`, `list_threads`, `send_message_to_thread`, …), a
+  long-lived coordinator thread can run waves whose workers are visible,
+  durable Desktop threads. Written defensively: probe `tool_search` for
+  `create_thread` before fan-out and fall back to subagent waves; the
+  coordinator must be a fresh Desktop-local thread (remote/mobile/CLI-started
+  and pre-feature resumed threads miss the tools — openai/codex #26907,
+  #25990, #25818); never `read_thread` a full worker transcript into the
+  coordinator — require structured handoffs via `send_message_to_thread`;
+  heartbeat instead of busy-polling; worktree hygiene (~15 managed worktrees,
+  auto-delete on archive; the sidebar hydrates only ~50 recent threads, so
+  track workers in the manifest, not the sidebar).
+- **`waves`: runs in place of cloud orchestration.** The "escalate to the
+  Cursor team's `orchestrate` plugin" section is replaced with "Waves instead
+  of cloud orchestration": local subagent runs cover the workload this skill
+  targets; orchestrate's principles (planners plan, workers hand off up, no
+  cross-talk) are already folded in; spawning cloud agents for a waves run is
+  explicitly out of scope, and outgrowing one machine is a tool decision the
+  user makes.
+- **`waves`: Cursor mechanics re-verified 2026-07-19.** Parallel `Task` calls
+  in one message remain the documented fan-out; backgrounding is
+  surface-dependent — `is_background: true` frontmatter is the documented
+  switch while per-call `run_in_background` is live but **undocumented** and
+  absent on some surfaces (e.g. cloud agents), so the skill no longer
+  hard-requires it; "Multitask Mode" naming dropped (`/multitask` is a
+  separate user-facing Agents Window command). `explore` claims softened to
+  what's verifiable: read-only by design, and read-only mode blocks **all
+  MCP** (the "no internet" claim was unverifiable and is gone). Added the
+  built-in naming drift note (docs say `explore`/`bash`/`browser`; Task
+  schemas expose `generalPurpose`, `shell`, `browser-use`,
+  `best-of-n-runner`, … — read the live enum). Resume rung strengthened:
+  completed subagents persist checkpoints across resumes (CLI 2026-07-06),
+  and re-tasking is for same-slice continuation only. Nesting documented as
+  one extra level, kept orchestrator-only as policy; model routing gains the
+  documented bracket-options syntax
+  (`claude-opus-4-8[effort=high,context=300k]`, `composer-2.5[fast=false]`)
+  and a `gpt-5.6-luna`-for-short-context-only note.
+- **Verification playbooks: new grounding in both variants** — VMAO (arXiv
+  2603.11445), LLM-as-a-Verifier (arXiv 2607.05391), centralized coordination
+  containing error amplification 4.4× vs 17.2× (arXiv 2512.08296),
+  Governance Decay (arXiv 2606.22528), Ringelmann team-size scaling (arXiv
+  2606.02646), diversity scaling (arXiv 2602.03794), and semantic early
+  stopping (arXiv 2606.27009).
+- Both `waves` plugins bump to **0.6.0**; marketplace `metadata.version` to
+  **0.12.0**.
+
+[0.12.0]: https://github.com/RayFernando1337/rayfernando-skills/releases/tag/v0.12.0
 
 ## [0.11.0] — 2026-07-07
 
