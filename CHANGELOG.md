@@ -132,6 +132,28 @@ All notable changes to this collection are documented here. The format follows [
   documented bracket-options syntax
   (`claude-opus-4-8[effort=high,context=300k]`, `composer-2.5[fast=false]`)
   and a `gpt-5.6-luna`-for-short-context-only note.
+- **`waves-codex`: aligned with GPT-5.6 native delegation** (per-claim
+  evidence from the codex-rs source at main, official docs, and July field
+  reports; details in `references/adaptation-notes.md`). Delegation mode is
+  derived from reasoning effort per turn — `ultra` → proactive, everything
+  else → explicit-request-only, where **"applicable AGENTS.md or skill
+  instructions" are a documented delegation trigger**: this skill's spawn
+  instructions are the sanctioned steering channel at any effort, no `ultra`
+  needed (and `ultra` is explicitly discouraged for wave runs — proactive
+  spawning bypasses the manifest and its children inherit ultra, the
+  July-2026 quota-burn failure mode, openai/codex #31814). Native V2 spawns
+  fork parent history by default and full forks inherit + reject
+  model/effort overrides, so the skill now requests **fresh-context workers**
+  for disjoint slices; per-spawn routing is explicit-only in 0.145+ and
+  custom TOML roles were unreliable on 5.6 at GA, so **inlined role
+  instructions + explicit per-spawn model/effort are now the primary
+  pattern** (TOML demoted to optional tuning, with a "Read First" note in
+  `recommended-config.md`). Also recorded: Luna is V1 and cannot be spawned
+  from Sol/Terra V2 parents (Terra is the spawnable cheap tier); V2 ignores
+  `agents.max_depth` and caps concurrency at 4 slots including the manager
+  (`agents.max_threads + 1` when set); encrypted delegation payloads make
+  the wave manifest the spawn-plan audit; verification now includes checking
+  each worker's *actual* model/effort rather than trusting the request.
 - **Verification playbooks: new grounding in both variants** — VMAO (arXiv
   2603.11445), LLM-as-a-Verifier (arXiv 2607.05391), centralized coordination
   containing error amplification 4.4× vs 17.2× (arXiv 2512.08296),

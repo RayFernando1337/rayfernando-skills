@@ -88,6 +88,47 @@ tree (a parallel verification wave with per-claim evidence):
   all open). Basis for the SKILL's "Coordinator Thread Mode" and its
   probe-then-fallback rule.
 
+Native-delegation deep dive, checked 2026-07-19 against codex-rs source at
+main (commit-level evidence), official docs, and July field reports:
+
+- Delegation mode is derived from reasoning effort per turn
+  (`core/src/session/multi_agents.rs`): `ultra` -> Proactive, anything else ->
+  ExplicitRequestOnly. The injected explicit-mode policy text is "Do not spawn
+  sub-agents unless the user or applicable AGENTS.md/skill instructions
+  explicitly ask" -- skill text is a first-class, documented delegation
+  trigger; `ultra` is never required for waves. The deprecated
+  `multiAgentMode` app-server params are ignored.
+- V2 eligibility is model-catalog-driven: `gpt-5.6-sol` and `gpt-5.6-terra`
+  are V2; `gpt-5.6-luna` is V1 (so V2 parents cannot spawn Luna children);
+  maintainers state 5.6 roots can only spawn 5.6+ models.
+- Native V2 spawns default to a full-history fork (`fork_turns` defaults to
+  `all`; filtered -- keeps user/system/final-answer messages, drops reasoning
+  and tool output). Full-history forks inherit the parent's agent type, model,
+  and effort and REJECT overrides; fresh-context spawns (`fork_turns: none`)
+  are the routable shape. Children inherit parent model/effort by default --
+  the July quota-burn failure mode (#31814: e.g. 888 model invocations /
+  103.6M input tokens across 3 tasks when Sol-Ultra bred Sol-Ultra children).
+- Custom TOML role routing was broken on 5.6 V2 at GA (roles -> `agent_role:
+  null`, model and sandbox pins ignored -- #31814, #32587, #32782). 0.145+
+  re-exposes per-spawn `model`/`reasoning_effort` with baked guidance to honor
+  them "only when explicitly requested by the user, applicable AGENTS.md
+  instructions, or skill instructions" (maintainer: "the model is not good
+  enough yet to judge"). V2 exposes `agent_type` only when custom agents are
+  registered. Consequence: inlined role instructions + explicit per-spawn
+  model/effort requests are the primary pattern; TOML is optional tuning.
+- V2 does not enforce `agents.max_depth`; the binding limit is
+  `multi_agent_v2.max_concurrent_threads_per_session` (default 4 including
+  the root; `agents.max_threads + 1` when set). V2 has no `close_agent`;
+  lifecycle verbs are `followup_task`, `send_message`, `wait_agent`,
+  `interrupt_agent`, `list_agents`.
+- Codex CLI/app does NOT use the server-side Responses API multi-agent beta
+  (no `multi_agent` request field anywhere in codex-rs); all orchestration is
+  client-side. The hosted beta is a parallel implementation of the same six
+  actions for API developers.
+- Encrypted V2 delegation payloads + children hidden from `/agent` mean
+  post-hoc transcript audits are gone; the wave manifest is the spawn-plan
+  audit, reviewed before dispatch.
+
 ## What Stayed Portable
 
 - Mental model: discover -> stage -> verify coverage -> decompose -> fan out ->

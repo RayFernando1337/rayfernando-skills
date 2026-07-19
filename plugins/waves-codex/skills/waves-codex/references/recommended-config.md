@@ -4,6 +4,33 @@ Use this as a starting point for the `waves-codex` workflow. Put shared
 defaults in `~/.codex/config.toml` or repo-specific settings in
 `.codex/config.toml` for trusted projects.
 
+## Read First: Native Delegation on GPT-5.6 (config is optional now)
+
+On GPT-5.6 Sol/Terra (the V2 multi-agent runtime), the primary steering
+surface is **prompt and skill text, not config**: delegation triggers on
+direct asks and "applicable AGENTS.md or skill instructions," and per-spawn
+model/effort routing is honored when explicitly requested the same way.
+Custom TOML role routing has been unreliable on V2 (roles resolving to null,
+model/sandbox pins ignored -- openai/codex #31814, #32587, #32782; per-spawn
+overrides restored in 0.145+ as explicit-only). Practical stance:
+
+- Everything below still works for V1 surfaces, `codex exec` fleets, and as
+  declarative documentation of your intended roles -- but on 5.6 V2, treat
+  TOML as optional tuning and **inline each role's instructions and intended
+  model/effort in the worker prompt** (the skill's default pattern).
+- Do not set `ultra` for wave runs: it flips delegation to proactive (spawns
+  outside your manifest) and its children inherit ultra.
+- V2 ignores `agents.max_depth`; the binding limit is concurrent agent slots
+  (4 including the manager by default, `agents.max_threads + 1` when set --
+  keeping `max_threads = 6` below yields 7 slots).
+- Luna is still V1: Sol/Terra parents cannot spawn Luna children. Terra is
+  the cheap tier for spawned workers; use Luna from the main thread or
+  `codex exec`.
+- After each Codex release, re-verify which spawn parameters
+  (`agent_type`, `model`, `reasoning_effort`, fork behavior) are actually
+  exposed before relying on them -- this surface has changed three times in
+  July 2026 alone.
+
 ## Default Manager/Worker Setup
 
 ```toml

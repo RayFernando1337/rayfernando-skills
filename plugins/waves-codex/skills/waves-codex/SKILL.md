@@ -40,6 +40,25 @@ when it is not. No current Codex doc confirms a general-purpose claim-verifier
 or critic hook; use a verifier subagent, CSV verification pass, tests,
 validators, or `codex exec --output-schema` instead.
 
+Native delegation on GPT-5.6 (how this skill plugs in): Sol and Terra run the
+V2 multi-agent runtime, and the delegation mode is derived from reasoning
+effort per turn -- `ultra` means *proactive* (the model spawns on its own
+judgment), every other effort means *explicit-request-only*, where the
+documented triggers are direct user asks **and "applicable AGENTS.md or skill
+instructions"** -- this skill's spawn instructions are that sanctioned
+channel, at any effort, no `ultra` required. Avoid `ultra` for wave runs:
+proactive spawning happens outside your manifest, and its children inherit the
+parent's model and effort (an ultra parent breeds ultra children -- the
+runaway-cost failure mode). Native V2 spawns also **fork the parent's history
+by default** (`fork_turns` defaults to `all`; filtered, but the child sees
+your conversation), and full-history forks inherit the parent's agent type /
+model / effort and reject overrides -- so for disjoint wave slices, request
+**fresh-context workers** (no history fork), which is also the only spawn
+shape that can be routed to a different model or effort. V2 ignores
+`agents.max_depth`; its binding limit is concurrent agent slots (4 including
+the manager by default; `agents.max_threads + 1` when set) -- batch wider
+waves accordingly.
+
 Read these references when using the skill:
 
 - `references/handoff-format.md` for the exact worker handoff contract.
@@ -74,7 +93,11 @@ Read these references when using the skill:
    research, tests, audits, bounded edits, or focused claim checks.
 2. Worker prompts are self-contained. Do not assume workers can infer the user's
    original request, your scratch reasoning, or sibling work unless you
-   intentionally pass or fork that context.
+   intentionally pass or fork that context. (On GPT-5.6's V2 runtime, native
+   spawns fork parent history *by default* -- request fresh-context workers
+   for disjoint slices, and keep prompts self-contained either way: a forked
+   child sees a filtered history, not your reasoning, and fork behavior is
+   version-sensitive.)
 3. One worker owns one slice and returns one handoff.
 4. Verify before you trust. A worker's `Status: success` is a claim, not
    evidence.
@@ -102,9 +125,12 @@ non-monotonic (more iterations can lower quality, not just cost). Equally real
 is the opposite failure: stopping while the manifest still has open slices.
 Keep the exploration, drop the runaway, never abandon un-terminal work.
 
-- Width: 3-8 workers per wave (and within `agents.max_threads`); size it so you
-  can fully verify all of them. Go wider only with a cheap automatic check
-  (tests, `codex exec --output-schema`, schema/exec) gating results.
+- Width: 3-8 workers per wave (and within the concurrency limit: V2 allows 4
+  concurrent agent slots including the manager by default, or
+  `agents.max_threads + 1` when set -- with `max_threads = 6`, that is 7
+  slots; batch wider waves). Size the wave so you can fully verify all of it.
+  Go wider only with a cheap automatic check (tests,
+  `codex exec --output-schema`, schema/exec) gating results.
   (Grounding: homogeneous-agent teams plateau around N~4-8 - added workers
   contribute redundant evidence, and diversity, not head count, escapes the
   ceiling - arXiv 2606.02646, 2602.03794.)
@@ -273,7 +299,10 @@ dependent slice with the distilled, verified findings (or their
 `.waves/<run>/` path) folded into its self-contained prompt, and keep
 unrelated slices parallel. The manifest doubles as the **completion gate**: N
 rows spawned means N handoffs collected and checked off before synthesis
-(Step 3).
+(Step 3). It is also the **spawn-plan audit**: V2 delegation payloads are
+encrypted after dispatch, so the manifest review before spawning is the only
+point where a human (or the manager) can inspect what each worker was asked
+to do.
 
 ### Step 2 - Fan Out with Codex Subagents
 
@@ -306,6 +335,17 @@ only in trusted projects -- so when a custom role you want is unavailable in
 the active surface, spawn `default` (or `worker`/`explorer`) with that role's
 instructions inlined in the worker prompt instead of dropping the role.
 
+On GPT-5.6's V2 runtime, **inlined role instructions are the primary pattern,
+not the fallback**: custom TOML role routing has been unreliable on Sol/Terra
+(roles resolving to null, model/sandbox pins ignored -- openai/codex #31814,
+#32587, #32782; per-spawn `model`/`reasoning_effort` overrides return in
+0.145+, honored only when the user, AGENTS.md, or skill instructions
+explicitly request them -- which this skill's routing instructions do). V2
+also exposes `agent_type` only when custom agents are registered. So: put the
+role in the prompt, state the intended model/effort explicitly per spawn, and
+treat TOML as optional tuning to re-verify per release rather than required
+setup.
+
 Route both the model tier and the reasoning effort per slice. The GPT-5.6
 family (GA 2026-07-09) is the current default: `gpt-5.6` (alias for
 `gpt-5.6-sol`, the flagship) for the manager, verifiers, synthesis, and hard
@@ -315,8 +355,11 @@ option for lightweight, short-context slices -- classification, row-shaped
 work, small-chunk reads -- but never long-context reads (Luna's recall
 collapses on 256K+ contexts per OpenAI's MRCR tables; note Codex clients
 currently treat GPT-5.6 context as 272K anyway, so keep chunks well under
-that). Terra-vs-Luna is contested among independent evals; the poles are not:
-lightweight -> Luna, hard/agentic -> Sol. `gpt-5.3-codex-spark` (research
+that). Spawn caveat: Luna is still on the V1 runtime, so **Sol/Terra V2
+parents currently cannot spawn Luna children** -- Terra is the cheap tier for
+spawned workers; use Luna from the main thread, `codex exec` fleets, or
+CSV fan-out surfaces instead. Terra-vs-Luna is contested among independent
+evals; the poles are not: lightweight -> Luna, hard/agentic -> Sol. `gpt-5.3-codex-spark` (research
 preview) remains the near-instant text-only option, and `gpt-5.5` /
 `gpt-5.4-mini` remain available as older fallbacks.
 
@@ -327,15 +370,21 @@ roughly 3-4x single-agent cost; Plus+ plans; Codex warns about its
 concurrency). Use `low`/`medium` for scouting and all-around research, `high`
 for coding and verifying, `xhigh`/`max` for orchestration, deep problem
 solving, and pre-fan-out synthesis; escalate a stuck high-stakes slice to Sol
-at `max` before considering `ultra`. The live per-spawn field is
+at `max` before considering `ultra` (which also flips delegation to proactive
+-- see the native-delegation note above). The live per-spawn field is
 `reasoning_effort`; the config / custom-agent TOML key is
-`model_reasoning_effort` -- set effort on each worker, not only in config (V2
-exposes per-spawn `model`/`reasoning_effort` overrides only when
-`multi_agent_v2.expose_spawn_agent_model_overrides` is enabled; custom agent
-TOML always works). Speed tier is a user preference: honor `/fast` /
-`service_tier` if the user enabled it and don't force it; honor any
-model/effort the user named, and if a requested model is unavailable, say so
-rather than substituting.
+`model_reasoning_effort` -- set effort on each worker, not only in config. On
+0.144.x the V2 per-spawn `model`/`reasoning_effort` overrides were hidden
+(children silently inherited the parent's model and effort); 0.145+ exposes
+them by default, honored when the user, AGENTS.md, or skill instructions
+explicitly request routing. Overrides work only on fresh-context spawns --
+full-history forks always inherit. **Verify what actually ran**: children
+inheriting the wrong model/effort was the top July-2026 failure mode, so
+check each worker's reported model/effort (or judge by output quality)
+instead of trusting the requested settings. Speed tier is a user preference:
+honor `/fast` / `service_tier` if the user enabled it and don't force it;
+honor any model/effort the user named, and if a requested model is
+unavailable, say so rather than substituting.
 
 ### Step 3 - Collect and Verify Handoffs
 
